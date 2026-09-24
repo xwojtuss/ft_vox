@@ -67,7 +67,7 @@ MeshData	BasicObjLoader::toMeshData(std::string path) {
 }
 
 MeshData	BasicObjLoader::toMeshData(const char* path) {
-	std::ifstream file(path);
+	std::ifstream file(resolvePath(path));
 	MeshData meshData;
 
 	m_vertices.clear();
@@ -77,10 +77,7 @@ MeshData	BasicObjLoader::toMeshData(const char* path) {
 	m_faces.clear();
 
 	if (!file.is_open()) {
-		file.open(std::string(app::buildToRoot) + path);
-		if (!file.is_open()) {
-			throw std::runtime_error("Failed to open file: " + std::string(path));
-		}
+		throw std::runtime_error("Failed to open file: " + std::string(path));
 	}
 
 	std::string line;

@@ -3,7 +3,7 @@
 using namespace assets;
 
 TextureData	PpmTextureLoader::toTextureData(const char* path) {
-	std::ifstream file(path);
+	std::ifstream file(resolvePath(path));
 	TextureData textureData;
 
 	if (!file.is_open())

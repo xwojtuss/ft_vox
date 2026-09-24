@@ -13,7 +13,7 @@
 #include "Resources.hpp"
 #include "../render/GpuTypes.hpp"
 #include "../scene/WorldInfo.hpp"
-#include "../app/ApplicationInfo.hpp"
+#include "../platform/filesystem/resolvePath.hpp"
 
 namespace assets {
 struct FaceIndex {

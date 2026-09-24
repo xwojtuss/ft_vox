@@ -3,12 +3,12 @@
 using namespace game::world;
 
 std::unique_ptr<Chunk>	ChunkLoader::loadChunk(glm::ivec3 chunkPosition) {
-	Chunk* chunk = new Chunk();
+	auto chunk = std::make_unique<Chunk>();
 
-	m_earthGenerator.generateChunk(chunk, chunkPosition);
+	m_earthGenerator.generateChunk(chunk.get(), chunkPosition);
 	if (!chunk)
 		throw std::runtime_error("Failed to generate chunk");
-	return std::unique_ptr<Chunk>(chunk);
+	return chunk;
 }
 
 void	ChunkLoader::saveChunk(glm::ivec3 chunkPosition) {
