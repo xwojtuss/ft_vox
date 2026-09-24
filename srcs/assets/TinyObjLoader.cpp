@@ -13,10 +13,8 @@ MeshData	TinyObjLoader::toMeshData(const char* path) {
 	std::string warn;
 	std::string err;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path)) {
-		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (std::string(app::buildToRoot) + path).c_str())) {
-			throw std::runtime_error("Failed to open file: " + std::string(path));
-		}
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, resolvePath(path).c_str())) {
+		throw std::runtime_error("Failed to open file: " + std::string(path));
 	}
 
 	std::unordered_map<render::Vertex, uint32_t> uniqueVertices{};

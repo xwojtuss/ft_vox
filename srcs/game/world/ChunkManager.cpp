@@ -72,7 +72,7 @@ void	ChunkManager::loadRange(glm::ivec3 start, glm::ivec3 end) {
 }
 
 void	ChunkManager::loadChunk(glm::ivec3 chunkPosition) {
-	m_chunks[chunkPosition] = std::move(m_chunkLoader.loadChunk(chunkPosition));
+	m_chunks[chunkPosition] = m_chunkLoader.loadChunk(chunkPosition);
 
 	makeChunkRenderable(m_world, m_renderer, chunkPosition);
 }

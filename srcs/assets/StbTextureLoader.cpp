@@ -6,12 +6,9 @@ assets::TextureData	StbTextureLoader::toTextureData(const char* path) {
 	int width, height, channels;
 	TextureData textureData;
 
-	stbi_uc* data = stbi_load(path, &width, &height, &channels, STBI_rgb_alpha);
+	stbi_uc* data = stbi_load(resolvePath(path).c_str(), &width, &height, &channels, STBI_rgb_alpha);
 	if (!data) {
-		data = stbi_load((std::string(app::buildToRoot) + path).c_str(), &width, &height, &channels, STBI_rgb_alpha);
-		if (!data) {
-			throw std::runtime_error("failed to load texture image: " + std::string(path));
-		}
+		throw std::runtime_error("failed to load texture image: " + std::string(path));
 	}
 	if (width <= 0 || height <= 0) {
 		stbi_image_free(data);

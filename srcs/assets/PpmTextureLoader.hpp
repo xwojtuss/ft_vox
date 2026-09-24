@@ -9,6 +9,7 @@
 
 #include "Resources.hpp"
 #include "ITextureLoader.hpp"
+#include "../platform/filesystem/resolvePath.hpp"
 
 namespace assets {
 class PpmTextureLoader : public ITextureLoader {

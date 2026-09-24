@@ -93,8 +93,11 @@ bool VulkanContext::isSuitable(VkPhysicalDevice device) {
 	m_swapChainSupport = querySwapChainSupport(device);
 	bool swapChainAdequate = !m_swapChainSupport.formats.empty() && !m_swapChainSupport.presentModes.empty();
 
-	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-		deviceFeatures.geometryShader && m_queueFamilyIndices.isComplete() && swapChainAdequate
+	// TODO: add support for more devices, this is a hotfix
+	return (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+		|| deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+		// && deviceFeatures.geometryShader
+		&& m_queueFamilyIndices.isComplete() && swapChainAdequate
 		&& supportedFeatures.samplerAnisotropy;
 }
 

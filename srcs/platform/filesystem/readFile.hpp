@@ -5,6 +5,6 @@
 #include <fstream>
 #include <string>
 
-#include "../../app/ApplicationInfo.hpp"
+#include "resolvePath.hpp"
 
 std::vector<char>	readFile(const std::string& filename);

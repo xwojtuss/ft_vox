@@ -28,7 +28,9 @@ file(GLOB_RECURSE SCOP_SOURCES CONFIGURE_DEPENDS
 
 add_executable(scop ${SCOP_SOURCES})
 
-target_compile_definitions(scop PRIVATE GLM_FORCE_CTOR_INIT NDEBUG)
+target_compile_definitions(scop PRIVATE GLM_FORCE_CTOR_INIT NDEBUG
+  PROJECT_ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+)
 
 target_compile_options(scop PRIVATE -Wall -Wextra -Werror -O0 -g)
 
