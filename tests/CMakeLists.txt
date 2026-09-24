@@ -15,6 +15,9 @@ file(GLOB_RECURSE SCOP_TEST_SOURCES CONFIGURE_DEPENDS
 
 add_executable(scop_tests ${SCOP_TEST_SOURCES})
 
+# Lets tests include shared helpers as "support/..."
+target_include_directories(scop_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+
 target_link_libraries(scop_tests PRIVATE
   scop_core
   Catch2::Catch2WithMain
