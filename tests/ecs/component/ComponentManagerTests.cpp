@@ -103,7 +103,6 @@ SCENARIO("Removing a component", "[ecs][component-manager]") {
 	}
 }
 
-// TODO: make pass
 SCENARIO("Removing one entity's component never changes another entity's data", "[ecs][component-manager]") {
 	GIVEN("entities 1 and 2 with 10 and 20 health") {
 		auto manager = makeManager();

@@ -13,6 +13,7 @@ namespace ecs {
 	class ComponentManager : public IComponentManager {
 	private:
 		std::array<ComponentType, maxComponents> m_components;
+		std::array<Entity, maxComponents>        m_componentEntities{};
 		std::unordered_map<Entity, size_t>       m_entityToComponentIndex;
 		std::size_t                              m_componentCount{0};
 

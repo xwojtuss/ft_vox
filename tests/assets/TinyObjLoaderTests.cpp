@@ -56,8 +56,7 @@ SCENARIO("A model file that does not exist is rejected", "[assets][tinyobj]") {
 	}
 }
 
-// TODO: make pass
-SCENARIO("A model without texture coordinates can be loaded", "[assets][tinyobj][crash]") {
+SCENARIO("A model without texture coordinates can be loaded", "[assets][tinyobj]") {
 	GIVEN("a triangle without texture coordinates") {
 		const std::string content = "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n";
 

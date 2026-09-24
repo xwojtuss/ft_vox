@@ -14,7 +14,7 @@ Dependencies ASystem::getDependencies() const {
 }
 
 void ASystem::registerEntity(const Entity& entity) {
-	if (!canRegister(entity))
+	if (hasEntity(entity) || !canRegister(entity))
 		return;
 
 	m_entities.push_back(entity);

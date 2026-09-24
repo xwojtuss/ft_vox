@@ -21,6 +21,7 @@ namespace ecs {
 		template<typename SystemType>
 		[[nodiscard]] SystemType* getSystem();
 
+		void                      unregisterEntity(const Entity& entity) const;
 		void                      onWorldReady();
 		void                      onRender(float aspectRatio, double time);
 		void                      onTextDraw(render::IRenderer& renderer);

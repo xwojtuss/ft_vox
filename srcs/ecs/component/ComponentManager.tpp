@@ -16,9 +16,10 @@ namespace ecs {
 				+ " slots are in use");
 		}
 
-		const size_t componentIndex      = m_componentCount;
-		m_components[componentIndex]     = component;
-		m_entityToComponentIndex[entity] = componentIndex;
+		const size_t componentIndex         = m_componentCount;
+		m_components[componentIndex]        = component;
+		m_componentEntities[componentIndex] = entity;
+		m_entityToComponentIndex[entity]    = componentIndex;
 		m_componentCount++;
 	}
 
@@ -52,9 +53,17 @@ namespace ecs {
 			throw error::EcsError("entity " + std::to_string(entity) + " has no component of this type");
 		}
 
-		const size_t componentIndex  = it->second;
-		m_components[componentIndex] = m_components[m_componentCount - 1];
+		const size_t componentIndex = it->second;
+		const size_t lastIndex      = m_componentCount - 1;
+
 		m_entityToComponentIndex.erase(it);
+		if (componentIndex != lastIndex) {
+			const Entity movedEntity = m_componentEntities[lastIndex];
+
+			m_components[componentIndex]          = m_components[lastIndex];
+			m_componentEntities[componentIndex]   = movedEntity;
+			m_entityToComponentIndex[movedEntity] = componentIndex;
+		}
 		m_componentCount--;
 	}
 

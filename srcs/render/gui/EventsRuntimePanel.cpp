@@ -1,4 +1,5 @@
 #include "EventsRuntimePanel.hpp"
+#include <chrono>
 #include <sstream>
 #include <iomanip>
 
@@ -24,7 +25,7 @@ void EventsRuntimePanel::display() {
 			first = false;
 
 			ss << std::fixed << std::setprecision(7);
-			ss << eventName << " Runtime: " << runtime.count() << " ms";
+			ss << eventName << " Runtime: " << std::chrono::duration<float, std::milli>(runtime).count() << " ms";
 			m_gui.text(ss.str());
 			ss.str("");
 		}
