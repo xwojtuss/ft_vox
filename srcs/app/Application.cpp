@@ -13,10 +13,8 @@ Application::Application() {
 	m_renderer = std::make_unique<render::vulkan::VulkanRenderer >(*m_window);
 	auto* vulkanRenderer = static_cast<render::vulkan::VulkanRenderer*>(m_renderer.get());
 	m_gui = std::make_unique<render::gui::vulkan::ImGuiGui>(vulkanRenderer->getContext(), vulkanRenderer->getSwapchain(), *m_window);
-	// m_modelLoader = std::make_unique<assets::BasicObjLoader>();
 	m_modelLoader = std::make_unique<assets::TinyObjLoader>();
 	m_textureLoader = std::make_unique<assets::StbTextureLoader>();
-	// m_textureLoader = std::make_unique<assets::PpmTextureLoader>();
 
 	auto defaultTextureData = m_textureLoader->toTextureData("textures/default.png");
 	defaultTextureData.pixelPerfect = true;
