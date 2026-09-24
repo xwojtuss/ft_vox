@@ -1,15 +1,19 @@
+#include <cstdlib>
 #include <exception>
 #include <iostream>
-#include <cstdlib>
 
 #include "app/Application.hpp"
+#include "error/Exception.hpp"
 
-int	main(void) {
-	app::Application	app;
-
+int main() {
 	try {
+		app::Application app;
+
 		app.run();
-	} catch(const std::exception& e) {
+	} catch (const error::Exception& e) {
+		std::cerr << '[' << e.domainName() << "] " << e.what() << '\n';
+		return EXIT_FAILURE;
+	} catch (const std::exception& e) {
 		std::cerr << e.what() << '\n';
 		return EXIT_FAILURE;
 	}

@@ -3,6 +3,8 @@
 
 #include <glm/gtc/epsilon.hpp>
 
+#include "scene/WorldInfo.hpp"
+#include "ecs/component/Components.hpp"
 #include "ecs/system/types/MovementSystem.hpp"
 #include "support/Player.hpp"
 
@@ -12,37 +14,37 @@ using ecs::component::Velocity;
 namespace worldinfo = scene::worldinfo;
 
 namespace {
-bool	nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
-	return glm::all(glm::epsilonEqual(a, b, 1e-4f));
-}
+	bool nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
+		return glm::all(glm::epsilonEqual(a, b, 1e-4f));
+	}
 
-struct MoveRecorder {
-	std::vector<ecs::PlayerMoveEvent>	moves;
+	struct MoveRecorder {
+		std::vector<ecs::PlayerMoveEvent> moves;
 
-	void	onPlayerMove(const ecs::PlayerMoveEvent& event) { moves.push_back(event); }
-};
+		void onPlayerMove(const ecs::PlayerMoveEvent& event) { moves.push_back(event); }
+	};
 
-render::input::InputCommand	moving(float forward, float right, float up) {
-	render::input::InputCommand command = {};
-	command.moveForward = forward;
-	command.moveRight = right;
-	command.moveUp = up;
-	return command;
-}
+	render::input::InputCommand moving(float forward, float right, float up) {
+		render::input::InputCommand command = {};
+		command.moveForward                 = forward;
+		command.moveRight                   = right;
+		command.moveUp                      = up;
+		return command;
+	}
 
-render::input::InputCommand	looking(float up, float right) {
-	render::input::InputCommand command = {};
-	command.lookUp = up;
-	command.lookRight = right;
-	return command;
-}
+	render::input::InputCommand looking(float up, float right) {
+		render::input::InputCommand command = {};
+		command.lookUp                      = up;
+		command.lookRight                   = right;
+		return command;
+	}
 }
 
 SCENARIO("Movement input sets where the player wants to go, relative to where they look", "[ecs][movement]") {
 	GIVEN("a player turned 90 degrees to the left") {
-		test::TestWorld		testWorld;
+		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle	player = test::createPlayer(testWorld);
+		ecs::EntityHandle player = test::createPlayer(testWorld);
 		player.registerToSystem<ecs::MovementSystem>();
 		player.getComponent<Transform>()->rotation = glm::angleAxis(glm::radians(90.0f), worldinfo::up);
 
@@ -58,7 +60,8 @@ SCENARIO("Movement input sets where the player wants to go, relative to where th
 			testWorld.dispatcher().emit(test::inputFrom(player, moving(0.0f, 1.0f, 1.0f)));
 
 			THEN("the player wants to go to their own right, and straight up in the world") {
-				REQUIRE(nearlyEqual(player.getComponent<Velocity>()->desiredVelocity, worldinfo::forward + worldinfo::up));
+				REQUIRE(
+					nearlyEqual(player.getComponent<Velocity>()->desiredVelocity, worldinfo::forward + worldinfo::up));
 			}
 		}
 
@@ -75,16 +78,18 @@ SCENARIO("Movement input sets where the player wants to go, relative to where th
 
 SCENARIO("Looking around turns the player, but never past straight up or down", "[ecs][movement]") {
 	GIVEN("a player facing forward") {
-		test::TestWorld		testWorld;
+		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle	player = test::createPlayer(testWorld);
+		ecs::EntityHandle player = test::createPlayer(testWorld);
 		player.registerToSystem<ecs::MovementSystem>();
 
 		WHEN("they look up by 30 degrees") {
 			testWorld.dispatcher().emit(test::inputFrom(player, looking(glm::radians(30.0f), 0.0f)));
 
 			THEN("they face 30 degrees above the horizon") {
-				REQUIRE(nearlyEqual(player.getComponent<Transform>()->forward(), {0.0f, std::sin(glm::radians(30.0f)), -std::cos(glm::radians(30.0f))}));
+				REQUIRE(
+					nearlyEqual(player.getComponent<Transform>()->forward(), {0.0f, std::sin(glm::radians(30.0f)), -std
+						::cos(glm::radians(30.0f))}));
 			}
 		}
 
@@ -92,7 +97,9 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 			testWorld.dispatcher().emit(test::inputFrom(player, looking(glm::radians(170.0f), 0.0f)));
 
 			THEN("they stop at the maximum pitch of 89 degrees instead of flipping over") {
-				REQUIRE(player.getComponent<Transform>()->forward().y == Approx(std::sin(glm::radians(89.0f))).epsilon(1e-4));
+				REQUIRE(
+					player.getComponent<Transform>()->forward().y == Approx(std::sin(glm::radians(89.0f))).epsilon(1e-4
+					));
 				REQUIRE(player.getComponent<Transform>()->forward().z < 0.0f);
 			}
 		}
@@ -101,7 +108,9 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 			testWorld.dispatcher().emit(test::inputFrom(player, looking(glm::radians(-170.0f), 0.0f)));
 
 			THEN("they stop at the minimum pitch of -89 degrees") {
-				REQUIRE(player.getComponent<Transform>()->forward().y == Approx(-std::sin(glm::radians(89.0f))).epsilon(1e-4));
+				REQUIRE(
+					player.getComponent<Transform>()->forward().y == Approx(-std::sin(glm::radians(89.0f))).epsilon(1e-4
+					));
 			}
 		}
 
@@ -118,11 +127,11 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 
 SCENARIO("The player speeds up towards where they want to go, up to their top speed", "[ecs][movement]") {
 	GIVEN("a standing player who wants to go forward, accelerating at 5 units/s² up to 10 units/s") {
-		test::TestWorld		testWorld;
+		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle	player = test::createPlayer(testWorld);
+		ecs::EntityHandle player = test::createPlayer(testWorld);
 		player.registerToSystem<ecs::MovementSystem>();
-		Velocity&			velocity = *player.getComponent<Velocity>();
+		Velocity& velocity       = *player.getComponent<Velocity>();
 		velocity.desiredVelocity = worldinfo::forward;
 
 		WHEN("0.1 s passes") {
@@ -158,12 +167,12 @@ SCENARIO("The player speeds up towards where they want to go, up to their top sp
 
 SCENARIO("The player slows down to a stop when no direction is held", "[ecs][movement]") {
 	GIVEN("a player moving forward at 1 unit/s, slowing down at 5 units/s²") {
-		test::TestWorld		testWorld;
+		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle	player = test::createPlayer(testWorld);
+		ecs::EntityHandle player = test::createPlayer(testWorld);
 		player.registerToSystem<ecs::MovementSystem>();
-		Velocity&			velocity = *player.getComponent<Velocity>();
-		velocity.velocity = worldinfo::forward;
+		Velocity& velocity = *player.getComponent<Velocity>();
+		velocity.velocity  = worldinfo::forward;
 
 		WHEN("0.1 s passes") {
 			testWorld.simulate(0.1f, 1.0f);
@@ -185,11 +194,11 @@ SCENARIO("The player slows down to a stop when no direction is held", "[ecs][mov
 
 SCENARIO("Every step the player moves is announced", "[ecs][movement]") {
 	GIVEN("a player and something listening for player moves") {
-		test::TestWorld		testWorld;
-		MoveRecorder		recorder;
+		test::TestWorld testWorld;
+		MoveRecorder    recorder;
 		testWorld.addSystem<ecs::MovementSystem>();
 		testWorld.dispatcher().subscribe(&recorder, &MoveRecorder::onPlayerMove);
-		ecs::EntityHandle	player = test::createPlayer(testWorld);
+		ecs::EntityHandle player = test::createPlayer(testWorld);
 		player.registerToSystem<ecs::MovementSystem>();
 
 		WHEN("the player moves") {

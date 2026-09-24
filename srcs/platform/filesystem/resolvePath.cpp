@@ -4,8 +4,8 @@
 
 #include "../../app/ApplicationInfo.hpp"
 
-std::string	resolvePath(const std::string& path) {
-	const std::filesystem::path	p(path);
+std::string resolvePath(const std::string& path) {
+	const std::filesystem::path p(path);
 
 	if (p.is_absolute())
 		return path;

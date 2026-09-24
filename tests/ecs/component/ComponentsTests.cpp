@@ -4,6 +4,7 @@
 #include <sstream>
 #include <glm/gtc/epsilon.hpp>
 
+#include "scene/WorldInfo.hpp"
 #include "ecs/component/Components.hpp"
 
 using Catch::Matchers::ContainsSubstring;
@@ -11,19 +12,19 @@ using namespace ecs::component;
 namespace worldinfo = scene::worldinfo;
 
 namespace {
-bool	nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
-	return glm::all(glm::epsilonEqual(a, b, 1e-5f));
-}
+	bool nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
+		return glm::all(glm::epsilonEqual(a, b, 1e-5f));
+	}
 
-std::string	describe(const ecs::IComponent& component) {
-	std::ostringstream out;
-	out << component;
-	return out.str();
-}
+	std::string describe(const ecs::IComponent& component) {
+		std::ostringstream out;
+		out << component;
+		return out.str();
+	}
 
-glm::quat	turnLeft90() {
-	return glm::angleAxis(glm::radians(90.0f), worldinfo::up);
-}
+	glm::quat turnLeft90() {
+		return glm::angleAxis(glm::radians(90.0f), worldinfo::up);
+	}
 }
 
 SCENARIO("An unrotated transform faces the world's forward direction", "[ecs][transform]") {
@@ -67,7 +68,7 @@ SCENARIO("The model matrix scales, then rotates, then moves", "[ecs][transform]"
 	GIVEN("a transform at (1, 2, 3) scaled by 2") {
 		Transform transform;
 		transform.position = {1.0f, 2.0f, 3.0f};
-		transform.scale = glm::vec3(2.0f);
+		transform.scale    = glm::vec3(2.0f);
 
 		THEN("the model's corner (1, 1, 1) ends up at (3, 4, 5)") {
 			const glm::vec4 corner = transform.toModelMatrix() * glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -87,8 +88,8 @@ SCENARIO("The model matrix scales, then rotates, then moves", "[ecs][transform]"
 
 SCENARIO("A text component uses the text pipeline", "[ecs][component]") {
 	GIVEN("a text component created for a text mesh") {
-		const assets::MeshHandle	textMesh;
-		const Text					text(textMesh);
+		const assets::MeshHandle textMesh;
+		const Text               text(textMesh);
 
 		THEN("it draws the given mesh with the text pipeline") {
 			REQUIRE(text.mesh.id == textMesh.id);
@@ -119,7 +120,7 @@ SCENARIO("Components describe themselves for the debug panel", "[ecs][component]
 	GIVEN("a 2D transform") {
 		Transform2D transform;
 		transform.position = {4.0f, 5.0f};
-		transform.scale = {0.5f, 0.25f};
+		transform.scale    = {0.5f, 0.25f};
 
 		THEN("its description shows position and scale") {
 			REQUIRE_THAT(describe(transform), ContainsSubstring("Position: (X:4.00, Y:5.00)"));
@@ -129,12 +130,12 @@ SCENARIO("Components describe themselves for the debug panel", "[ecs][component]
 
 	GIVEN("a velocity that cannot move") {
 		Velocity velocity;
-		velocity.velocity = {1.0f, 0.0f, 0.0f};
+		velocity.velocity        = {1.0f, 0.0f, 0.0f};
 		velocity.desiredVelocity = {0.0f, 2.0f, 0.0f};
-		velocity.maxSpeed = 10.0f;
-		velocity.acceleration = 3.0f;
-		velocity.decelleration = 4.0f;
-		velocity.canMove = false;
+		velocity.maxSpeed        = 10.0f;
+		velocity.acceleration    = 3.0f;
+		velocity.deceleration    = 4.0f;
+		velocity.canMove         = false;
 
 		THEN("its description shows every movement setting") {
 			const std::string text = describe(velocity);
@@ -142,7 +143,7 @@ SCENARIO("Components describe themselves for the debug panel", "[ecs][component]
 			REQUIRE_THAT(text, ContainsSubstring("Desired Velocity: (X:0.00, Y:2.00, Z:0.00)"));
 			REQUIRE_THAT(text, ContainsSubstring("Max Speed: 10.00"));
 			REQUIRE_THAT(text, ContainsSubstring("Acceleration: 3.00"));
-			REQUIRE_THAT(text, ContainsSubstring("Decelleration: 4.00"));
+			REQUIRE_THAT(text, ContainsSubstring("Deceleration: 4.00"));
 			REQUIRE_THAT(text, ContainsSubstring("Can Move: false"));
 		}
 	}
@@ -176,13 +177,13 @@ SCENARIO("Components describe themselves for the debug panel", "[ecs][component]
 
 	GIVEN("a centered text saying hello") {
 		Text text;
-		text.text = "hello";
+		text.text                = "hello";
 		text.horizontalAlignment = HAlignment::Center;
-		text.verticalAlignment = VAlignment::Bottom;
-		text.aligned = true;
+		text.verticalAlignment   = VAlignment::Bottom;
+		text.aligned             = true;
 
 		THEN("its description shows the text and its alignment by name") {
-			const std::string description = describe(static_cast<const Component<Text>&>(text));
+			const std::string description = describe(static_cast<const ecs::Component<Text>&>(text));
 			REQUIRE_THAT(description, ContainsSubstring("Text: hello"));
 			REQUIRE_THAT(description, ContainsSubstring("Horizontal Alignment: Center"));
 			REQUIRE_THAT(description, ContainsSubstring("Vertical Alignment: Bottom"));
@@ -192,8 +193,8 @@ SCENARIO("Components describe themselves for the debug panel", "[ecs][component]
 
 	GIVEN("an input with a mouse sensitivity of 0.5") {
 		Input input;
-		input.mouseSensitivity = 0.5f;
-		input.command = {};
+		input.mouseSensitivity    = 0.5f;
+		input.command             = {};
 		input.command.moveForward = 1.0f;
 
 		THEN("its description shows the sensitivity and the current command") {

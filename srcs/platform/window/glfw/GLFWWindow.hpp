@@ -9,42 +9,40 @@
 #endif
 
 #include "../IWindow.hpp"
-#include "../app/ApplicationInfo.hpp"
-#include "../../input/glfw/GLFWInput.hpp"
 #include "../../../render/input/InputManager.hpp"
 
 namespace platform::window::glfw {
-class GLFWWindow : public platform::window::IWindow {
-private:
-	GLFWwindow*					m_window;
-	render::input::InputManager	m_inputManager;
-	bool		m_wasResized = false;
+	class GLFWWindow final : public IWindow {
+	private:
+		GLFWwindow*                 m_window;
+		render::input::InputManager m_inputManager;
+		bool                        m_wasResized = false;
 
-	static void	framebufferResizeCallback(GLFWwindow* rawWindow, int width, int height);
-	static void	cursorPositionCallback(GLFWwindow* rawWindow, double xpos, double ypos);
-	static void	mouseButtonCallback(GLFWwindow* rawWindow, int button, int action, int mods);
-	static void	keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+		static void framebufferResizeCallback(GLFWwindow* rawWindow, int width, int height);
+		static void cursorPositionCallback(GLFWwindow* rawWindow, double xPos, double yPos);
+		static void mouseButtonCallback(GLFWwindow* rawWindow, int button, int action, int mods);
+		static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-public:
-	GLFWWindow();
-	~GLFWWindow() override;
+	public:
+		GLFWWindow();
+		~GLFWWindow() override;
 
-	uint32_t		getWidth() const override;
-	uint32_t		getHeight() const override;
-	void			getFramebufferSize(uint32_t* width, uint32_t* height) const override;
-	float			getAspectRatio() const override;
-	void			waitUntilNotMinimized() override;
-	bool			shouldClose() const override;
-	void			pollEvents() override;
-	bool			wasResized() const override;
-	void*			getHandle() const override;
-	const char**	getExtensions(uint32_t* count) const override;
-	double			getTime() const override;
-	void			setMouseCursorVisible(bool visible) override;
-	void			setMouseCursorPosition(double x, double y) override;
-	void			setMouseCursorPositionToCenter() override;
-	bool			isMouseCursorVisible() const override;
+		[[nodiscard]] uint32_t getWidth() const override;
+		[[nodiscard]] uint32_t getHeight() const override;
+		void                   getFramebufferSize(uint32_t* width, uint32_t* height) const override;
+		[[nodiscard]] float    getAspectRatio() const override;
+		void                   waitUntilNotMinimized() override;
+		[[nodiscard]] bool     shouldClose() const override;
+		void                   pollEvents() override;
+		[[nodiscard]] bool     wasResized() const override;
+		[[nodiscard]] void*    getHandle() const override;
+		const char**           getExtensions(uint32_t* count) const override;
+		[[nodiscard]] double   getTime() const override;
+		void                   setMouseCursorVisible(bool visible) override;
+		void                   setMouseCursorPosition(double x, double y) override;
+		void                   setMouseCursorPositionToCenter() override;
+		[[nodiscard]] bool     isMouseCursorVisible() const override;
 
-	render::input::InputManager&	getInputManager() override;
-};
+		render::input::InputManager& getInputManager() override;
+	};
 }

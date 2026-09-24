@@ -10,7 +10,7 @@ using input::InputAction;
 using input::InputEvent;
 
 namespace {
-constexpr int	forwardKey = 17;
+	constexpr int forwardKey = 17;
 }
 
 SCENARIO("Each player's keyboard is independent", "[client][input][command][multiplayer]") {
@@ -38,13 +38,13 @@ SCENARIO("A command is plain data that can be sent over the network", "[client][
 
 	GIVEN("a command where the player moves forward, turns and starts jumping") {
 		input::InputCommand sent = {};
-		sent.moveForward = 1.0f;
-		sent.lookRight = 0.25f;
-		sent.startedEvents = InputEvent::Jump;
+		sent.moveForward         = 1.0f;
+		sent.lookRight           = 0.25f;
+		sent.startedEvents       = InputEvent::Jump;
 
 		WHEN("it is written into a packet and read back on the other side") {
-			unsigned char		packet[sizeof(input::InputCommand)];
-			input::InputCommand	received;
+			unsigned char       packet[sizeof(input::InputCommand)];
+			input::InputCommand received;
 			std::memcpy(packet, &sent, sizeof(packet));
 			std::memcpy(&received, packet, sizeof(packet));
 

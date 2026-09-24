@@ -1,33 +1,30 @@
 #pragma once
 
-#include "GuiSystem.hpp"
-
 namespace ecs {
-template<typename PanelType>
-void	GuiSystem::registerPanel(render::input::InputEvent toggleEvent, PanelType& panel) {
-	std::type_index typeIdx = std::type_index(typeid(PanelType));
-	
-	m_panels.emplace(typeIdx, std::make_unique<PanelType>(panel));
-	
-	if (m_eventToPanelType.find(toggleEvent) != m_eventToPanelType.end()) {
-		m_eventToPanelType[toggleEvent].push_back(typeIdx);
-		return;
-	}
-	std::vector<std::type_index> panelTypes;
+	template<typename PanelType>
+	void GuiSystem::registerPanel(const render::input::InputEvent toggleEvent, PanelType& panel) {
+		auto typeIdx = std::type_index(typeid(PanelType));
 
-	panelTypes.push_back(typeIdx);
-	m_eventToPanelType[toggleEvent] = panelTypes;
-}
+		m_panels.emplace(typeIdx, std::make_unique<PanelType>(panel));
 
-template<typename PanelType>
-PanelType*	GuiSystem::getPanel() {
-	std::type_index typeIdx = std::type_index(typeid(PanelType));
-	auto it = m_panels.find(typeIdx);
-	
-	if (it != m_panels.end()) {
-		return static_cast<PanelType*>(it->second.get());
+		if (m_eventToPanelType.find(toggleEvent) != m_eventToPanelType.end()) {
+			m_eventToPanelType[toggleEvent].push_back(typeIdx);
+			return;
+		}
+		std::vector<std::type_index> panelTypes;
+
+		panelTypes.push_back(typeIdx);
+		m_eventToPanelType[toggleEvent] = panelTypes;
 	}
-	
-	return nullptr;
-}
+
+	template<typename PanelType>
+	PanelType* GuiSystem::getPanel() {
+		const auto typeIdx = std::type_index(typeid(PanelType));
+
+		if (const auto it = m_panels.find(typeIdx); it != m_panels.end()) {
+			return static_cast<PanelType*>(it->second.get());
+		}
+
+		return nullptr;
+	}
 }

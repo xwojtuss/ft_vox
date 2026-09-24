@@ -1,26 +1,32 @@
 #include "TinyObjLoader.hpp"
+#include <stdexcept>
+#include "../render/GpuTypes.hpp"
+#include "../platform/filesystem/resolvePath.hpp"
 
 #include <unordered_map>
 
+#include "../error/Exception.hpp"
+
 using namespace assets;
 
-MeshData	TinyObjLoader::toMeshData(const char* path) {
-	std::vector<render::Vertex> vertices;
-	std::vector<uint32_t> indices;
-	tinyobj::attrib_t attrib;
-	std::vector<tinyobj::shape_t> shapes;
+MeshData TinyObjLoader::toMeshData(const char* path) {
+	std::vector<render::Vertex>      vertices;
+	std::vector<uint32_t>            indices;
+	tinyobj::attrib_t                attrib;
+	std::vector<tinyobj::shape_t>    shapes;
 	std::vector<tinyobj::material_t> materials;
-	std::string warn;
-	std::string err;
+	std::string                      warn;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, resolvePath(path).c_str())) {
-		throw std::runtime_error("Failed to open file: " + std::string(path));
+	if (std::string err; !tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, resolvePath(path).c_str())) {
+		throw error::AssetError(path, err.empty()
+										? "could not be loaded"
+										: err.substr(0, err.find_last_not_of('\n') + 1));
 	}
 
 	std::unordered_map<render::Vertex, uint32_t> uniqueVertices{};
 
-	for (const auto& shape : shapes) {
-		for (const auto& index : shape.mesh.indices) {
+	for (const auto& shape: shapes) {
+		for (const auto& index: shape.mesh.indices) {
 			render::Vertex vertex{};
 
 			vertex.pos = {
@@ -41,15 +47,12 @@ MeshData	TinyObjLoader::toMeshData(const char* path) {
 			}
 
 			indices.push_back(uniqueVertices[vertex]);
-			}
+		}
 	}
 
 	return MeshData{vertices, indices};
 }
 
-MeshData	TinyObjLoader::toMeshData(std::string path) {
+MeshData TinyObjLoader::toMeshData(const std::string& path) {
 	return toMeshData(path.c_str());
-}
-
-TinyObjLoader::~TinyObjLoader() {
 }

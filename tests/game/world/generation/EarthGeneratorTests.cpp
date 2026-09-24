@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <map>
 
+#include "scene/WorldInfo.hpp"
 #include "game/world/generation/EarthGenerator.hpp"
 #include "support/Blocks.hpp"
 
@@ -14,42 +15,42 @@ using game::world::chunkYSize;
 using game::world::chunkZSize;
 
 namespace {
-Chunk	generate(glm::ivec3 chunkPosition) {
-	EarthGenerator	generator;
-	Chunk			chunk;
+	Chunk generate(glm::ivec3 chunkPosition) {
+		EarthGenerator generator;
+		Chunk          chunk;
 
-	generator.generateChunk(&chunk, chunkPosition);
-	return chunk;
-}
+		generator.generateChunk(&chunk, chunkPosition);
+		return chunk;
+	}
 
-size_t	countBlocks(const Chunk& chunk, game::BlockId id) {
-	size_t count = 0;
-	for (unsigned short x = 0; x < chunkXSize; ++x)
-		for (unsigned short y = 0; y < chunkYSize; ++y)
-			for (unsigned short z = 0; z < chunkZSize; ++z)
-				count += chunk.getBlock(x, y, z).id == id;
-	return count;
-}
+	size_t countBlocks(const Chunk& chunk, game::BlockId id) {
+		size_t count = 0;
+		for (unsigned short x = 0; x < chunkXSize; ++x)
+			for (unsigned short y = 0; y < chunkYSize; ++y)
+				for (unsigned short z = 0; z < chunkZSize; ++z)
+					count += chunk.getBlock(x, y, z).id == id;
+		return count;
+	}
 
-std::map<int, bool>	solidByWorldHeight(const std::map<int, Chunk>& stack, unsigned short x, unsigned short z) {
-	std::map<int, bool> solid;
-	for (const auto& [chunkY, chunk] : stack)
-		for (unsigned short y = 0; y < chunkYSize; ++y)
-			solid[chunkY * chunkYSize + y] = chunk.getBlock(x, y, z).id != test::air;
-	return solid;
-}
+	std::map<int, bool> solidByWorldHeight(const std::map<int, Chunk>& stack, unsigned short x, unsigned short z) {
+		std::map<int, bool> solid;
+		for (const auto& [chunkY, chunk]: stack)
+			for (unsigned short y = 0; y < chunkYSize; ++y)
+				solid[chunkY * chunkYSize + y] = chunk.getBlock(x, y, z).id != test::air;
+		return solid;
+	}
 
-int	surfaceHeight(const Chunk& groundChunk, unsigned short x, unsigned short z) {
-	int height = 0;
-	while (height < chunkYSize && groundChunk.getBlock(x, height, z).id != test::air)
-		++height;
-	return height;
-}
+	int surfaceHeight(const Chunk& groundChunk, unsigned short x, unsigned short z) {
+		int height = 0;
+		while (height < chunkYSize && groundChunk.getBlock(x, height, z).id != test::air)
+			++height;
+		return height;
+	}
 }
 
 SCENARIO("The same chunk is always generated the same way", "[generation]") {
 	GIVEN("the chunk at (2, 0, -3) generated twice by separate generators") {
-		const Chunk first = generate({2, 0, -3});
+		const Chunk first  = generate({2, 0, -3});
 		const Chunk second = generate({2, 0, -3});
 
 		THEN("both contain exactly the same blocks") {
@@ -84,8 +85,8 @@ SCENARIO("Everything below the world's floor is solid", "[generation]") {
 
 SCENARIO("Nothing is generated above the maximum terrain height", "[generation]") {
 	GIVEN("the first chunk that starts at the maximum terrain height (64 blocks)") {
-		const int	chunkY = scene::worldinfo::terrainMaxHeightBlocks / chunkYSize;
-		const Chunk	chunk = generate({1, chunkY, 1});
+		const int   chunkY = scene::worldinfo::terrainMaxHeightBlocks / chunkYSize;
+		const Chunk chunk  = generate({1, chunkY, 1});
 
 		THEN("it is empty") {
 			REQUIRE(countBlocks(chunk, test::air) == static_cast<size_t>(chunkXSize * chunkYSize * chunkZSize));
@@ -95,7 +96,7 @@ SCENARIO("Nothing is generated above the maximum terrain height", "[generation]"
 
 SCENARIO("Terrain has no floating blocks or caves", "[generation]") {
 	GIVEN("a full vertical stack of chunks from below the floor to above the maximum height") {
-		const glm::ivec2	column = GENERATE(glm::ivec2(0, 0), glm::ivec2(-3, 5), glm::ivec2(12, -9));
+		const glm::ivec2     column = GENERATE(glm::ivec2(0, 0), glm::ivec2(-3, 5), glm::ivec2(12, -9));
 		std::map<int, Chunk> stack;
 
 		for (int chunkY = -1; chunkY <= 4; ++chunkY)
@@ -105,7 +106,7 @@ SCENARIO("Terrain has no floating blocks or caves", "[generation]") {
 			for (unsigned short x = 0; x < chunkXSize; ++x) {
 				for (unsigned short z = 0; z < chunkZSize; ++z) {
 					bool reachedSurface = false;
-					for (const auto& [worldY, solid] : solidByWorldHeight(stack, x, z)) {
+					for (const auto& [worldY, solid]: solidByWorldHeight(stack, x, z)) {
 						if (!solid)
 							reachedSurface = true;
 						else

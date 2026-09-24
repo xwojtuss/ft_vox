@@ -1,15 +1,20 @@
 #include "readFile.hpp"
 
-std::vector<char>	readFile(const std::string& filename) {
-	std::ifstream		file(resolvePath(filename), std::ios::ate | std::ios::binary);
+#include <fstream>
+
+#include "resolvePath.hpp"
+#include "../../error/Exception.hpp"
+
+std::vector<char> readFile(const std::string& filename) {
+	std::ifstream file(resolvePath(filename), std::ios::ate | std::ios::binary);
 
 	if (!file.is_open()) {
-		throw std::runtime_error("failed to open file: " + filename);
+		throw error::FileError(filename, "could not be opened");
 	}
-	size_t				fileSize = (size_t) file.tellg();
-	std::vector<char>	buffer(fileSize);
+	const auto        fileSize = static_cast<size_t>(file.tellg());
+	std::vector<char> buffer(fileSize);
 	file.seekg(0);
-	file.read(buffer.data(), fileSize);
+	file.read(buffer.data(), static_cast<std::streamsize>(fileSize));
 	file.close();
 
 	return buffer;

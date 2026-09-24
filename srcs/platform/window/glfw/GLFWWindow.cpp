@@ -1,4 +1,6 @@
 #include "GLFWWindow.hpp"
+#include "../app/ApplicationInfo.hpp"
+#include "../../input/glfw/GLFWInput.hpp"
 
 using namespace platform::window::glfw;
 
@@ -20,51 +22,51 @@ GLFWWindow::GLFWWindow() {
 	glfwSetCursorPosCallback(m_window, cursorPositionCallback);
 	glfwSetMouseButtonCallback(m_window, mouseButtonCallback);
 	glfwSetKeyCallback(m_window, keyCallback);
-
 }
 
-void	GLFWWindow::cursorPositionCallback(GLFWwindow* rawWindow, double xpos, double ypos) {
-	auto m_window = reinterpret_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
-	
-	m_window->getInputManager().processMouseMove(xpos, ypos);
+void GLFWWindow::cursorPositionCallback(GLFWwindow* rawWindow, const double xPos, const double yPos) {
+	auto* window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
+
+	window->getInputManager().processMouseMove(xPos, yPos);
 }
 
-void	GLFWWindow::mouseButtonCallback(GLFWwindow* rawWindow, int button, int action, int mods) {
-	auto m_window = reinterpret_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
+void GLFWWindow::mouseButtonCallback(GLFWwindow* rawWindow, const int button, const int action, const int mods) {
+	auto* window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
 
-	(void)mods;
-	m_window->getInputManager().processMouseButton(platform::input::glfw::glfwToMouseButton(button), platform::input::glfw::glfwToInputAction(action), platform::input::glfw::glfwToInputMods(mods));
+	window->getInputManager().processMouseButton(input::glfw::glfwToMouseButton(button),
+												input::glfw::glfwToInputAction(action),
+												input::glfw::glfwToInputMods(mods));
 }
 
-void	GLFWWindow::keyCallback(GLFWwindow* rawWindow, int key, int scancode, int action, int mods) {
-	auto m_window = reinterpret_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
+void GLFWWindow::keyCallback(GLFWwindow* rawWindow, [[maybe_unused]] int key, const int scancode, const int action,
+							const int    mods) {
+	auto* window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
 
-	(void)key;
-	m_window->getInputManager().processKey(scancode, platform::input::glfw::glfwToInputAction(action), platform::input::glfw::glfwToInputMods(mods));
+	window->getInputManager().processKey(scancode, input::glfw::glfwToInputAction(action),
+										input::glfw::glfwToInputMods(mods));
 }
 
-void	GLFWWindow::framebufferResizeCallback(GLFWwindow* rawWindow, int width, int height) {
-	auto m_window = reinterpret_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
-	m_window->m_wasResized = true;
-
-	(void)width;
-	(void)height;
+void GLFWWindow::framebufferResizeCallback(GLFWwindow*           rawWindow, [[maybe_unused]] int width,
+											[[maybe_unused]] int height) {
+	auto* window         = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
+	window->m_wasResized = true;
 }
 
-uint32_t	GLFWWindow::getWidth() const {
-	int width;
+uint32_t GLFWWindow::getWidth() const {
+	int width = 0;
 	glfwGetFramebufferSize(m_window, &width, nullptr);
 	return static_cast<uint32_t>(width);
 }
 
-uint32_t	GLFWWindow::getHeight() const {
-	int height;
+uint32_t GLFWWindow::getHeight() const {
+	int height = 0;
 	glfwGetFramebufferSize(m_window, nullptr, &height);
 	return static_cast<uint32_t>(height);
 }
 
-void	GLFWWindow::waitUntilNotMinimized() {
-	int width = 0, height = 0;
+void GLFWWindow::waitUntilNotMinimized() {
+	int width  = 0;
+	int height = 0;
 
 	glfwGetFramebufferSize(m_window, &width, &height);
 
@@ -76,18 +78,19 @@ void	GLFWWindow::waitUntilNotMinimized() {
 	m_wasResized = false;
 }
 
-void	GLFWWindow::getFramebufferSize(uint32_t* width, uint32_t* height) const {
-	int w, h;
+void GLFWWindow::getFramebufferSize(uint32_t* width, uint32_t* height) const {
+	int w = 0;
+	int h = 0;
 	glfwGetFramebufferSize(m_window, &w, &h);
-	*width = static_cast<uint32_t>(w);
+	*width  = static_cast<uint32_t>(w);
 	*height = static_cast<uint32_t>(h);
 }
 
-bool	GLFWWindow::shouldClose() const {
+bool GLFWWindow::shouldClose() const {
 	return glfwWindowShouldClose(m_window);
 }
 
-void	GLFWWindow::pollEvents() {
+void GLFWWindow::pollEvents() {
 	glfwPollEvents();
 }
 
@@ -95,43 +98,45 @@ bool GLFWWindow::wasResized() const {
 	return m_wasResized;
 }
 
-void*	GLFWWindow::getHandle() const {
+void* GLFWWindow::getHandle() const {
 	return m_window;
 }
 
-double	GLFWWindow::getTime() const {
+double GLFWWindow::getTime() const {
 	return glfwGetTime();
 }
 
-const char**	GLFWWindow::getExtensions(uint32_t* count) const {
+const char** GLFWWindow::getExtensions(uint32_t* count) const {
 	return glfwGetRequiredInstanceExtensions(count);
 }
 
-float	GLFWWindow::getAspectRatio() const {
-	int width, height;
+float GLFWWindow::getAspectRatio() const {
+	int width  = 0;
+	int height = 0;
 	glfwGetFramebufferSize(m_window, &width, &height);
 	return static_cast<float>(width) / static_cast<float>(height);
 }
 
-void	GLFWWindow::setMouseCursorVisible(bool visible) {
+void GLFWWindow::setMouseCursorVisible(const bool visible) {
 	glfwSetInputMode(m_window, GLFW_CURSOR, visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 }
 
-void	GLFWWindow::setMouseCursorPosition(double x, double y) {
+void GLFWWindow::setMouseCursorPosition(const double x, const double y) {
 	glfwSetCursorPos(m_window, x, y);
 }
 
-void	GLFWWindow::setMouseCursorPositionToCenter() {
-	int width, height;
+void GLFWWindow::setMouseCursorPositionToCenter() {
+	int width  = 0;
+	int height = 0;
 	glfwGetFramebufferSize(m_window, &width, &height);
-	setMouseCursorPosition(width / 2.0, height / 2.0);
+	GLFWWindow::setMouseCursorPosition(width / 2.0, height / 2.0);
 }
 
-bool	GLFWWindow::isMouseCursorVisible() const {
+bool GLFWWindow::isMouseCursorVisible() const {
 	return glfwGetInputMode(m_window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
 }
 
-render::input::InputManager&	GLFWWindow::getInputManager() {
+render::input::InputManager& GLFWWindow::getInputManager() {
 	return m_inputManager;
 }
 

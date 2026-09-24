@@ -1,23 +1,19 @@
 #pragma once
 
 #include <vector>
-#include <vulkan/vulkan.h>
-#include <cstdlib>
-#include <cstring>
 
 namespace render::vulkan {
+	using ValidationLayers = std::vector<const char*>;
 
-typedef std::vector<const char*>	ValidationLayers;
-
-class VulkanValidationLayers {
-public:
-	static const ValidationLayers	layers;
+	class VulkanValidationLayers {
+	public:
+		static const ValidationLayers layers;
 #ifdef NDEBUG
-	static constexpr bool	isEnabled = false;
+		static constexpr bool isEnabled = false;
 #else
-	static constexpr bool	isEnabled = true;
+		static constexpr bool isEnabled = true;
 #endif
 
-	static bool	checkSupport();
-};
+		static bool checkSupport();
+	};
 }

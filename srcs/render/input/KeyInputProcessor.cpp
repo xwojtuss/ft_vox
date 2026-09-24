@@ -1,57 +1,64 @@
 #include "KeyInputProcessor.hpp"
+#include <unordered_map>
+#include "../../platform/input/glfw/GLFWInput.hpp"
+
+#include "../../error/Exception.hpp"
 
 using namespace render::input;
 
-KeyInputProcessor::KeyInputProcessor() : m_defaultBindings(), m_bindings(), m_pressedEvents(0), m_repeatedEvents(0), m_releasedEvents(0), m_activeEvents(0) {
-}
+void KeyInputProcessor::processKey(const int scancode, const InputAction action, const InputMods modifiers) {
+	const Input input       = createInput(scancode, modifiers);
+	const Input singleInput = createInput(scancode, 0);
 
-void	KeyInputProcessor::processKey(int scancode, InputAction action, InputMods modifiers) {
-	Input input = createInput(scancode, modifiers);
-	Input singleInput = createInput(scancode, 0);
-	
 	auto it = m_bindings.find(input);
-	if (it == m_bindings.end() && (it = m_bindings.find(singleInput)) == m_bindings.end())
+	if (it == m_bindings.end())
+		it = m_bindings.find(singleInput);
+	if (it == m_bindings.end())
 		return;
-	
-	for (const auto& bindingInputEvent : it->second) {
+
+	for (const auto& bindingInputEvent: it->second) {
 		switchEvent(bindingInputEvent, action);
 	}
 }
 
-void	KeyInputProcessor::getKeyEvents(InputEvents& pressedEvents, InputEvents& repeatedEvents, InputEvents& releasedEvents, InputEvents& activeEvents) {
-	pressedEvents = m_pressedEvents;
-	repeatedEvents = m_repeatedEvents;
-	releasedEvents = m_releasedEvents;
-	activeEvents = m_activeEvents;
-	m_pressedEvents = 0;
+void KeyInputProcessor::getKeyEvents(InputEvents& pressedEvents, InputEvents&  repeatedEvents,
+									InputEvents&  releasedEvents, InputEvents& activeEvents) {
+	pressedEvents    = m_pressedEvents;
+	repeatedEvents   = m_repeatedEvents;
+	releasedEvents   = m_releasedEvents;
+	activeEvents     = m_activeEvents;
+	m_pressedEvents  = 0;
 	m_repeatedEvents = 0;
 	m_releasedEvents = 0;
 }
 
-void	KeyInputProcessor::processMouseButton(MouseButton button, InputAction action, InputMods modifiers) {
-	Input input = createMouseInput(button, modifiers);
-	Input singleInput = createMouseInput(button, 0);
+void KeyInputProcessor::processMouseButton(const MouseButton button, const InputAction action,
+											const InputMods  modifiers) {
+	const Input input       = createMouseInput(button, modifiers);
+	const Input singleInput = createMouseInput(button, 0);
 
 	auto it = m_bindings.find(input);
-	if (it == m_bindings.end() && (it = m_bindings.find(singleInput)) == m_bindings.end())
+	if (it == m_bindings.end())
+		it = m_bindings.find(singleInput);
+	if (it == m_bindings.end())
 		return;
 
-	for (const auto& bindingInputEvent : it->second) {
+	for (const auto& bindingInputEvent: it->second) {
 		switchEvent(bindingInputEvent, action);
 	}
 }
 
-void	KeyInputProcessor::switchEvent(InputEvent event, InputAction action) {
+void KeyInputProcessor::switchEvent(const InputEvent event, const InputAction action) {
 	switch (action) {
-		case InputAction::Press:
+		case Press:
 			m_pressedEvents |= event;
 			m_activeEvents |= event;
 			break;
-		case InputAction::Release:
+		case Release:
 			m_releasedEvents |= event;
 			m_activeEvents &= ~event;
 			break;
-		case InputAction::Repeat:
+		case Repeat:
 			m_repeatedEvents |= event;
 			break;
 		default:
@@ -59,17 +66,14 @@ void	KeyInputProcessor::switchEvent(InputEvent event, InputAction action) {
 	}
 }
 
-void	KeyInputProcessor::bindEvent(Input input, InputEvent event) {
+void KeyInputProcessor::bindEvent(const Input input, const InputEvent event) {
 	m_bindings[input].push_back(event);
 }
 
-void	KeyInputProcessor::resetBindings() {
+void KeyInputProcessor::resetBindings() {
 	m_bindings = m_defaultBindings.getDefaultBindings();
 
 	if (m_bindings.empty()) {
-		throw std::runtime_error("Attempted to initialize bindings before glfw was initialized");
+		throw error::InputError("default key bindings were requested before GLFW was initialized");
 	}
-}
-
-KeyInputProcessor::~KeyInputProcessor() {
 }

@@ -3,6 +3,8 @@
 
 #include <glm/gtc/epsilon.hpp>
 
+#include "scene/WorldInfo.hpp"
+#include "ecs/component/Components.hpp"
 #include "ecs/system/types/MovementSystem.hpp"
 #include "ecs/system/types/PlayerInputSystem.hpp"
 #include "support/Player.hpp"
@@ -15,29 +17,30 @@ namespace input = render::input;
 namespace worldinfo = scene::worldinfo;
 
 namespace {
-constexpr int	forwardKey = 17;
+	constexpr int forwardKey = 17;
 
-struct InputRecorder {
-	std::vector<ecs::InputEvent>	events;
+	struct InputRecorder {
+		std::vector<ecs::InputEvent> events;
 
-	void	onInput(const ecs::InputEvent& event) { events.push_back(event); }
-};
+		void onInput(const ecs::InputEvent& event) { events.push_back(event); }
+	};
 
-bool	nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
-	return glm::all(glm::epsilonEqual(a, b, 1e-4f));
-}
+	bool nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
+		return glm::all(glm::epsilonEqual(a, b, 1e-4f));
+	}
 }
 
 SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]") {
 	GIVEN("a player, with the forward key bound to moving forward") {
-		test::TestWorld				testWorld;
-		render::input::InputManager	inputManager;
-		InputRecorder				recorder;
+		test::TestWorld             testWorld;
+		render::input::InputManager inputManager;
+		InputRecorder               recorder;
 		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
 		testWorld.dispatcher().subscribe(&recorder, &InputRecorder::onInput);
-		ecs::EntityHandle			player = test::createPlayer(testWorld);
+		ecs::EntityHandle player = test::createPlayer(testWorld);
 		player.registerToSystem<ecs::PlayerInputSystem>();
-		inputManager.getKeyInputProcessor().bindEvent(render::input::createInput(forwardKey, 0), input::InputEvent::MoveForward);
+		inputManager.getKeyInputProcessor().bindEvent(render::input::createInput(forwardKey, 0),
+													input::InputEvent::MoveForward);
 
 		WHEN("the forward key is pressed and a simulation step runs") {
 			inputManager.processKey(forwardKey, InputAction::Press, 0);
@@ -72,9 +75,9 @@ SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]"
 // TODO: make pass
 SCENARIO("Without a player, no input event is sent", "[ecs][player-input]") {
 	GIVEN("a world with the player input system but no player") {
-		test::TestWorld				testWorld;
-		render::input::InputManager	inputManager;
-		InputRecorder				recorder;
+		test::TestWorld             testWorld;
+		render::input::InputManager inputManager;
+		InputRecorder               recorder;
 		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
 		testWorld.dispatcher().subscribe(&recorder, &InputRecorder::onInput);
 
@@ -90,11 +93,11 @@ SCENARIO("Without a player, no input event is sent", "[ecs][player-input]") {
 
 SCENARIO("The mouse turns the player the way it moves", "[ecs][player-input][movement]") {
 	GIVEN("a player facing forward, turning 1 degree per pixel of mouse movement") {
-		test::TestWorld				testWorld;
-		render::input::InputManager	inputManager;
+		test::TestWorld             testWorld;
+		render::input::InputManager inputManager;
 		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
 		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle			player = test::createPlayer(testWorld, glm::radians(1.0f));
+		ecs::EntityHandle player = test::createPlayer(testWorld, glm::radians(1.0f));
 		player.registerToSystem<ecs::PlayerInputSystem>();
 		player.registerToSystem<ecs::MovementSystem>();
 		inputManager.processMouseMove(0.0, 0.0);
@@ -113,7 +116,9 @@ SCENARIO("The mouse turns the player the way it moves", "[ecs][player-input][mov
 			testWorld.simulate(0.016f, 1.0f);
 
 			THEN("the player looks 30 degrees up") {
-				REQUIRE(player.getComponent<Transform>()->forward().y == Approx(std::sin(glm::radians(30.0f))).epsilon(1e-4));
+				REQUIRE(
+					player.getComponent<Transform>()->forward().y == Approx(std::sin(glm::radians(30.0f))).epsilon(1e-4
+					));
 			}
 		}
 	}

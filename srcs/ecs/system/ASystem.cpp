@@ -1,40 +1,39 @@
-#include "ASystem.hpp"
+#include <algorithm>
+
 #include "../World.hpp"
+#include "../component/IComponentManager.hpp"
+#include "ASystem.hpp"
 
 using namespace ecs;
 
-ASystem::ASystem(const Dependencies& dependencies) : m_dependencies(dependencies), m_world(nullptr) {
+ASystem::ASystem(const Dependencies& dependencies) : m_dependencies(dependencies) {
 }
 
-Dependencies	ASystem::getDependencies() const {
+Dependencies ASystem::getDependencies() const {
 	return m_dependencies;
 }
 
-void	ASystem::registerEntity(const Entity& entity) {
+void ASystem::registerEntity(const Entity& entity) {
 	if (!canRegister(entity))
 		return;
 
 	m_entities.push_back(entity);
 }
 
-void	ASystem::unregisterEntity(const Entity& entity) {
-	for (auto it = m_entities.begin(); it != m_entities.end(); ++it) {
-		if (*it == entity) {
-			m_entities.erase(it);
-			break;
-		}
-	}
+void ASystem::unregisterEntity(const Entity& entity) {
+	if (const auto it = std::find(m_entities.begin(), m_entities.end(), entity); it != m_entities.end())
+		m_entities.erase(it);
 }
 
-void	ASystem::registerWorld(World* world) {
+void ASystem::registerWorld(World* world) {
 	m_world = world;
 }
 
-bool	ASystem::canRegister(const Entity& entity) const {
+bool ASystem::canRegister(const Entity& entity) const {
 	if (!m_world)
 		return false;
 
-	IComponentManager* manager = nullptr;
+	const IComponentManager* manager = nullptr;
 
 	for (int i = 0; i < static_cast<int>(m_dependencies.mask.size()); ++i) {
 		if (!m_dependencies.mask.test(i))
@@ -48,10 +47,6 @@ bool	ASystem::canRegister(const Entity& entity) const {
 	return true;
 }
 
-bool	ASystem::hasEntity(const Entity& entity) const {
-	for (const Entity& e : m_entities) {
-		if (e == entity)
-			return true;
-	}
-	return false;
+bool ASystem::hasEntity(const Entity& entity) const {
+	return std::find(m_entities.begin(), m_entities.end(), entity) != m_entities.end();
 }

@@ -10,9 +10,9 @@ using game::world::chunkYSize;
 using game::world::chunkZSize;
 
 namespace {
-game::BlockId	uniqueIdFor(unsigned short x, unsigned short y, unsigned short z) {
-	return 1 + x * chunkYSize * chunkZSize + y * chunkZSize + z;
-}
+	game::BlockId uniqueIdFor(unsigned short x, unsigned short y, unsigned short z) {
+		return 1 + x * chunkYSize * chunkZSize + y * chunkZSize + z;
+	}
 }
 
 SCENARIO("A chunk is a 16 x 16 x 16 cube of blocks", "[chunk]") {

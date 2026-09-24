@@ -34,7 +34,7 @@ Then run the executable:
 
 ## Tests
 
-Tests use [Catch2 v3](https://github.com/catchorg/Catch2) in BDD style (`SCENARIO` / `GIVEN` / `WHEN` / `THEN`) and live in `tests/`, mirroring `srcs/`. Any `*.cpp` added there is picked up automatically.
+Tests use [Catch2 v3](https://github.com/catchorg/Catch2) BDD-style and live in `tests/`, mirroring `srcs/`. Any `*.cpp` added there is picked up automatically.
 
 Build and run all tests:
 ```bash

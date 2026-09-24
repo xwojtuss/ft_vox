@@ -1,5 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "scene/WorldInfo.hpp"
+#include "ecs/component/Components.hpp"
+#include "ecs/entity/EntityHandle.hpp"
+#include "ecs/system/types/RenderSystem.hpp"
 #include "game/world/ChunkManager.hpp"
 #include "support/Blocks.hpp"
 #include "support/FakeRenderer.hpp"
@@ -11,41 +15,41 @@ using game::world::chunkZSize;
 namespace worldinfo = scene::worldinfo;
 
 namespace {
-constexpr int	chunksAroundSpawn = (worldinfo::maxHorizontalRenderDistance + 1)
-	* (worldinfo::maxHorizontalRenderDistance + 1)
-	* worldinfo::maxVerticalRenderDistance;
+	constexpr int chunksAroundSpawn = (worldinfo::maxHorizontalRenderDistance + 1)
+									* (worldinfo::maxHorizontalRenderDistance + 1)
+									* worldinfo::maxVerticalRenderDistance;
 
-constexpr size_t	trianglesInSolidChunk = 6 * chunkXSize * chunkZSize * 2;
+	constexpr size_t trianglesInSolidChunk = 6 * chunkXSize * chunkZSize * 2;
 
-constexpr ecs::Entity	firstEntity = 1;
+	constexpr ecs::Entity firstEntity = 1;
 
-struct SpawnedWorld {
-	int						dirtPixels = 0;
-	game::block::BlockDatas	blockDatas = test::makeBlockDatas(&dirtPixels);
-	ecs::World				world{blockDatas};
-	test::FakeRenderer		renderer;
-	std::unique_ptr<ChunkManager>	manager;
-	size_t					meshesAtSpawn;
+	struct SpawnedWorld {
+		int                           dirtPixels = 0;
+		game::block::BlockDatas       blockDatas = test::makeBlockDatas(&dirtPixels);
+		ecs::World                    world{blockDatas};
+		test::FakeRenderer            renderer;
+		std::unique_ptr<ChunkManager> manager;
+		size_t                        meshesAtSpawn;
 
-	SpawnedWorld() {
-		world.createSystem<ecs::RenderSystem>();
-		manager = std::make_unique<ChunkManager>(blockDatas, world, renderer);
-		meshesAtSpawn = renderer.createdMeshes.size();
+		SpawnedWorld() {
+			world.createSystem<ecs::RenderSystem>();
+			manager       = std::make_unique<ChunkManager>(blockDatas, world, renderer);
+			meshesAtSpawn = renderer.createdMeshes.size();
+		}
+
+		size_t meshCount() const {
+			return renderer.createdMeshes.size();
+		}
+
+		ecs::EntityHandle entityOfMesh(size_t meshIndex) {
+			return ecs::EntityHandle{firstEntity + static_cast<ecs::Entity>(meshIndex), &world};
+		}
+	};
+
+	SpawnedWorld& sharedSpawnedWorld() {
+		static SpawnedWorld instance;
+		return instance;
 	}
-
-	size_t	meshCount() const {
-		return renderer.createdMeshes.size();
-	}
-
-	ecs::EntityHandle	entityOfMesh(size_t meshIndex) {
-		return ecs::EntityHandle{firstEntity + static_cast<ecs::Entity>(meshIndex), &world};
-	}
-};
-
-SpawnedWorld&	sharedSpawnedWorld() {
-	static SpawnedWorld	instance;
-	return instance;
-}
 }
 
 SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]") {
@@ -66,24 +70,26 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 			ecs::RenderSystem* renderSystem = env.world.getSystemManager().getSystem<ecs::RenderSystem>();
 
 			for (size_t i = 0; i < env.meshesAtSpawn; ++i) {
-				ecs::EntityHandle			entity = env.entityOfMesh(i);
-				const ecs::component::Mesh*	mesh = entity.getComponent<ecs::component::Mesh>();
+				ecs::EntityHandle           entity = env.entityOfMesh(i);
+				const ecs::component::Mesh* mesh   = entity.getComponent<ecs::component::Mesh>();
 
 				REQUIRE(mesh != nullptr);
 				REQUIRE(mesh->mesh.id == env.renderer.createdMeshes[i].id);
 				REQUIRE(mesh->pipelineType == assets::PipelineType::Textured);
-				REQUIRE(entity.getComponent<ecs::component::Texture>()->texture.id == env.renderer.createdTextures.front().id);
+				REQUIRE(
+					entity.getComponent<ecs::component::Texture>()->texture.id == env.renderer.createdTextures.front().
+					id);
 				REQUIRE(entity.hasComponent<ecs::component::Transform>());
 				REQUIRE(renderSystem->hasEntity(entity.entity));
 			}
 		}
 		AND_THEN("every chunk entity sits on the 16-block chunk grid, inside the render distance") {
-			const glm::ivec3	chunkSize(chunkXSize, chunkYSize, chunkZSize);
-			const int			halfDistance = worldinfo::maxHorizontalRenderDistance / 2;
+			const glm::ivec3 chunkSize(chunkXSize, chunkYSize, chunkZSize);
+			const int        halfDistance = worldinfo::maxHorizontalRenderDistance / 2;
 
 			for (size_t i = 0; i < env.meshesAtSpawn; ++i) {
-				const glm::vec3		position = env.entityOfMesh(i).getComponent<ecs::component::Transform>()->position;
-				const glm::ivec3	chunk = glm::ivec3(position) / chunkSize;
+				const glm::vec3  position = env.entityOfMesh(i).getComponent<ecs::component::Transform>()->position;
+				const glm::ivec3 chunk    = glm::ivec3(position) / chunkSize;
 
 				REQUIRE(glm::vec3(chunk * chunkSize) == position);
 				REQUIRE(std::abs(chunk.x) <= halfDistance);
@@ -98,8 +104,8 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 // TODO: make pass
 SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 	GIVEN("a running world") {
-		SpawnedWorld&	env = sharedSpawnedWorld();
-		const size_t	meshesBefore = env.meshCount();
+		SpawnedWorld& env          = sharedSpawnedWorld();
+		const size_t  meshesBefore = env.meshCount();
 
 		WHEN("an underground chunk (y = -1) is loaded") {
 			env.manager->loadChunk(glm::ivec3(40, -1, -40));
@@ -109,7 +115,8 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 				REQUIRE(env.renderer.createdMeshTriangleCounts.back() == trianglesInSolidChunk);
 			}
 			AND_THEN("its entity is placed at that chunk's world position") {
-				const glm::vec3 position = env.entityOfMesh(meshesBefore).getComponent<ecs::component::Transform>()->position;
+				const glm::vec3 position = env.entityOfMesh(meshesBefore).getComponent<ecs::component::Transform>()->
+						position;
 				REQUIRE(position == glm::vec3(40 * chunkXSize, -1 * chunkYSize, -40 * chunkZSize));
 			}
 		}

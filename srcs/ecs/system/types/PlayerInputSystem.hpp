@@ -3,20 +3,18 @@
 #include "../ASystem.hpp"
 #include "../Dispatcher.hpp"
 #include "../DispatcherEvents.hpp"
-#include "../../component/Components.hpp"
-#include "../../../render/input/InputTypes.hpp"
 #include "../../../render/input/InputManager.hpp"
 
 namespace ecs {
-class PlayerInputSystem : public ASystem {
-private:
-	render::input::InputManager&	m_inputManager;
-	Dispatcher*						m_dispatcher;
+	class PlayerInputSystem : public ASystem {
+	private:
+		render::input::InputManager& m_inputManager;
+		Dispatcher*                  m_dispatcher{nullptr};
 
-public:
-	PlayerInputSystem(render::input::InputManager& inputManager);
+	public:
+		explicit PlayerInputSystem(render::input::InputManager& inputManager);
 
-	void			onSimulate(const SimulateEvent& event);
-	virtual void	bindEvents(Dispatcher& dispatcher) override;
-};
+		void onSimulate(const SimulateEvent& event) const;
+		void bindEvents(Dispatcher& dispatcher) override;
+	};
 }

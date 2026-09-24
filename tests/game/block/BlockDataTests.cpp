@@ -5,8 +5,8 @@
 
 SCENARIO("The block registry knows air and dirt", "[block][registry]") {
 	GIVEN("a registry built from a cube model and a texture") {
-		int						texturePixels = 0;
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas(&texturePixels);
+		int                     texturePixels = 0;
+		game::block::BlockDatas blockDatas    = test::makeBlockDatas(&texturePixels);
 
 		THEN("block 0 is air and has nothing to draw") {
 			const game::block::BlockData& air = blockDatas.getBlockData(test::air);
@@ -34,7 +34,7 @@ SCENARIO("The block registry knows air and dirt", "[block][registry]") {
 
 SCENARIO("Block definitions can be changed through the registry", "[block][registry]") {
 	GIVEN("a registry") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
 
 		WHEN("a new block type is defined") {
 			blockDatas.getBlockData(test::blockWithoutModel).prettyName = "Stone";

@@ -11,34 +11,33 @@
 #include "../game/block/BlockData.hpp"
 
 namespace ecs {
-struct EntityHandle;
+	struct EntityHandle;
 
-class World {
-private:
-	SystemManager												m_systemManager;
-	std::unordered_map<int, std::unique_ptr<IComponentManager>>	m_componentManagers;
-	EntityManager												m_entityManager;
-	game::block::BlockDatas										m_blockDatas;
+	class World {
+	private:
+		SystemManager                                               m_systemManager;
+		std::unordered_map<int, std::unique_ptr<IComponentManager>> m_componentManagers;
+		EntityManager                                               m_entityManager;
+		game::block::BlockDatas                                     m_blockDatas;
 
-public:
-	World(game::block::BlockDatas& blockDatas);
-	~World() = default;
+	public:
+		explicit World(game::block::BlockDatas blockDatas);
 
-	template <typename ComponentType>
-	ComponentManager<ComponentType>&	getComponentManager();
-	IComponentManager*					getComponentManager(int componentId);
-	EntityHandle						createEntity();
-	void								destroyEntity(const Entity& entity);
+		template<typename ComponentType>
+		[[nodiscard]] ComponentManager<ComponentType>& getComponentManager();
+		[[nodiscard]] IComponentManager*               getComponentManager(int componentId);
+		EntityHandle                                   createEntity();
+		void                                           destroyEntity(const Entity& entity) const;
 
-	// This is expensive, only call for debug
-	std::vector<IComponent*>			getAllComponents(const Entity& entity);
+		// This is expensive, only call for debug
+		[[nodiscard]] std::vector<IComponent*> getAllComponents(const Entity& entity) const;
 
-	template <typename SystemType, typename... Args>
-	void								createSystem(Args&&... args);
+		template<typename SystemType, typename... Args>
+		void createSystem(Args&&... args);
 
-	SystemManager&						getSystemManager();
-	game::block::BlockDatas&			getBlockDatas();
-};
+		[[nodiscard]] SystemManager&           getSystemManager();
+		[[nodiscard]] game::block::BlockDatas& getBlockDatas();
+	};
 }
 
 #include "World.tpp"

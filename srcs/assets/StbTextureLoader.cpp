@@ -1,32 +1,38 @@
 #include "StbTextureLoader.hpp"
+#include <stdexcept>
+
+#include "stb_image.h"
+#include "../platform/filesystem/resolvePath.hpp"
+
+#include "../error/Exception.hpp"
 
 using namespace assets;
 
-assets::TextureData	StbTextureLoader::toTextureData(const char* path) {
-	int width, height, channels;
+TextureData StbTextureLoader::toTextureData(const char* path) {
+	int width    = 0;
+	int height   = 0;
+	int channels = 0;
+
 	TextureData textureData;
 
 	stbi_uc* data = stbi_load(resolvePath(path).c_str(), &width, &height, &channels, STBI_rgb_alpha);
 	if (!data) {
-		throw std::runtime_error("failed to load texture image: " + std::string(path));
+		throw error::AssetError(path, stbi_failure_reason());
 	}
 	if (width <= 0 || height <= 0) {
 		stbi_image_free(data);
-		throw std::runtime_error("invalid texture dimensions!");
+		throw error::AssetError(path, "image has no pixels");
 	}
 
-	textureData.width = static_cast<unsigned int>(width);
-	textureData.height = static_cast<unsigned int>(height);
-	textureData.mipLevels = 1;
-	textureData.pixels = data;
+	textureData.width      = static_cast<unsigned int>(width);
+	textureData.height     = static_cast<unsigned int>(height);
+	textureData.mipLevels  = 1;
+	textureData.pixels     = data;
 	textureData.freePixels = stbi_image_free;
-	
+
 	return textureData;
 }
 
-assets::TextureData	StbTextureLoader::toTextureData(std::string path) {
+TextureData StbTextureLoader::toTextureData(const std::string& path) {
 	return toTextureData(path.c_str());
-}
-
-StbTextureLoader::~StbTextureLoader() {
 }

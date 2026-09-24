@@ -8,21 +8,25 @@
 #include <functional>
 
 namespace ecs {
-typedef std::function<void(const void*)>	Listener;
-class Dispatcher {
-private:
-	std::unordered_map<std::type_index, std::vector<Listener>>		m_listeners;
-	std::unordered_map<std::string, std::chrono::duration<float>>	m_eventRuntimes;
+	using Listener = std::function<void(const void*)>;
 
-public:
-	template<typename Event, typename SystemType>
-	void subscribe(SystemType* instance, void (SystemType::*method)(const Event&));
+	class Dispatcher {
+	private:
+		std::unordered_map<std::type_index, std::vector<Listener>>    m_listeners;
+		std::unordered_map<std::string, std::chrono::duration<float>> m_eventRuntimes;
 
-	template<typename Event>
-	void emit(const Event& event);
+	public:
+		template<typename Event, typename SystemType>
+		void subscribe(SystemType* instance, void (SystemType::*method)(const Event&));
 
-	std::unordered_map<std::string, std::chrono::duration<float>>	getEventRuntimes() const;
-};
+		template<typename Event, typename SystemType>
+		void subscribe(const SystemType* instance, void (SystemType::*method)(const Event&) const);
+
+		template<typename Event>
+		void emit(const Event& event);
+
+		[[nodiscard]] std::unordered_map<std::string, std::chrono::duration<float>> getEventRuntimes() const;
+	};
 }
 
 #include "Dispatcher.tpp"

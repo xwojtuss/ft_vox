@@ -25,9 +25,9 @@ SCENARIO("Systems are stored by type", "[ecs][systems]") {
 
 SCENARIO("The system manager turns engine phases into events", "[ecs][systems]") {
 	GIVEN("a system manager with a health system listening to every event") {
-		ecs::SystemManager	manager;
-		test::FakeRenderer	renderer;
-		HealthSystem&		system = manager.addSystem<HealthSystem>();
+		ecs::SystemManager manager;
+		test::FakeRenderer renderer;
+		HealthSystem&      system = manager.addSystem<HealthSystem>();
 		system.bindEvents(manager.getDispatcher());
 
 		WHEN("the world becomes ready") {
@@ -62,7 +62,8 @@ SCENARIO("The system manager turns engine phases into events", "[ecs][systems]")
 			manager.onRendererFrame(renderer);
 
 			THEN("one event per step is sent, each carrying the renderer") {
-				REQUIRE(system.receivedEvents == std::vector<std::string>{"RendererDrawEvent", "TextDrawEvent", "RendererFrameEvent"});
+				REQUIRE(system.receivedEvents == std::vector<std::string>{"RendererDrawEvent", "TextDrawEvent",
+						"RendererFrameEvent"});
 				REQUIRE(system.lastRenderer == &renderer);
 			}
 		}
@@ -71,14 +72,14 @@ SCENARIO("The system manager turns engine phases into events", "[ecs][systems]")
 
 SCENARIO("A system only accepts entities that have the components it needs", "[ecs][systems]") {
 	GIVEN("a world with a health system and three entities") {
-		game::block::BlockDatas	blockDatas(assets::MeshData{}, assets::TextureData{});
-		ecs::World				world(blockDatas);
+		game::block::BlockDatas blockDatas(assets::MeshData{}, assets::TextureData{});
+		ecs::World              world(blockDatas);
 		world.createSystem<HealthSystem>();
-		HealthSystem&			system = *world.getSystemManager().getSystem<HealthSystem>();
+		HealthSystem& system = *world.getSystemManager().getSystem<HealthSystem>();
 
-		ecs::EntityHandle	withHealth = world.createEntity();
-		ecs::EntityHandle	withArmorOnly = world.createEntity();
-		ecs::EntityHandle	withNothing = world.createEntity();
+		ecs::EntityHandle withHealth    = world.createEntity();
+		ecs::EntityHandle withArmorOnly = world.createEntity();
+		ecs::EntityHandle withNothing   = world.createEntity();
 		withHealth.addComponent(test::Health(10));
 		withArmorOnly.addComponent(test::Armor(5));
 
@@ -136,11 +137,11 @@ SCENARIO("A system outside any world accepts no entities", "[ecs][systems]") {
 // TODO: make pass
 SCENARIO("Registering the same entity twice keeps it once", "[ecs][systems]") {
 	GIVEN("a world with a health system and an entity with Health") {
-		game::block::BlockDatas	blockDatas(assets::MeshData{}, assets::TextureData{});
-		ecs::World				world(blockDatas);
+		game::block::BlockDatas blockDatas(assets::MeshData{}, assets::TextureData{});
+		ecs::World              world(blockDatas);
 		world.createSystem<HealthSystem>();
-		HealthSystem&			system = *world.getSystemManager().getSystem<HealthSystem>();
-		ecs::EntityHandle		entity = world.createEntity();
+		HealthSystem&     system = *world.getSystemManager().getSystem<HealthSystem>();
+		ecs::EntityHandle entity = world.createEntity();
 		entity.addComponent(test::Health());
 
 		WHEN("the entity is registered twice") {

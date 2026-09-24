@@ -7,7 +7,7 @@
 SCENARIO("Every component type gets its own id", "[ecs][component]") {
 	GIVEN("two different component types") {
 		const int healthId = ecs::Component<test::Health>::getId();
-		const int armorId = ecs::Component<test::Armor>::getId();
+		const int armorId  = ecs::Component<test::Armor>::getId();
 
 		THEN("their ids differ") {
 			REQUIRE(healthId != armorId);

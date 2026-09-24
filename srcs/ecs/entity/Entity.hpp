@@ -1,5 +1,5 @@
 #pragma once
 
 namespace ecs {
-typedef int	Entity;
+	using Entity = int;
 }

@@ -2,4 +2,4 @@
 
 #include <string>
 
-std::string	resolvePath(const std::string& path);
+[[nodiscard]] std::string resolvePath(const std::string& path);

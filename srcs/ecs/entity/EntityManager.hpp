@@ -1,18 +1,13 @@
 #pragma once
 
-#include <array>
-
 #include "Entity.hpp"
 
 namespace ecs {
-class EntityManager {
-private:
-	Entity	lastEntity;
+	class EntityManager {
+	private:
+		Entity m_lastEntity{1};
 
-public:
-	EntityManager();
-	~EntityManager() = default;
-
-	Entity	createEntity();
-};
+	public:
+		Entity createEntity();
+	};
 }

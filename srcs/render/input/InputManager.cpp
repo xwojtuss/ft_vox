@@ -2,51 +2,52 @@
 
 using namespace render::input;
 
-InputManager::InputManager() : m_mouseProcessor(), m_keyInputProcessor() {
+float InputManager::axis(const InputEvents activeEvents, const InputEvent positive, const InputEvent negative) {
+	const float forward  = hasEvent(activeEvents, positive) ? 1.0f : 0.0f;
+	const float backward = hasEvent(activeEvents, negative) ? 1.0f : 0.0f;
+	return forward - backward;
 }
 
-InputCommand	InputManager::buildCommand() {
+InputCommand InputManager::buildCommand() {
 	InputCommand command = {};
 
-	double deltaX, deltaY;
+	double deltaX = 0.0;
+	double deltaY = 0.0;
 	m_mouseProcessor.getMouseDelta(deltaX, deltaY);
 
 	command.lookRight += static_cast<float>(deltaX);
-	command.lookUp += static_cast<float>(deltaY);
+	command.lookUp    += static_cast<float>(deltaY);
 
-	InputEvents pressedEvents, repeatedEvents, releasedEvents, activeEvents;
+	InputEvents pressedEvents  = 0;
+	InputEvents repeatedEvents = 0;
+	InputEvents releasedEvents = 0;
+	InputEvents activeEvents   = 0;
 	m_keyInputProcessor.getKeyEvents(pressedEvents, repeatedEvents, releasedEvents, activeEvents);
 
-	command.startedEvents = pressedEvents;
+	command.startedEvents  = pressedEvents;
 	command.repeatedEvents = repeatedEvents;
 	command.releasedEvents = releasedEvents;
-	command.activeEvents = activeEvents;
+	command.activeEvents   = activeEvents;
 
-	command.moveForward = hasEvent(activeEvents, InputEvent::MoveForward) * 1.0f;
-	command.moveForward -= hasEvent(activeEvents, InputEvent::MoveBackward) * 1.0f;
-	command.moveRight = hasEvent(activeEvents, InputEvent::MoveRight) * 1.0f;
-	command.moveRight -= hasEvent(activeEvents, InputEvent::MoveLeft) * 1.0f;
-	command.moveUp = hasEvent(activeEvents, InputEvent::Jump) * 1.0f;
-	command.moveUp -= hasEvent(activeEvents, InputEvent::Crouch) * 1.0f;
-	
+	command.moveForward = axis(activeEvents, MoveForward, MoveBackward);
+	command.moveRight   = axis(activeEvents, MoveRight, MoveLeft);
+	command.moveUp      = axis(activeEvents, Jump, Crouch);
+
 	return command;
 }
 
-void	InputManager::processMouseMove(double xpos, double ypos) {
-	m_mouseProcessor.processMouseMove(-xpos, -ypos);
+void InputManager::processMouseMove(const double xPos, const double yPos) {
+	m_mouseProcessor.processMouseMove(-xPos, -yPos);
 }
 
-void	InputManager::processMouseButton(int button, InputAction action, InputMods modifiers) {
+void InputManager::processMouseButton(int button, const InputAction action, const InputMods modifiers) {
 	m_keyInputProcessor.processMouseButton(static_cast<MouseButton>(button), action, modifiers);
 }
 
-void	InputManager::processKey(int scancode, InputAction action, InputMods modifiers) {
+void InputManager::processKey(const int scancode, const InputAction action, const InputMods modifiers) {
 	m_keyInputProcessor.processKey(scancode, action, modifiers);
 }
 
-KeyInputProcessor&	InputManager::getKeyInputProcessor() {
+KeyInputProcessor& InputManager::getKeyInputProcessor() {
 	return m_keyInputProcessor;
-}
-
-InputManager::~InputManager() {
 }
