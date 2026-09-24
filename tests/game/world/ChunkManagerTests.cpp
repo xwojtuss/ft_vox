@@ -17,14 +17,8 @@ constexpr int	chunksAroundSpawn = (worldinfo::maxHorizontalRenderDistance + 1)
 
 constexpr size_t	trianglesInSolidChunk = 6 * chunkXSize * chunkZSize * 2;
 
-/**
- * A running world with a fake renderer instead of the GPU.
- *
- * Creating a ChunkManager generates and meshes every chunk around spawn,
- * which takes seconds, so all scenarios share one. Each scenario works on
- * its own far-away chunk positions and compares against counts taken right
- * before it acts, so they do not depend on each other.
- */
+constexpr ecs::Entity	firstEntity = 1;
+
 struct SpawnedWorld {
 	int						dirtPixels = 0;
 	game::block::BlockDatas	blockDatas = test::makeBlockDatas(&dirtPixels);
@@ -43,13 +37,12 @@ struct SpawnedWorld {
 		return renderer.createdMeshes.size();
 	}
 
-	// Entity ids are handed out from 1, one per chunk mesh, in creation order
 	ecs::EntityHandle	entityOfMesh(size_t meshIndex) {
-		return ecs::EntityHandle{static_cast<ecs::Entity>(meshIndex + 1), &world};
+		return ecs::EntityHandle{firstEntity + static_cast<ecs::Entity>(meshIndex), &world};
 	}
 };
 
-SpawnedWorld&	spawnedWorld() {
+SpawnedWorld&	sharedSpawnedWorld() {
 	static SpawnedWorld	instance;
 	return instance;
 }
@@ -57,7 +50,7 @@ SpawnedWorld&	spawnedWorld() {
 
 SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]") {
 	GIVEN("a world whose chunk manager has just been created") {
-		SpawnedWorld& env = spawnedWorld();
+		SpawnedWorld& env = sharedSpawnedWorld();
 
 		THEN("exactly one texture is created, from the dirt block's texture") {
 			REQUIRE(env.renderer.createdTextures.size() == 1);
@@ -105,7 +98,7 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 // TODO: make pass
 SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 	GIVEN("a running world") {
-		SpawnedWorld&	env = spawnedWorld();
+		SpawnedWorld&	env = sharedSpawnedWorld();
 		const size_t	meshesBefore = env.meshCount();
 
 		WHEN("an underground chunk (y = -1) is loaded") {
@@ -137,8 +130,6 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 			}
 		}
 
-		// Currently fails: every call creates another mesh and entity for the
-		// same chunk, so it would be drawn twice
 		WHEN("an already visible chunk is made renderable again") {
 			env.manager->loadChunk(glm::ivec3(45, -1, 45));
 			env.manager->makeChunkRenderable(env.world, env.renderer, {45, -1, 45});
@@ -153,7 +144,7 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 // TODO: make pass
 SCENARIO("Unloading a chunk forgets it", "[chunk-manager]") {
 	GIVEN("a running world") {
-		SpawnedWorld& env = spawnedWorld();
+		SpawnedWorld& env = sharedSpawnedWorld();
 
 		WHEN("a loaded chunk is unloaded") {
 			env.manager->loadChunk(60, -1, 60);
@@ -166,8 +157,6 @@ SCENARIO("Unloading a chunk forgets it", "[chunk-manager]") {
 			}
 		}
 
-		// Currently fails: unloadChunk only forgets the chunk data, its entity
-		// keeps its mesh and stays registered in the render system
 		WHEN("a visible chunk is unloaded") {
 			const size_t meshIndex = env.meshCount();
 			env.manager->loadChunk(65, -1, 65);

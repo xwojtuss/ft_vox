@@ -30,7 +30,6 @@ file(GLOB_RECURSE SCOP_SOURCES CONFIGURE_DEPENDS
 )
 list(REMOVE_ITEM SCOP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
 
-# Everything except main() lives in scop_core, shared by the game and the tests
 add_library(scop_core STATIC ${SCOP_SOURCES})
 
 add_executable(scop "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")

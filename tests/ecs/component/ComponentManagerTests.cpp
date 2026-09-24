@@ -7,7 +7,6 @@
 using HealthManager = ecs::ComponentManager<test::Health>;
 
 namespace {
-// Managers hold room for every component up front, so keep them off the stack
 std::unique_ptr<HealthManager>	makeManager() {
 	return std::make_unique<HealthManager>();
 }

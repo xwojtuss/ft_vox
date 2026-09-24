@@ -1,7 +1,3 @@
-# Runs every test, then always writes the coverage report, then fails if
-# either a test failed or coverage is below the threshold in gcovr.cfg.
-# Usage: cmake -DBUILD_DIR=... -DREPORT_DIR=... -DCTEST=... -DGCOVR="cmd|args" -DGCOVR_ARGS="a|b" -P RunCoverage.cmake
-
 string(REPLACE "|" ";" GCOVR "${GCOVR}")
 string(REPLACE "|" ";" GCOVR_ARGS "${GCOVR_ARGS}")
 

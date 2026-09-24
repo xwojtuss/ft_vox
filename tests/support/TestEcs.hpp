@@ -7,10 +7,10 @@
 #include "ecs/entity/EntityHandle.hpp"
 #include "ecs/system/ASystem.hpp"
 #include "ecs/system/DispatcherEvents.hpp"
+#include "game/block/BlockData.hpp"
 
 namespace test {
 
-// Small components that only exist in tests, so their data is easy to check
 struct Health : public ecs::Component<Health> {
 	int	points = 100;
 
@@ -25,9 +25,6 @@ struct Armor : public ecs::Component<Armor> {
 	explicit Armor(int rating) : Armor() { this->rating = rating; }
 };
 
-/**
- * A system that needs Health and records every event it receives
- */
 class HealthSystem : public ecs::ASystem {
 public:
 	std::vector<std::string>	receivedEvents;
@@ -71,6 +68,29 @@ private:
 	void	onSimulate(const ecs::SimulateEvent& event) {
 		receivedEvents.push_back(event.getName());
 		lastDeltaTime = event.deltaTime;
+	}
+};
+
+struct TestWorld {
+	game::block::BlockDatas	blockDatas{assets::MeshData{}, assets::TextureData{}};
+	ecs::World				world{blockDatas};
+
+	template <typename SystemType, typename... Args>
+	SystemType&	addSystem(Args&... args) {
+		world.createSystem<SystemType>(args...);
+		return *world.getSystemManager().getSystem<SystemType>();
+	}
+
+	ecs::EntityHandle	createEntity() {
+		return world.createEntity();
+	}
+
+	ecs::Dispatcher&	dispatcher() {
+		return world.getSystemManager().getDispatcher();
+	}
+
+	void	simulate(float deltaTime, float time) {
+		world.getSystemManager().onSimulate(deltaTime, time);
 	}
 };
 }

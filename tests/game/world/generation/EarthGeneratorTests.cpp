@@ -31,10 +31,6 @@ size_t	countBlocks(const Chunk& chunk, game::BlockId id) {
 	return count;
 }
 
-/**
- * Stacks the chunks of one vertical column and returns, for a block column,
- * the world heights that are solid
- */
 std::map<int, bool>	solidByWorldHeight(const std::map<int, Chunk>& stack, unsigned short x, unsigned short z) {
 	std::map<int, bool> solid;
 	for (const auto& [chunkY, chunk] : stack)
