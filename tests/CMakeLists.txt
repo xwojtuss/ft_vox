@@ -15,7 +15,6 @@ file(GLOB_RECURSE SCOP_TEST_SOURCES CONFIGURE_DEPENDS
 
 add_executable(scop_tests ${SCOP_TEST_SOURCES})
 
-# Lets tests include shared helpers as "support/..."
 target_include_directories(scop_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 target_link_libraries(scop_tests PRIVATE
@@ -23,14 +22,8 @@ target_link_libraries(scop_tests PRIVATE
   Catch2::Catch2WithMain
 )
 
-# Every SCENARIO becomes its own CTest test
 catch_discover_tests(scop_tests DISCOVERY_MODE PRE_TEST)
 
-# ---------------------------------------------------------------------------
-# Coverage: `cmake --build --preset coverage` runs every test, prints a
-# per-file report, writes HTML and fails if line coverage is below the
-# threshold in gcovr.cfg
-# ---------------------------------------------------------------------------
 set(SCOP_COVERAGE_DIR "${CMAKE_BINARY_DIR}/coverage")
 
 if(NOT SCOP_COVERAGE)
@@ -46,7 +39,6 @@ find_program(GCOVR_EXECUTABLE gcovr)
 if(GCOVR_EXECUTABLE)
   set(GCOVR_COMMAND "${GCOVR_EXECUTABLE}")
 else()
-  # `pip install --user gcovr` does not always put gcovr on PATH
   find_package(Python3 COMPONENTS Interpreter)
   if(Python3_FOUND)
     execute_process(COMMAND "${Python3_EXECUTABLE}" -m gcovr --version
@@ -61,7 +53,6 @@ if(NOT GCOVR_COMMAND)
   message(FATAL_ERROR "SCOP_COVERAGE is ON but gcovr was not found. Install it with: python3 -m pip install --user gcovr")
 endif()
 
-# gcovr needs the gcov flavour that matches the compiler
 string(REGEX MATCH "^[0-9]+" SCOP_COMPILER_MAJOR "${CMAKE_CXX_COMPILER_VERSION}")
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   find_program(SCOP_GCOV NAMES gcov-${SCOP_COMPILER_MAJOR} gcov REQUIRED)
@@ -73,7 +64,6 @@ else()
   set(SCOP_GCOV_EXECUTABLE "${SCOP_LLVM_COV} gcov")
 endif()
 
-# Lists are passed to the script with | so they survive the command line
 string(REPLACE ";" "|" SCOP_GCOVR_COMMAND "${GCOVR_COMMAND}")
 set(SCOP_GCOVR_ARGS
   --config "${PROJECT_SOURCE_DIR}/gcovr.cfg"

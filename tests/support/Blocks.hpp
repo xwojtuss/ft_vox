@@ -13,24 +13,19 @@ constexpr game::BlockId	blockWithoutModel = 2;
 
 constexpr glm::vec3		cubeColor = {1.0f, 0.5f, 0.25f};
 
-/**
- * A unit cube from (0, 0, 0) to (1, 1, 1): 6 faces, 12 triangles,
- * wound counter-clockwise when seen from outside so normals point outwards.
- */
 inline assets::MeshData	makeCubeMesh() {
-	using Quad = std::array<glm::vec3, 4>;
-	const std::array<Quad, 6> faces = {{
-		{{{1, 0, 0}, {1, 1, 0}, {1, 1, 1}, {1, 0, 1}}}, // +x
-		{{{0, 0, 0}, {0, 0, 1}, {0, 1, 1}, {0, 1, 0}}}, // -x
-		{{{0, 1, 0}, {0, 1, 1}, {1, 1, 1}, {1, 1, 0}}}, // +y
-		{{{0, 0, 0}, {1, 0, 0}, {1, 0, 1}, {0, 0, 1}}}, // -y
-		{{{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}}}, // +z
-		{{{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}}, // -z
-	}};
+	using CounterClockwiseQuad = std::array<glm::vec3, 4>;
+	const CounterClockwiseQuad	right = {{{1, 0, 0}, {1, 1, 0}, {1, 1, 1}, {1, 0, 1}}};
+	const CounterClockwiseQuad	left = {{{0, 0, 0}, {0, 0, 1}, {0, 1, 1}, {0, 1, 0}}};
+	const CounterClockwiseQuad	top = {{{0, 1, 0}, {0, 1, 1}, {1, 1, 1}, {1, 1, 0}}};
+	const CounterClockwiseQuad	bottom = {{{0, 0, 0}, {1, 0, 0}, {1, 0, 1}, {0, 0, 1}}};
+	const CounterClockwiseQuad	back = {{{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}}};
+	const CounterClockwiseQuad	front = {{{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}};
+	const std::array<CounterClockwiseQuad, 6> faces = {right, left, top, bottom, back, front};
 	const std::array<glm::vec2, 4> texCoords = {{{0, 0}, {0, 1}, {1, 1}, {1, 0}}};
 	assets::MeshData mesh;
 
-	for (const Quad& face : faces) {
+	for (const CounterClockwiseQuad& face : faces) {
 		const uint32_t first = static_cast<uint32_t>(mesh.vertices.size());
 		for (size_t corner = 0; corner < 4; ++corner)
 			mesh.vertices.push_back({face[corner], cubeColor, texCoords[corner]});
@@ -39,15 +34,12 @@ inline assets::MeshData	makeCubeMesh() {
 	return mesh;
 }
 
-/**
- * Block registry where dirt uses the unit cube and `pixels` as its texture
- */
-inline game::block::BlockDatas	makeBlockDatas(void* pixels = nullptr) {
+inline game::block::BlockDatas	makeBlockDatas(void* dirtTexturePixels = nullptr) {
 	assets::TextureData texture{};
 	texture.width = 1;
 	texture.height = 1;
 	texture.mipLevels = 1;
-	texture.pixels = pixels;
+	texture.pixels = dirtTexturePixels;
 	return game::block::BlockDatas(makeCubeMesh(), texture);
 }
 }

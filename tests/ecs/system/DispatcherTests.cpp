@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-// DispatcherEvents.hpp uses ecs::Entity without including it
 #include "ecs/entity/Entity.hpp"
 #include "ecs/system/Dispatcher.hpp"
 #include "ecs/system/DispatcherEvents.hpp"
