@@ -15,6 +15,7 @@ EntityHandle World::createEntity() {
 }
 
 void World::destroyEntity(const Entity& entity) const {
+	m_systemManager.unregisterEntity(entity);
 	for (const auto& [componentId, manager]: m_componentManagers) {
 		if (manager->hasComponent(entity)) {
 			manager->removeComponent(entity);

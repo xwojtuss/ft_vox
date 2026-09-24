@@ -202,7 +202,6 @@ SCENARIO("Destroying an entity removes all of its components", "[ecs][world]") {
 	}
 }
 
-// TODO: make pass
 SCENARIO("A destroyed entity leaves every system", "[ecs][world]") {
 	GIVEN("an entity with Health registered to the health system") {
 		game::block::BlockDatas blockDatas = test::makeBlockDatas();

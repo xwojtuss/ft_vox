@@ -2,6 +2,11 @@
 
 using namespace ecs;
 
+void SystemManager::unregisterEntity(const Entity& entity) const {
+	for (const auto& [type, system]: m_systems)
+		system->unregisterEntity(entity);
+}
+
 void SystemManager::onWorldReady() {
 	m_dispatcher.emit<WorldReadyEvent>(WorldReadyEvent{});
 }

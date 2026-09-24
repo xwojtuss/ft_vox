@@ -47,7 +47,9 @@ scop
 valgrind.log
 
 # Per-user files
-TODO.md
+*.md
+!README.md
+!LICENCE.md
 
 # CMake build directory
 build/

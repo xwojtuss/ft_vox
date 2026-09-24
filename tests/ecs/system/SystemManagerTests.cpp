@@ -134,7 +134,6 @@ SCENARIO("A system outside any world accepts no entities", "[ecs][systems]") {
 	}
 }
 
-// TODO: make pass
 SCENARIO("Registering the same entity twice keeps it once", "[ecs][systems]") {
 	GIVEN("a world with a health system and an entity with Health") {
 		game::block::BlockDatas blockDatas(assets::MeshData{}, assets::TextureData{});

@@ -149,7 +149,6 @@ SCENARIO("The events panel lists how long each event took", "[ecs][gui]") {
 	}
 }
 
-// TODO: make pass
 SCENARIO("Event runtimes are shown in milliseconds", "[ecs][gui]") {
 	GIVEN("a ready world where a simulation step takes about 20 ms") {
 		GuiWorld   env;
