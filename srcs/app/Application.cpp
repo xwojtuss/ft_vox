@@ -66,38 +66,7 @@ void	Application::init() {
 	camera.registerToSystem<ecs::CameraSystem>();
 	camera.registerToSystem<ecs::WindowControlSystem>();
 	camera.registerToSystem<ecs::ToggleShaderSystem>();
-
-	ecs::EntityHandle floor = m_world->createEntity();
-	ecs::component::Transform floorTransform{};
-	ecs::component::Mesh floorMesh{};
-	ecs::component::Texture floorTexture{};
-	float floorSize = 100.0f;
-	floorTransform.position = glm::vec3(floorSize / 2.0f, -5.0f, -floorSize / 2.0f);
-	floorTransform.scale = glm::vec3(floorSize, floorSize, 1.0f);
-	floorTransform.rotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
-	floorTransform.rotation = glm::rotate(floorTransform.rotation, glm::radians(180.0f), scene::worldinfo::up);
-	floorTransform.rotation = glm::rotate(floorTransform.rotation, glm::radians(90.0f), scene::worldinfo::left);
-	assets::TextureData floorTextureData = m_textureLoader->toTextureData("textures/medival.jpg");
-	assets::MeshData floorMeshData;
-	floorMeshData.vertices = {
-		{{0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-		{{1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-		{{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-		{{0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-	};
-	floorMeshData.indices = {
-		0, 1, 2,
-		2, 3, 0
-	};
-	floorMeshData.scaleTextureCoordinates(floorSize / 10.0f);
-	floorMesh.mesh = m_renderer->createMesh(floorMeshData);
-	floorTexture.texture = m_renderer->createTexture(floorTextureData);
-	floorMesh.pipelineType = assets::PipelineType::Textured;
-	floor.addComponent(floorTransform);
-	floor.addComponent(floorMesh);
-	floor.addComponent(floorTexture);
-	floor.registerToSystem<ecs::RenderSystem>();
-
+	
 	m_renderer->setClearColor(0x0a2882);
 }
 
