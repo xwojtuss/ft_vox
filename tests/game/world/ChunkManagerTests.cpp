@@ -102,6 +102,7 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 	}
 }
 
+// TODO: make pass
 SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 	GIVEN("a running world") {
 		SpawnedWorld&	env = spawnedWorld();
@@ -136,17 +137,20 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 			}
 		}
 
-		WHEN("an already loaded chunk is made renderable again") {
+		// Currently fails: every call creates another mesh and entity for the
+		// same chunk, so it would be drawn twice
+		WHEN("an already visible chunk is made renderable again") {
 			env.manager->loadChunk(glm::ivec3(45, -1, 45));
 			env.manager->makeChunkRenderable(env.world, env.renderer, {45, -1, 45});
 
-			THEN("it gets a second mesh: the manager does not prevent duplicates") {
-				REQUIRE(env.meshCount() == meshesBefore + 2);
+			THEN("it is not duplicated: it still has exactly one mesh") {
+				REQUIRE(env.meshCount() == meshesBefore + 1);
 			}
 		}
 	}
 }
 
+// TODO: make pass
 SCENARIO("Unloading a chunk forgets it", "[chunk-manager]") {
 	GIVEN("a running world") {
 		SpawnedWorld& env = spawnedWorld();
@@ -159,6 +163,24 @@ SCENARIO("Unloading a chunk forgets it", "[chunk-manager]") {
 			THEN("it can no longer be made renderable") {
 				env.manager->makeChunkRenderable(env.world, env.renderer, {60, -1, 60});
 				REQUIRE(env.meshCount() == meshesBefore);
+			}
+		}
+
+		// Currently fails: unloadChunk only forgets the chunk data, its entity
+		// keeps its mesh and stays registered in the render system
+		WHEN("a visible chunk is unloaded") {
+			const size_t meshIndex = env.meshCount();
+			env.manager->loadChunk(65, -1, 65);
+			ecs::EntityHandle chunkEntity = env.entityOfMesh(meshIndex);
+			REQUIRE(chunkEntity.hasComponent<ecs::component::Mesh>());
+
+			env.manager->unloadChunk(65, -1, 65);
+
+			THEN("it disappears from the world: it is no longer drawn") {
+				ecs::RenderSystem* renderSystem = env.world.getSystemManager().getSystem<ecs::RenderSystem>();
+
+				REQUIRE_FALSE(renderSystem->hasEntity(chunkEntity.entity));
+				REQUIRE_FALSE(chunkEntity.hasComponent<ecs::component::Mesh>());
 			}
 		}
 

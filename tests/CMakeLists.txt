@@ -73,18 +73,26 @@ else()
   set(SCOP_GCOV_EXECUTABLE "${SCOP_LLVM_COV} gcov")
 endif()
 
+# Lists are passed to the script with | so they survive the command line
+string(REPLACE ";" "|" SCOP_GCOVR_COMMAND "${GCOVR_COMMAND}")
+set(SCOP_GCOVR_ARGS
+  --config "${PROJECT_SOURCE_DIR}/gcovr.cfg"
+  --root "${PROJECT_SOURCE_DIR}"
+  --gcov-executable "${SCOP_GCOV_EXECUTABLE}"
+  --txt
+  --html-details "${SCOP_COVERAGE_DIR}/index.html"
+  "${CMAKE_BINARY_DIR}"
+)
+string(REPLACE ";" "|" SCOP_GCOVR_ARGS "${SCOP_GCOVR_ARGS}")
+
 add_custom_target(coverage
-  COMMAND ${CMAKE_COMMAND} -DDIR=${CMAKE_BINARY_DIR} -P "${PROJECT_SOURCE_DIR}/cmake/CleanCoverageData.cmake"
-  COMMAND ${CMAKE_CTEST_COMMAND} --test-dir "${CMAKE_BINARY_DIR}" --output-on-failure
-  COMMAND ${CMAKE_COMMAND} -E make_directory "${SCOP_COVERAGE_DIR}"
-  COMMAND ${CMAKE_COMMAND} -E echo "HTML report: ${SCOP_COVERAGE_DIR}/index.html"
-  COMMAND ${GCOVR_COMMAND}
-    --config "${PROJECT_SOURCE_DIR}/gcovr.cfg"
-    --root "${PROJECT_SOURCE_DIR}"
-    --gcov-executable "${SCOP_GCOV_EXECUTABLE}"
-    --txt
-    --html-details "${SCOP_COVERAGE_DIR}/index.html"
-    "${CMAKE_BINARY_DIR}"
+  COMMAND ${CMAKE_COMMAND}
+    -DBUILD_DIR=${CMAKE_BINARY_DIR}
+    -DREPORT_DIR=${SCOP_COVERAGE_DIR}
+    -DCTEST=${CMAKE_CTEST_COMMAND}
+    "-DGCOVR=${SCOP_GCOVR_COMMAND}"
+    "-DGCOVR_ARGS=${SCOP_GCOVR_ARGS}"
+    -P "${PROJECT_SOURCE_DIR}/cmake/RunCoverage.cmake"
   DEPENDS scop_tests
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
   COMMENT "Running tests and measuring coverage"
