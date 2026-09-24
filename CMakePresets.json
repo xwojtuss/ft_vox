@@ -2,7 +2,7 @@
   "version": 6,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 16,
+    "minor": 25,
     "patch": 0
   },
   "configurePresets": [
@@ -42,9 +42,31 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Coverage (Clang)",
+      "inherits": "dev-clang",
+      "cacheVariables": {
+        "SCOP_COVERAGE": "ON"
+      }
+    },
+    {
+      "name": "coverage42",
+      "displayName": "Coverage (GCC) - 42 Workstations",
+      "inherits": "dev42",
+      "cacheVariables": {
+        "SCOP_COVERAGE": "ON"
+      }
     }
   ],
   "buildPresets": [
+    {
+      "name": "dev42",
+      "displayName": "Build Debug (GCC) - 42 Workstations",
+      "configurePreset": "dev42",
+      "jobs": 0
+    },
     {
       "name": "dev",
       "displayName": "Build Debug (GCC)",
@@ -56,6 +78,83 @@
       "displayName": "Build Debug (Clang)",
       "configurePreset": "dev-clang",
       "jobs": 0
+    },
+    {
+      "name": "coverage",
+      "displayName": "Run tests + coverage report (Clang)",
+      "configurePreset": "coverage",
+      "targets": ["coverage"],
+      "jobs": 0
+    },
+    {
+      "name": "coverage42",
+      "displayName": "Run tests + coverage report (GCC) - 42 Workstations",
+      "configurePreset": "coverage42",
+      "targets": ["coverage"],
+      "jobs": 0
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "test-base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "dev42",
+      "inherits": "test-base",
+      "configurePreset": "dev42"
+    },
+    {
+      "name": "dev",
+      "inherits": "test-base",
+      "configurePreset": "dev"
+    },
+    {
+      "name": "dev-clang",
+      "inherits": "test-base",
+      "configurePreset": "dev-clang"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "test",
+      "displayName": "Build and run tests (Clang)",
+      "steps": [
+        { "type": "configure", "name": "dev-clang" },
+        { "type": "build", "name": "dev-clang" },
+        { "type": "test", "name": "dev-clang" }
+      ]
+    },
+    {
+      "name": "test42",
+      "displayName": "Build and run tests (GCC) - 42 Workstations",
+      "steps": [
+        { "type": "configure", "name": "dev42" },
+        { "type": "build", "name": "dev42" },
+        { "type": "test", "name": "dev42" }
+      ]
+    },
+    {
+      "name": "coverage",
+      "displayName": "Tests + coverage gate (Clang)",
+      "steps": [
+        { "type": "configure", "name": "coverage" },
+        { "type": "build", "name": "coverage" }
+      ]
+    },
+    {
+      "name": "coverage42",
+      "displayName": "Tests + coverage gate (GCC) - 42 Workstations",
+      "steps": [
+        { "type": "configure", "name": "coverage42" },
+        { "type": "build", "name": "coverage42" }
+      ]
     }
   ]
 }

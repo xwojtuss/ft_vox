@@ -59,3 +59,6 @@ docs/doxygen/latex
 
 # Config files
 *.ini
+
+# IDE files
+.idea
