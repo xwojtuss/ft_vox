@@ -3,16 +3,15 @@
 #include "../../ecs/entity/Entity.hpp"
 
 namespace game {
+	using BlockId = unsigned int;
 
-typedef unsigned int	BlockId;
+	struct Block {
+		BlockId     id;
+		ecs::Entity entity = -1;
 
-struct Block {
-	BlockId		id;
-	ecs::Entity	entity = -1;
+		Block();
+		explicit Block(BlockId id);
 
-	Block();
-	Block(BlockId id);
-
-	bool	hasEntity() const;
-};
+		[[nodiscard]] bool hasEntity() const;
+	};
 }

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "error/Exception.hpp"
 #include "support/Blocks.hpp"
 #include "support/TestEcs.hpp"
 
@@ -10,24 +11,24 @@ using test::Health;
 using test::HealthSystem;
 
 namespace {
-std::vector<std::string>	componentNames(ecs::World& world, ecs::Entity entity) {
-	std::vector<std::string> names;
-	for (ecs::IComponent* component : world.getAllComponents(entity))
-		names.push_back(component->getName());
-	std::sort(names.begin(), names.end());
-	return names;
-}
+	std::vector<std::string> componentNames(ecs::World& world, ecs::Entity entity) {
+		std::vector<std::string> names;
+		for (ecs::IComponent* component: world.getAllComponents(entity))
+			names.push_back(component->getName());
+		std::sort(names.begin(), names.end());
+		return names;
+	}
 }
 
 SCENARIO("Every new entity gets its own id", "[ecs][world]") {
 	GIVEN("a world") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
 
 		WHEN("three entities are created") {
-			const ecs::EntityHandle first = world.createEntity();
+			const ecs::EntityHandle first  = world.createEntity();
 			const ecs::EntityHandle second = world.createEntity();
-			const ecs::EntityHandle third = world.createEntity();
+			const ecs::EntityHandle third  = world.createEntity();
 
 			THEN("they get increasing, distinct ids starting at 1") {
 				REQUIRE(first.entity == 1);
@@ -43,9 +44,9 @@ SCENARIO("Every new entity gets its own id", "[ecs][world]") {
 
 SCENARIO("A world creates one component manager per component type, on demand", "[ecs][world]") {
 	GIVEN("a world where no Health component was used yet") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
-		const int				healthId = ecs::Component<Health>::getId();
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
+		const int               healthId = ecs::Component<Health>::getId();
 
 		THEN("there is no Health manager yet") {
 			REQUIRE(world.getComponentManager(healthId) == nullptr);
@@ -64,9 +65,9 @@ SCENARIO("A world creates one component manager per component type, on demand", 
 
 SCENARIO("Components are attached to entities through their handle", "[ecs][world][entity]") {
 	GIVEN("an entity without components") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
-		ecs::EntityHandle		entity = world.createEntity();
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
+		ecs::EntityHandle       entity = world.createEntity();
 
 		THEN("it has no Health") {
 			REQUIRE_FALSE(entity.hasComponent<Health>());
@@ -101,7 +102,7 @@ SCENARIO("Components are attached to entities through their handle", "[ecs][worl
 
 		WHEN("a component it does not have is removed") {
 			THEN("it is rejected") {
-				REQUIRE_THROWS_AS(entity.removeComponent<Armor>(), std::runtime_error);
+				REQUIRE_THROWS_AS(entity.removeComponent<Armor>(), error::EcsError);
 			}
 		}
 	}
@@ -109,11 +110,11 @@ SCENARIO("Components are attached to entities through their handle", "[ecs][worl
 
 SCENARIO("Entities join and leave systems through their handle", "[ecs][world][entity]") {
 	GIVEN("a world with a health system and an entity with Health") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
 		world.createSystem<HealthSystem>();
-		HealthSystem&			system = *world.getSystemManager().getSystem<HealthSystem>();
-		ecs::EntityHandle		entity = world.createEntity();
+		HealthSystem&     system = *world.getSystemManager().getSystem<HealthSystem>();
+		ecs::EntityHandle entity = world.createEntity();
 		entity.addComponent(Health());
 
 		WHEN("it is registered to the health system") {
@@ -134,9 +135,9 @@ SCENARIO("Entities join and leave systems through their handle", "[ecs][world][e
 	}
 
 	GIVEN("a world without a health system") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
-		ecs::EntityHandle		entity = world.createEntity();
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
+		ecs::EntityHandle       entity = world.createEntity();
 		entity.addComponent(Health());
 
 		THEN("registering and unregistering do nothing and do not fail") {
@@ -148,8 +149,8 @@ SCENARIO("Entities join and leave systems through their handle", "[ecs][world][e
 
 SCENARIO("Systems created by the world are connected to it", "[ecs][world]") {
 	GIVEN("a world") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
 
 		WHEN("a health system is created through the world") {
 			world.createSystem<HealthSystem>();
@@ -165,22 +166,24 @@ SCENARIO("Systems created by the world are connected to it", "[ecs][world]") {
 
 SCENARIO("The world keeps the block definitions it was created with", "[ecs][world]") {
 	GIVEN("a world created from a block registry") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
 
 		THEN("it knows the same blocks") {
 			REQUIRE(world.getBlockDatas().getBlockData(test::dirt).prettyName == "Dirt");
-			REQUIRE(world.getBlockDatas().getBlockData(test::dirt).meshData.indices == blockDatas.getBlockData(test::dirt).meshData.indices);
+			REQUIRE(
+				world.getBlockDatas().getBlockData(test::dirt).meshData.indices == blockDatas.getBlockData(test::dirt).
+				meshData.indices);
 		}
 	}
 }
 
 SCENARIO("Destroying an entity removes all of its components", "[ecs][world]") {
 	GIVEN("an entity with Health and Armor next to another entity with Health") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
-		ecs::EntityHandle		doomed = world.createEntity();
-		ecs::EntityHandle		survivor = world.createEntity();
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
+		ecs::EntityHandle       doomed   = world.createEntity();
+		ecs::EntityHandle       survivor = world.createEntity();
 		doomed.addComponent(Health(1));
 		doomed.addComponent(Armor(1));
 		survivor.addComponent(Health(2));
@@ -202,11 +205,11 @@ SCENARIO("Destroying an entity removes all of its components", "[ecs][world]") {
 // TODO: make pass
 SCENARIO("A destroyed entity leaves every system", "[ecs][world]") {
 	GIVEN("an entity with Health registered to the health system") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
 		world.createSystem<HealthSystem>();
-		HealthSystem&			system = *world.getSystemManager().getSystem<HealthSystem>();
-		ecs::EntityHandle		entity = world.createEntity();
+		HealthSystem&     system = *world.getSystemManager().getSystem<HealthSystem>();
+		ecs::EntityHandle entity = world.createEntity();
 		entity.addComponent(Health());
 		entity.registerToSystem<HealthSystem>();
 
@@ -220,13 +223,12 @@ SCENARIO("A destroyed entity leaves every system", "[ecs][world]") {
 	}
 }
 
-// TODO: make pass
-SCENARIO("The world keeps working after an entity is destroyed", "[ecs][world][crash]") {
+SCENARIO("The world keeps working after an entity is destroyed", "[ecs][world]") {
 	GIVEN("two entities with Health") {
-		game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-		ecs::World				world(blockDatas);
-		ecs::EntityHandle		doomed = world.createEntity();
-		ecs::EntityHandle		survivor = world.createEntity();
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world(blockDatas);
+		ecs::EntityHandle       doomed   = world.createEntity();
+		ecs::EntityHandle       survivor = world.createEntity();
 		doomed.addComponent(Health(1));
 		survivor.addComponent(Health(2));
 

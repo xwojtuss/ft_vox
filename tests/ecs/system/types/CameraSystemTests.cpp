@@ -2,6 +2,8 @@
 
 #include <glm/gtc/epsilon.hpp>
 
+#include "scene/WorldInfo.hpp"
+#include "ecs/component/Components.hpp"
 #include "ecs/system/types/CameraSystem.hpp"
 #include "support/FakeRenderer.hpp"
 #include "support/TestEcs.hpp"
@@ -11,25 +13,25 @@ using ecs::component::Transform;
 namespace worldinfo = scene::worldinfo;
 
 namespace {
-bool	nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
-	return glm::all(glm::epsilonEqual(a, b, 1e-4f));
-}
+	bool nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
+		return glm::all(glm::epsilonEqual(a, b, 1e-4f));
+	}
 
-glm::vec3	seenFromCamera(const Camera& camera, const glm::vec3& point) {
-	return glm::vec3(camera.view * glm::vec4(point, 1.0f));
-}
+	glm::vec3 seenFromCamera(const Camera& camera, const glm::vec3& point) {
+		return glm::vec3(camera.view * glm::vec4(point, 1.0f));
+	}
 }
 
 SCENARIO("The camera sees the world from its entity's position and direction", "[ecs][camera]") {
 	GIVEN("a camera with a 70 degree field of view at (1, 2, 3), turned 90 degrees to the left") {
-		test::TestWorld		testWorld;
+		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::CameraSystem>();
-		ecs::EntityHandle	cameraEntity = testWorld.createEntity();
-		Transform			transform;
-		Camera				camera;
+		ecs::EntityHandle cameraEntity = testWorld.createEntity();
+		Transform         transform;
+		Camera            camera;
 		transform.position = {1.0f, 2.0f, 3.0f};
 		transform.rotation = glm::angleAxis(glm::radians(90.0f), worldinfo::up);
-		camera.fov = 70.0f;
+		camera.fov         = 70.0f;
 		cameraEntity.addComponent(transform);
 		cameraEntity.addComponent(camera);
 		cameraEntity.registerToSystem<ecs::CameraSystem>();
@@ -45,7 +47,8 @@ SCENARIO("The camera sees the world from its entity's position and direction", "
 				REQUIRE(nearlyEqual(seenFromCamera(updated, transform.position), glm::vec3(0.0f)));
 			}
 			AND_THEN("what is in front of the entity is straight ahead in the view") {
-				REQUIRE(nearlyEqual(seenFromCamera(updated, transform.position + worldinfo::left), {0.0f, 0.0f, -1.0f}));
+				REQUIRE(
+					nearlyEqual(seenFromCamera(updated, transform.position + worldinfo::left), {0.0f, 0.0f, -1.0f}));
 			}
 
 			AND_WHEN("the renderer finishes the frame") {

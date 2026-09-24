@@ -2,36 +2,43 @@
 
 #include <ostream>
 #include <string>
+#include <utility>
 
 namespace ecs {
-struct ComponentId {
-	static int	id;
-};
+	struct ComponentId {
+		static int id;
+	};
 
-struct IComponent {
-protected:
-	std::string	m_name;
+	struct IComponent {
+	protected:
+		std::string m_name;
 
-	IComponent(const std::string& name) : m_name(name) {}
+		explicit IComponent(std::string name) : m_name(std::move(name)) {
+		}
 
-public:
-	virtual ~IComponent() = default;
+	public:
+		virtual ~IComponent() = default;
 
-	virtual std::ostream&		print(std::ostream& os) const = 0;
-	const std::string&			getName() const;
-};
+		virtual std::ostream& print(std::ostream& os) const = 0;
 
-template <typename ComponentType>
-struct Component : public IComponent {
-protected:
-	Component(const std::string& name) : IComponent(name) {}
+		[[nodiscard]] const std::string& getName() const;
 
-public:
-	static int	getId();
+		friend std::ostream& operator<<(std::ostream& os, const IComponent& component) {
+			return component.print(os);
+		}
+	};
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+	template<typename ComponentType>
+	struct Component : public IComponent {
+	protected:
+		explicit Component(const std::string& name) : IComponent(name) {
+		}
+
+	public:
+		static int getId();
+
+		std::ostream& print(std::ostream& os) const override;
+	};
 }
-std::ostream&	operator<<(std::ostream& os, const ecs::IComponent& component);
 
 #include "Component.tpp"

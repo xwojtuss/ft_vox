@@ -21,8 +21,8 @@ SCENARIO("Loading a chunk generates its terrain", "[chunk-loader]") {
 				REQUIRE(loaded != nullptr);
 			}
 			AND_THEN("it holds the same terrain the world generator produces for that position") {
-				EarthGenerator	generator;
-				Chunk			expected;
+				EarthGenerator generator;
+				Chunk          expected;
 				generator.generateChunk(&expected, {-2, 0, 5});
 
 				for (unsigned short x = 0; x < chunkXSize; ++x)
@@ -33,7 +33,7 @@ SCENARIO("Loading a chunk generates its terrain", "[chunk-loader]") {
 		}
 
 		WHEN("the same chunk is loaded twice") {
-			const std::unique_ptr<Chunk> first = loader.loadChunk({0, 0, 0});
+			const std::unique_ptr<Chunk> first  = loader.loadChunk({0, 0, 0});
 			const std::unique_ptr<Chunk> second = loader.loadChunk({0, 0, 0});
 
 			THEN("each load returns its own copy") {

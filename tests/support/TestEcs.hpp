@@ -10,87 +10,95 @@
 #include "game/block/BlockData.hpp"
 
 namespace test {
+	struct Health : public ecs::Component<Health> {
+		int points = 100;
 
-struct Health : public ecs::Component<Health> {
-	int	points = 100;
+		Health() : Component<Health>("Health") {
+		}
 
-	Health() : Component<Health>("Health") {}
-	explicit Health(int points) : Health() { this->points = points; }
-};
+		explicit Health(int points) : Health() { this->points = points; }
+	};
 
-struct Armor : public ecs::Component<Armor> {
-	int	rating = 0;
+	struct Armor : public ecs::Component<Armor> {
+		int rating = 0;
 
-	Armor() : Component<Armor>("Armor") {}
-	explicit Armor(int rating) : Armor() { this->rating = rating; }
-};
+		Armor() : Component<Armor>("Armor") {
+		}
 
-class HealthSystem : public ecs::ASystem {
-public:
-	std::vector<std::string>	receivedEvents;
-	float						lastDeltaTime = 0.0f;
-	float						lastAspectRatio = 0.0f;
-	render::IRenderer*			lastRenderer = nullptr;
+		explicit Armor(int rating) : Armor() { this->rating = rating; }
+	};
 
-	HealthSystem() : ASystem(ecs::Dependencies()) {
-		m_dependencies.addDependency<Health>();
-	}
+	class HealthSystem : public ecs::ASystem {
+	public:
+		std::vector<std::string> receivedEvents;
+		float                    lastDeltaTime   = 0.0f;
+		float                    lastAspectRatio = 0.0f;
+		render::IRenderer*       lastRenderer    = nullptr;
 
-	void	bindEvents(ecs::Dispatcher& dispatcher) override {
-		dispatcher.subscribe<ecs::WorldReadyEvent>(this, &HealthSystem::onWorldReady);
-		dispatcher.subscribe<ecs::RenderEvent>(this, &HealthSystem::onRender);
-		dispatcher.subscribe<ecs::TextDrawEvent>(this, &HealthSystem::onTextDraw);
-		dispatcher.subscribe<ecs::RendererDrawEvent>(this, &HealthSystem::onRendererDraw);
-		dispatcher.subscribe<ecs::RendererFrameEvent>(this, &HealthSystem::onRendererFrame);
-		dispatcher.subscribe<ecs::SimulateEvent>(this, &HealthSystem::onSimulate);
-	}
+		HealthSystem() : ASystem(ecs::Dependencies()) {
+			m_dependencies.addDependency<Health>();
+		}
 
-	const std::vector<ecs::Entity>&	entities() const { return m_entities; }
+		void bindEvents(ecs::Dispatcher& dispatcher) override {
+			dispatcher.subscribe<ecs::WorldReadyEvent>(this, &HealthSystem::onWorldReady);
+			dispatcher.subscribe<ecs::RenderEvent>(this, &HealthSystem::onRender);
+			dispatcher.subscribe<ecs::TextDrawEvent>(this, &HealthSystem::onTextDraw);
+			dispatcher.subscribe<ecs::RendererDrawEvent>(this, &HealthSystem::onRendererDraw);
+			dispatcher.subscribe<ecs::RendererFrameEvent>(this, &HealthSystem::onRendererFrame);
+			dispatcher.subscribe<ecs::SimulateEvent>(this, &HealthSystem::onSimulate);
+		}
 
-private:
-	void	onWorldReady(const ecs::WorldReadyEvent& event) { receivedEvents.push_back(event.getName()); }
-	void	onRender(const ecs::RenderEvent& event) {
-		receivedEvents.push_back(event.getName());
-		lastAspectRatio = event.aspectRatio;
-	}
-	void	onTextDraw(const ecs::TextDrawEvent& event) {
-		receivedEvents.push_back(event.getName());
-		lastRenderer = event.renderer;
-	}
-	void	onRendererDraw(const ecs::RendererDrawEvent& event) {
-		receivedEvents.push_back(event.getName());
-		lastRenderer = event.renderer;
-	}
-	void	onRendererFrame(const ecs::RendererFrameEvent& event) {
-		receivedEvents.push_back(event.getName());
-		lastRenderer = event.renderer;
-	}
-	void	onSimulate(const ecs::SimulateEvent& event) {
-		receivedEvents.push_back(event.getName());
-		lastDeltaTime = event.deltaTime;
-	}
-};
+		const std::vector<ecs::Entity>& entities() const { return m_entities; }
 
-struct TestWorld {
-	game::block::BlockDatas	blockDatas{assets::MeshData{}, assets::TextureData{}};
-	ecs::World				world{blockDatas};
+	private:
+		void onWorldReady(const ecs::WorldReadyEvent& event) { receivedEvents.push_back(event.getName()); }
 
-	template <typename SystemType, typename... Args>
-	SystemType&	addSystem(Args&... args) {
-		world.createSystem<SystemType>(args...);
-		return *world.getSystemManager().getSystem<SystemType>();
-	}
+		void onRender(const ecs::RenderEvent& event) {
+			receivedEvents.push_back(event.getName());
+			lastAspectRatio = event.aspectRatio;
+		}
 
-	ecs::EntityHandle	createEntity() {
-		return world.createEntity();
-	}
+		void onTextDraw(const ecs::TextDrawEvent& event) {
+			receivedEvents.push_back(event.getName());
+			lastRenderer = event.renderer;
+		}
 
-	ecs::Dispatcher&	dispatcher() {
-		return world.getSystemManager().getDispatcher();
-	}
+		void onRendererDraw(const ecs::RendererDrawEvent& event) {
+			receivedEvents.push_back(event.getName());
+			lastRenderer = event.renderer;
+		}
 
-	void	simulate(float deltaTime, float time) {
-		world.getSystemManager().onSimulate(deltaTime, time);
-	}
-};
+		void onRendererFrame(const ecs::RendererFrameEvent& event) {
+			receivedEvents.push_back(event.getName());
+			lastRenderer = event.renderer;
+		}
+
+		void onSimulate(const ecs::SimulateEvent& event) {
+			receivedEvents.push_back(event.getName());
+			lastDeltaTime = event.deltaTime;
+		}
+	};
+
+	struct TestWorld {
+		game::block::BlockDatas blockDatas{assets::MeshData{}, assets::TextureData{}};
+		ecs::World              world{blockDatas};
+
+		template<typename SystemType, typename... Args>
+		SystemType& addSystem(Args&... args) {
+			world.createSystem<SystemType>(args...);
+			return *world.getSystemManager().getSystem<SystemType>();
+		}
+
+		ecs::EntityHandle createEntity() {
+			return world.createEntity();
+		}
+
+		ecs::Dispatcher& dispatcher() {
+			return world.getSystemManager().getDispatcher();
+		}
+
+		void simulate(float deltaTime, float time) {
+			world.getSystemManager().onSimulate(deltaTime, time);
+		}
+	};
 }

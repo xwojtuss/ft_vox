@@ -7,35 +7,35 @@
 using game::world::chunkXSize;
 
 namespace {
-struct ChunkSystemWorld {
-	game::block::BlockDatas	blockDatas = test::makeBlockDatas();
-	ecs::World				world{blockDatas};
-	test::FakeRenderer		renderer;
+	struct ChunkSystemWorld {
+		game::block::BlockDatas blockDatas = test::makeBlockDatas();
+		ecs::World              world{blockDatas};
+		test::FakeRenderer      renderer;
 
-	ChunkSystemWorld() {
-		world.createSystem<ecs::ChunkSystem>(world, renderer);
+		ChunkSystemWorld() {
+			world.createSystem<ecs::ChunkSystem>(world, renderer);
+		}
+
+		size_t meshCount() const {
+			return renderer.createdMeshes.size();
+		}
+
+		void movePlayer(glm::vec3 from, glm::vec3 to) {
+			world.getSystemManager().getDispatcher().emit(ecs::PlayerMoveEvent(from, to));
+		}
+	};
+
+	ChunkSystemWorld& sharedChunkSystemWorld() {
+		static ChunkSystemWorld instance;
+		return instance;
 	}
-
-	size_t	meshCount() const {
-		return renderer.createdMeshes.size();
-	}
-
-	void	movePlayer(glm::vec3 from, glm::vec3 to) {
-		world.getSystemManager().getDispatcher().emit(ecs::PlayerMoveEvent(from, to));
-	}
-};
-
-ChunkSystemWorld&	sharedChunkSystemWorld() {
-	static ChunkSystemWorld	instance;
-	return instance;
-}
 }
 
 // TODO: make pass
 SCENARIO("Chunks load around the player as they move", "[ecs][chunk-system]") {
 	GIVEN("a world whose chunk system has loaded the area around spawn") {
-		ChunkSystemWorld&	env = sharedChunkSystemWorld();
-		const size_t		meshesBefore = env.meshCount();
+		ChunkSystemWorld& env          = sharedChunkSystemWorld();
+		const size_t      meshesBefore = env.meshCount();
 
 		REQUIRE(meshesBefore > 0);
 

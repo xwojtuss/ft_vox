@@ -1,73 +1,88 @@
 #pragma once
 
+#include <utility>
+
 #include "../../render/input/InputTypes.hpp"
 
 namespace render {
-class IRenderer;
+	class IRenderer;
 }
 
 namespace ecs {
+	struct DispatchEvent {
+	protected:
+		std::string m_name;
 
-struct DispatchEvent {
-protected:
-	std::string	m_name;
+		explicit DispatchEvent(std::string name) : m_name(std::move(name)) {
+		}
 
-	DispatchEvent(const std::string& name) : m_name(name) {}
+	public:
+		virtual ~DispatchEvent() = default;
 
-public:
-	virtual ~DispatchEvent() = default;
+		[[nodiscard]] const std::string& getName() const { return m_name; }
+	};
 
-	const std::string&	getName() const { return m_name; }
-};
+	struct RenderEvent : public DispatchEvent {
+		float  aspectRatio;
+		double time;
 
-struct RenderEvent : public DispatchEvent {
-	float	aspectRatio;
-	double	time;
+		RenderEvent(const float aspectRatio, const double time) : DispatchEvent("RenderEvent"),
+																aspectRatio(aspectRatio), time(time) {
+		}
+	};
 
-	RenderEvent(float aspectRatio, double time) : DispatchEvent("RenderEvent"), aspectRatio(aspectRatio), time(time) {}
-};
+	struct TextDrawEvent : public DispatchEvent {
+		render::IRenderer* renderer;
 
-struct TextDrawEvent : public DispatchEvent {
-	render::IRenderer*	renderer;
+		explicit TextDrawEvent(render::IRenderer* renderer) : DispatchEvent("TextDrawEvent"), renderer(renderer) {
+		}
+	};
 
-	TextDrawEvent(render::IRenderer* renderer) : DispatchEvent("TextDrawEvent"), renderer(renderer) {}
-};
+	struct RendererDrawEvent : public DispatchEvent {
+		render::IRenderer* renderer;
 
-struct RendererDrawEvent : public DispatchEvent {
-	render::IRenderer*	renderer;
+		explicit RendererDrawEvent(render::IRenderer* renderer) : DispatchEvent("RendererDrawEvent"),
+																renderer(renderer) {
+		}
+	};
 
-	RendererDrawEvent(render::IRenderer* renderer) : DispatchEvent("RendererDrawEvent"), renderer(renderer) {}
-};
+	struct RendererFrameEvent : public DispatchEvent {
+		render::IRenderer* renderer;
 
-struct RendererFrameEvent : public DispatchEvent {
-	render::IRenderer*	renderer;
+		explicit RendererFrameEvent(render::IRenderer* renderer) : DispatchEvent("RendererFrameEvent"),
+																	renderer(renderer) {
+		}
+	};
 
-	RendererFrameEvent(render::IRenderer* renderer) : DispatchEvent("RendererFrameEvent"), renderer(renderer) {}
-};
+	struct InputEvent : public DispatchEvent {
+		float                       deltaTime{0};
+		ecs::Entity                 source{-1};
+		render::input::InputCommand command;
 
-struct InputEvent : public DispatchEvent {
-	float						deltaTime;
-	ecs::Entity					source;
-	render::input::InputCommand	command;
+		InputEvent() : DispatchEvent("InputEvent") {
+		}
+	};
 
-	InputEvent() : DispatchEvent("InputEvent"), deltaTime(0), source(-1) {}
-};
+	struct WorldReadyEvent : public DispatchEvent {
+		WorldReadyEvent() : DispatchEvent("WorldReadyEvent") {
+		}
+	};
 
-struct WorldReadyEvent : public DispatchEvent {
-	WorldReadyEvent() : DispatchEvent("WorldReadyEvent") {}
-};
+	struct SimulateEvent : public DispatchEvent {
+		float deltaTime;
+		float time;
 
-struct SimulateEvent : public DispatchEvent {
-	float	deltaTime;
-	float	time;
+		SimulateEvent(const float deltaTime, const float time) : DispatchEvent("SimulateEvent"), deltaTime(deltaTime),
+																time(time) {
+		}
+	};
 
-	SimulateEvent(float deltaTime, float time) : DispatchEvent("SimulateEvent"), deltaTime(deltaTime), time(time) {}
-};
+	struct PlayerMoveEvent : public DispatchEvent {
+		glm::vec3 previousPosition;
+		glm::vec3 currentPosition;
 
-struct PlayerMoveEvent : public DispatchEvent {
-	glm::vec3	previousPosition;
-	glm::vec3	currentPosition;
-
-	PlayerMoveEvent(glm::vec3 previousPosition, glm::vec3 currentPosition) : DispatchEvent("PlayerMoveEvent"), previousPosition(previousPosition), currentPosition(currentPosition) {}
-};
+		PlayerMoveEvent(const glm::vec3 previousPosition, const glm::vec3 currentPosition) : DispatchEvent(
+				"PlayerMoveEvent"), previousPosition(previousPosition), currentPosition(currentPosition) {
+		}
+	};
 }

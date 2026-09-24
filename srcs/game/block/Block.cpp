@@ -2,10 +2,12 @@
 
 using namespace game;
 
-Block::Block() : id(0), entity(-1) {}
+Block::Block() : id(0) {
+}
 
-Block::Block(BlockId id) : id(id), entity(-1) {}
+Block::Block(const BlockId id) : id(id) {
+}
 
-bool	Block::hasEntity() const {
+bool Block::hasEntity() const {
 	return entity != -1;
 }

@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "ecs/component/Components.hpp"
 #include "ecs/system/types/RenderSystem.hpp"
 #include "support/FakeRenderer.hpp"
 #include "support/TestEcs.hpp"
@@ -9,26 +10,26 @@ using ecs::component::Texture;
 using ecs::component::Transform;
 
 namespace {
-ecs::EntityHandle	createDrawable(test::TestWorld& testWorld, glm::vec3 position) {
-	ecs::EntityHandle	entity = testWorld.createEntity();
-	Transform			transform;
-	transform.position = position;
-	entity.addComponent(transform);
-	entity.addComponent(Mesh());
-	return entity;
-}
+	ecs::EntityHandle createDrawable(test::TestWorld& testWorld, glm::vec3 position) {
+		ecs::EntityHandle entity = testWorld.createEntity();
+		Transform         transform;
+		transform.position = position;
+		entity.addComponent(transform);
+		entity.addComponent(Mesh());
+		return entity;
+	}
 }
 
 SCENARIO("Every mesh in the render system is drawn each frame", "[ecs][render]") {
 	GIVEN("a textured mesh and an untextured mesh in the render system, and a mesh outside it") {
-		test::TestWorld		testWorld;
-		test::FakeRenderer	renderer;
+		test::TestWorld    testWorld;
+		test::FakeRenderer renderer;
 		testWorld.addSystem<ecs::RenderSystem>();
 
-		ecs::EntityHandle	textured = createDrawable(testWorld, {1.0f, 0.0f, 0.0f});
+		ecs::EntityHandle textured = createDrawable(testWorld, {1.0f, 0.0f, 0.0f});
 		textured.addComponent(Texture());
 		textured.registerToSystem<ecs::RenderSystem>();
-		ecs::EntityHandle	untextured = createDrawable(testWorld, {2.0f, 0.0f, 0.0f});
+		ecs::EntityHandle untextured = createDrawable(testWorld, {2.0f, 0.0f, 0.0f});
 		untextured.registerToSystem<ecs::RenderSystem>();
 		createDrawable(testWorld, {3.0f, 0.0f, 0.0f});
 

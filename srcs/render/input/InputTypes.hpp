@@ -1,104 +1,103 @@
 #pragma once
 
-#include <cstdint>
 #include <unordered_map>
-#include <functional>
+#include <vector>
 #include <glm/glm.hpp>
 
 namespace render::input {
-typedef int	InputEvents;
-enum InputEvent {
-	MoveForward = 1 << 0,
-	MoveBackward = 1 << 1,
-	MoveRight = 1 << 2,
-	MoveLeft = 1 << 3,
-	Jump = 1 << 4,
-	Crouch = 1 << 5,
-	AnyMove = MoveForward | MoveBackward | MoveRight | MoveLeft | Jump | Crouch,
-	ToggleCursor = 1 << 6,
-	ActionButton = 1 << 7,
-	SecondaryButton = 1 << 8,
-	AnyMouseButton = ActionButton | SecondaryButton,
-	ShaderToggle = 1 << 9,
-	PlayerComponentsMenuToggle = 1 << 10,
-	EventRuntimesMenuToggle = 1 << 11,
-	All = 1 << (sizeof(InputEvents) * 8 - 1)
-};
+	using InputEvents = uint32_t;
 
-enum MouseButton {
-	LeftButton = 1 << 0,
-	RightButton = 1 << 1,
-	MiddleButton = 1 << 2,
-	Button4 = 1 << 3,
-	Button5 = 1 << 4,
-	Button6 = 1 << 5,
-	Button7 = 1 << 6,
-	Button8 = 1 << 7,
-	AnyButton = LeftButton | RightButton | MiddleButton | Button4 | Button5 | Button6 | Button7 | Button8
-};
+	enum InputEvent : uint32_t {
+		MoveForward                = 1U << 0U,
+		MoveBackward               = 1U << 1U,
+		MoveRight                  = 1U << 2U,
+		MoveLeft                   = 1U << 3U,
+		Jump                       = 1U << 4U,
+		Crouch                     = 1U << 5U,
+		AnyMove                    = MoveForward | MoveBackward | MoveRight | MoveLeft | Jump | Crouch,
+		ToggleCursor               = 1U << 6U,
+		ActionButton               = 1U << 7U,
+		SecondaryButton            = 1U << 8U,
+		AnyMouseButton             = ActionButton | SecondaryButton,
+		PlayerComponentsMenuToggle = 1U << 9U,
+		EventRuntimesMenuToggle    = 1U << 10U,
+		All                        = 1U << ((sizeof(InputEvents) * 8U) - 1U)
+	};
 
-struct InputCommand {
-	float		moveForward;
-	float		moveRight;
-	float		moveUp;
-	float		lookUp;
-	float		lookRight;
-	InputEvents	startedEvents;
-	InputEvents	repeatedEvents;
-	InputEvents	releasedEvents;
-	InputEvents	activeEvents;
+	enum MouseButton : uint32_t {
+		LeftButton   = 1U << 0U,
+		RightButton  = 1U << 1U,
+		MiddleButton = 1U << 2U,
+		Button4      = 1U << 3U,
+		Button5      = 1U << 4U,
+		Button6      = 1U << 5U,
+		Button7      = 1U << 6U,
+		Button8      = 1U << 7U,
+		AnyButton    = LeftButton | RightButton | MiddleButton | Button4 | Button5 | Button6 | Button7 | Button8
+	};
 
-	float		maxPitch = glm::radians(89.0f);
-};
+	struct InputCommand {
+		float       moveForward{};
+		float       moveRight{};
+		float       moveUp{};
+		float       lookUp{};
+		float       lookRight{};
+		InputEvents startedEvents{};
+		InputEvents repeatedEvents{};
+		InputEvents releasedEvents{};
+		InputEvents activeEvents{};
 
-enum InputAction {
-	Press,
-	Release,
-	Repeat
-};
+		float maxPitch = glm::radians(89.0f);
+	};
 
-typedef int	InputMods;
-enum InputMod {
-	Shift = 1 << 0,
-	Control = 1 << 1,
-	Alt = 1 << 2,
-	Super = 1 << 3
-};
+	enum InputAction {
+		Press,
+		Release,
+		Repeat
+	};
 
-constexpr bool	hasModifier(InputMods mods, InputMod mod) {
-	return (mods & mod) != 0;
-}
+	using InputMods = uint32_t;
 
-constexpr bool	hasEvent(InputEvents events, InputEvent event) {
-	return (events & event) != 0;
-}
+	enum InputMod : uint32_t {
+		Shift   = 1U << 0U,
+		Control = 1U << 1U,
+		Alt     = 1U << 2U,
+		Super   = 1U << 3U
+	};
 
-constexpr bool	hasAnyEvent(InputEvents events, InputEvents other) {
-	return (events & other) != 0;
-}
+	[[nodiscard]] constexpr bool hasModifier(const InputMods mods, const InputMod mod) {
+		return (mods & mod) != 0;
+	}
 
-constexpr bool	hasAllEvents(InputEvents events, InputEvents other) {
-	return (events & other) == other;
-}
+	[[nodiscard]] constexpr bool hasEvent(const InputEvents events, const InputEvent event) {
+		return (events & event) != 0;
+	}
 
-typedef long	Input;
+	[[nodiscard]] constexpr bool hasAnyEvent(const InputEvents events, const InputEvents other) {
+		return (events & other) != 0;
+	}
 
-constexpr Input	createInput(int scancode, InputMods mods) {
-	return (scancode << 8) | mods;
-}
+	[[nodiscard]] constexpr bool hasAllEvents(const InputEvents events, const InputEvents other) {
+		return (events & other) == other;
+	}
 
-constexpr Input	createMouseInput(MouseButton button, InputMods mods) {
-	return (button << 16) | mods;
-}
+	using Input = long;
 
-constexpr int	getScancode(Input input) {
-	return input >> 8;
-}
+	[[nodiscard]] constexpr Input createInput(const int scancode, const InputMods mods) {
+		return (static_cast<Input>(scancode) << 8) | static_cast<Input>(mods);
+	}
 
-constexpr MouseButton	getMouseButton(Input input) {
-	return static_cast<MouseButton>(input >> 16);
-}
+	[[nodiscard]] constexpr Input createMouseInput(const MouseButton button, const InputMods mods) {
+		return (static_cast<Input>(button) << 16) | static_cast<Input>(mods);
+	}
 
-typedef std::unordered_map<Input, std::vector<InputEvent>>	InputEventBindings;
+	[[nodiscard]] constexpr int getScancode(const Input input) {
+		return static_cast<int>(input >> 8);
+	}
 
+	[[nodiscard]] constexpr MouseButton getMouseButton(const Input input) {
+		return static_cast<MouseButton>(input >> 16);
+	}
+
+	using InputEventBindings = std::unordered_map<Input, std::vector<InputEvent>>;
 }

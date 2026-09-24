@@ -2,27 +2,25 @@
 
 #include <bitset>
 
-#include "../component/Component.hpp"
-
 namespace ecs {
-typedef std::bitset<32>	DependencyMask;
+	using DependencyMask = std::bitset<32>;
 
-struct Dependencies {
-	DependencyMask	mask;
+	struct Dependencies {
+		DependencyMask mask;
 
-	Dependencies();
+		Dependencies();
 
-	template <typename ComponentType>
-	void		addDependency();
+		template<typename ComponentType>
+		void addDependency();
 
-	template <typename ComponentType>
-	void		removeDependency();
+		template<typename ComponentType>
+		void removeDependency();
 
-	template <typename ComponentType>
-	bool		includes() const;
+		template<typename ComponentType>
+		[[nodiscard]] bool includes() const;
 
-	bool		matches(const Dependencies& other) const;
-};
+		[[nodiscard]] bool matches(const Dependencies& other) const;
+	};
 }
 
 #include "Dependencies.tpp"

@@ -5,15 +5,15 @@
 #include "../../assets/Resources.hpp"
 
 namespace game::world {
-class ChunkMesher {
-private:
-	game::block::BlockDatas&	m_blockDatas;
+	class ChunkMesher {
+	private:
+		block::BlockDatas& m_blockDatas;
 
-	static game::BlockId	getVoxelCheckBounds(const Chunk& chunk, int x, int y, int z);
+		static BlockId getVoxelCheckBounds(const Chunk& chunk, unsigned short x, unsigned short y, unsigned short z);
 
-public:
-	ChunkMesher(game::block::BlockDatas& blockDatas);
+	public:
+		explicit ChunkMesher(block::BlockDatas& blockDatas);
 
-	assets::MeshData	toMeshData(const Chunk& chunk);
-};
+		[[nodiscard]] assets::MeshData toMeshData(const Chunk& chunk) const;
+	};
 }

@@ -5,19 +5,18 @@
 #include "InputTypes.hpp"
 
 namespace render::input {
-class InputManager {
-private:
-	MouseInputProcessor	m_mouseProcessor;
-	KeyInputProcessor	m_keyInputProcessor;
+	class InputManager {
+	private:
+		MouseInputProcessor m_mouseProcessor;
+		KeyInputProcessor   m_keyInputProcessor;
 
-public:
-	InputManager();
-	~InputManager();
+		static float axis(InputEvents activeEvents, InputEvent positive, InputEvent negative);
 
-	InputCommand		buildCommand();
-	void				processMouseMove(double xpos, double ypos);
-	void				processMouseButton(int button, InputAction action, InputMods modifiers);
-	void				processKey(int scancode, InputAction action, InputMods modifiers);
-	KeyInputProcessor&	getKeyInputProcessor();
-};
+	public:
+		[[nodiscard]] InputCommand       buildCommand();
+		void                             processMouseMove(double xPos, double yPos);
+		void                             processMouseButton(int button, InputAction action, InputMods modifiers);
+		void                             processKey(int scancode, InputAction action, InputMods modifiers);
+		[[nodiscard]] KeyInputProcessor& getKeyInputProcessor();
+	};
 }

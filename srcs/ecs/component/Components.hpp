@@ -1,147 +1,154 @@
 #pragma once
 
 #include <string>
-#include <iomanip>
 #include <ostream>
-#include <magic_enum/magic_enum.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 #include "Component.hpp"
 #include "../../assets/Resources.hpp"
-#include "../../scene/WorldInfo.hpp"
 #include "../../render/input/InputTypes.hpp"
 
 namespace ecs::component {
-struct Transform : public Component<Transform> {
-	glm::vec3	position = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::quat	rotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
-	glm::vec3	scale = glm::vec3(1.0f, 1.0f, 1.0f);
-	bool		canRotate = true;
+	struct Transform : public Component<Transform> {
+		glm::vec3 position  = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::quat rotation  = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
+		glm::vec3 scale     = glm::vec3(1.0f, 1.0f, 1.0f);
+		bool      canRotate = true;
 
-	Transform() : Component<Transform>("Transform") {}
+		Transform() : Component("Transform") {
+		}
 
-	glm::vec3	forward() const;
-	glm::vec3	right() const;
-	glm::vec3	left() const;
-	glm::vec3	up() const;
-	glm::vec3	down() const;
-	glm::mat4	toModelMatrix() const;
+		[[nodiscard]] glm::vec3 forward() const;
+		[[nodiscard]] glm::vec3 right() const;
+		[[nodiscard]] glm::vec3 left() const;
+		[[nodiscard]] glm::vec3 up() const;
+		[[nodiscard]] glm::vec3 down() const;
+		[[nodiscard]] glm::mat4 toModelMatrix() const;
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-struct Transform2D : public Component<Transform2D> {
-	glm::vec2	position;
-	glm::vec2	scale;
+	struct Transform2D : public Component<Transform2D> {
+		glm::vec2 position;
+		glm::vec2 scale;
 
-	Transform2D() : Component<Transform2D>("Transform2D") {}
+		Transform2D() : Component("Transform2D") {
+		}
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-struct Velocity : public Component<Velocity> {
-	glm::vec3	velocity;
-	glm::vec3	desiredVelocity;
-	float		maxSpeed;
-	float		acceleration;
-	float		decelleration;
-	bool		canMove = true;
+	struct Velocity : public Component<Velocity> {
+		glm::vec3 velocity;
+		glm::vec3 desiredVelocity;
+		float     maxSpeed{};
+		float     acceleration{};
+		float     deceleration{};
+		bool      canMove = true;
 
-	Velocity() : Component<Velocity>("Velocity") {}
+		Velocity() : Component("Velocity") {
+		}
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-struct Camera : public Component<Camera> {
-	glm::mat4	view;
-	glm::mat4	projection;
-	float		fov;
+	struct Camera : public Component<Camera> {
+		glm::mat4 view;
+		glm::mat4 projection;
+		float     fov{};
 
-	Camera() : Component<Camera>("Camera") {}
+		Camera() : Component("Camera") {
+		}
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-struct Mesh : public Component<Mesh> {
-	assets::MeshHandle		mesh;
-	assets::PipelineType	pipelineType;
+	struct Mesh : public Component<Mesh> {
+		assets::MeshHandle   mesh;
+		assets::PipelineType pipelineType = assets::PipelineType::Textured;
 
-	Mesh() : Component<Mesh>("Mesh") {}
+		Mesh() : Component("Mesh") {
+		}
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-struct Texture : public Component<Texture> {
-	assets::TextureHandle	texture;
+	struct Texture : public Component<Texture> {
+		assets::TextureHandle texture;
 
-	Texture() : Component<Texture>("Texture") {}
+		Texture() : Component("Texture") {
+		}
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-enum HAlignment {
-	Left,
-	Center,
-	Right
-};
+	enum HAlignment {
+		Left,
+		Center,
+		Right
+	};
 
-enum VAlignment {
-	Top = HAlignment::Left,
-	Middle = HAlignment::Center,
-	Bottom = HAlignment::Right
-};
+	enum VAlignment {
+		Top    = Left,
+		Middle = Center,
+		Bottom = Right
+	};
 
-struct Text : public Component<Text>, public Mesh {
-	std::string				text;
-	HAlignment				horizontalAlignment = HAlignment::Left;
-	VAlignment				verticalAlignment = VAlignment::Top;
-	bool					aligned = false;
+	struct Text : public Component<Text>, public Mesh {
+		std::string text;
+		HAlignment  horizontalAlignment = Left;
+		VAlignment  verticalAlignment   = Top;
+		bool        aligned             = false;
 
-	Text() : Component<Text>("Text"), Mesh() {}
-	Text(assets::MeshHandle textMeshHandle) : Component<Text>("Text"), Mesh() {
-		pipelineType = assets::PipelineType::Text;
-		mesh = textMeshHandle;
-		this->text = "";
-	}
+		Text() : Component<Text>("Text") {
+		}
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		explicit Text(assets::MeshHandle textMeshHandle) : Component<Text>("Text") {
+			pipelineType = assets::PipelineType::Text;
+			mesh         = textMeshHandle;
+		}
 
-struct Input : public Component<Input> {
-	render::input::InputCommand	command;
-	float						mouseSensitivity;
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-	Input() : Component<Input>("Input") {}
+	struct Input : public Component<Input> {
+		render::input::InputCommand command;
+		float                       mouseSensitivity{};
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		Input() : Component("Input") {
+		}
 
-struct Color : public Component<Color> {
-	glm::vec4	color;
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-	Color() : Component<Color>("Color") {}
+	struct Color : public Component<Color> {
+		glm::vec4 color;
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		Color() : Component("Color") {
+		}
 
-enum AnimationType {
-	Spin,
-	Bounce,
-	Jitter,
-	Random,
-	Circle,
-	Pulse
-};
+		std::ostream& print(std::ostream& os) const override;
+	};
 
-struct Animation : public Component<Animation> {
-	float			speed = 1.0f;
-	float			intensity = 1.0f;
-	AnimationType	type;
+	enum AnimationType {
+		Spin,
+		Bounce,
+		Jitter,
+		Random,
+		Circle,
+		Pulse
+	};
 
-	Animation() : Component<Animation>("Animation") {}
+	struct Animation : public Component<Animation> {
+		float         speed     = 1.0f;
+		float         intensity = 1.0f;
+		AnimationType type      = AnimationType::Spin;
 
-	virtual std::ostream&	print(std::ostream& os) const override;
-};
+		Animation() : Component("Animation") {
+		}
+
+		std::ostream& print(std::ostream& os) const override;
+	};
 }

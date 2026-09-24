@@ -8,28 +8,33 @@
 #include "ecs/system/DispatcherEvents.hpp"
 
 namespace {
-struct EventRecorder {
-	std::string					name;
-	std::vector<std::string>*	calls;
-	float						lastDeltaTime = 0.0f;
+	struct EventRecorder {
+		std::string               name;
+		std::vector<std::string>* calls;
+		float                     lastDeltaTime = 0.0f;
 
-	void	onSimulate(const ecs::SimulateEvent& event) {
-		calls->push_back(name);
-		lastDeltaTime = event.deltaTime;
-	}
-	void	onWorldReady(const ecs::WorldReadyEvent&) {
-		calls->push_back(name + " ready");
-	}
-};
+		void onSimulate(const ecs::SimulateEvent& event) {
+			calls->push_back(name);
+			lastDeltaTime = event.deltaTime;
+		}
+
+		void onRender(const ecs::RenderEvent&) const {
+			calls->push_back(name + " rendered");
+		}
+
+		void onWorldReady(const ecs::WorldReadyEvent&) {
+			calls->push_back(name + " ready");
+		}
+	};
 }
 
 SCENARIO("Events reach every subscriber of their type, in subscription order", "[ecs][dispatcher]") {
 	GIVEN("two listeners subscribed to simulate events and one to world-ready events") {
-		ecs::Dispatcher				dispatcher;
-		std::vector<std::string>	calls;
-		EventRecorder					first{"first", &calls};
-		EventRecorder					second{"second", &calls};
-		EventRecorder					other{"other", &calls};
+		ecs::Dispatcher          dispatcher;
+		std::vector<std::string> calls;
+		EventRecorder            first{"first", &calls};
+		EventRecorder            second{"second", &calls};
+		EventRecorder            other{"other", &calls};
 
 		dispatcher.subscribe<ecs::SimulateEvent>(&first, &EventRecorder::onSimulate);
 		dispatcher.subscribe<ecs::SimulateEvent>(&second, &EventRecorder::onSimulate);
@@ -57,11 +62,28 @@ SCENARIO("Events reach every subscriber of their type, in subscription order", "
 	}
 }
 
+SCENARIO("Handlers that do not change their system can be const", "[ecs][dispatcher]") {
+	GIVEN("a listener whose render handler is a const member function") {
+		ecs::Dispatcher          dispatcher;
+		std::vector<std::string> calls;
+		const EventRecorder      listener{"listener", &calls};
+		dispatcher.subscribe<ecs::RenderEvent>(&listener, &EventRecorder::onRender);
+
+		WHEN("a render event is emitted") {
+			dispatcher.emit(ecs::RenderEvent(1.0f, 0.0));
+
+			THEN("the const handler receives it") {
+				REQUIRE(calls == std::vector<std::string>{"listener rendered"});
+			}
+		}
+	}
+}
+
 SCENARIO("The dispatcher measures how long each event took", "[ecs][dispatcher]") {
 	GIVEN("a dispatcher with one simulate listener") {
-		ecs::Dispatcher				dispatcher;
-		std::vector<std::string>	calls;
-		EventRecorder					listener{"listener", &calls};
+		ecs::Dispatcher          dispatcher;
+		std::vector<std::string> calls;
+		EventRecorder            listener{"listener", &calls};
 		dispatcher.subscribe<ecs::SimulateEvent>(&listener, &EventRecorder::onSimulate);
 
 		THEN("nothing is measured before any event") {

@@ -2,14 +2,15 @@
 
 #include <memory>
 
+#include "error/Exception.hpp"
 #include "support/TestEcs.hpp"
 
 using HealthManager = ecs::ComponentManager<test::Health>;
 
 namespace {
-std::unique_ptr<HealthManager>	makeManager() {
-	return std::make_unique<HealthManager>();
-}
+	std::unique_ptr<HealthManager> makeManager() {
+		return std::make_unique<HealthManager>();
+	}
 }
 
 SCENARIO("An entity's component can be added, read and checked", "[ecs][component-manager]") {
@@ -66,7 +67,7 @@ SCENARIO("Components can be walked by index", "[ecs][component-manager]") {
 			REQUIRE(manager->getComponentAtIndex(2)->points == 30);
 		}
 		AND_THEN("an index past the count is rejected") {
-			REQUIRE_THROWS_AS(manager->getComponentAtIndex(3), std::runtime_error);
+			REQUIRE_THROWS_AS(manager->getComponentAtIndex(3), error::EcsError);
 		}
 	}
 }
@@ -96,7 +97,7 @@ SCENARIO("Removing a component", "[ecs][component-manager]") {
 
 		WHEN("a component is removed from an entity that has none") {
 			THEN("it is rejected") {
-				REQUIRE_THROWS_AS(manager->removeComponent(99), std::runtime_error);
+				REQUIRE_THROWS_AS(manager->removeComponent(99), error::EcsError);
 			}
 		}
 	}
@@ -130,7 +131,7 @@ SCENARIO("A component manager has a fixed capacity", "[ecs][component-manager]")
 			REQUIRE(manager->getComponentCount() == static_cast<size_t>(ecs::maxComponents));
 		}
 		AND_THEN("adding one more is rejected") {
-			REQUIRE_THROWS_AS(manager->addComponent(ecs::maxComponents, test::Health()), std::runtime_error);
+			REQUIRE_THROWS_AS(manager->addComponent(ecs::maxComponents, test::Health()), error::EcsError);
 		}
 	}
 }
@@ -142,7 +143,7 @@ SCENARIO("A component manager can be copied", "[ecs][component-manager]") {
 
 		WHEN("it is assigned to another manager") {
 			auto copy = makeManager();
-			*copy = *original;
+			*copy     = *original;
 
 			THEN("the copy holds the same components") {
 				REQUIRE(copy->getComponentCount() == 1);
@@ -156,7 +157,7 @@ SCENARIO("A component manager can be copied", "[ecs][component-manager]") {
 
 		WHEN("it is assigned to itself") {
 			HealthManager& same = *original;
-			*original = same;
+			*original           = same;
 
 			THEN("nothing changes") {
 				REQUIRE(original->getComponentCount() == 1);

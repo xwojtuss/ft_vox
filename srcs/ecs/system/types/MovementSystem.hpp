@@ -1,24 +1,21 @@
 #pragma once
 
-#include <string>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 #include "../ASystem.hpp"
 #include "../DispatcherEvents.hpp"
-#include "../../component/Components.hpp"
 
 namespace ecs {
-class World;
+	class World;
 
-class MovementSystem : public ASystem {
-public:
-	MovementSystem();
-	~MovementSystem() = default;
+	class MovementSystem : public ASystem {
+	public:
+		MovementSystem();
 
-	void					onInput(const InputEvent& event);
-	void					onSimulate(const SimulateEvent& event);
-	virtual void			bindEvents(Dispatcher& dispatcher) override;
-};
+		void onInput(const InputEvent& event) const;
+		void onSimulate(const SimulateEvent& event) const;
+		void bindEvents(Dispatcher& dispatcher) override;
+	};
 }

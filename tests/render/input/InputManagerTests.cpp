@@ -7,42 +7,43 @@ using input::InputAction;
 using input::InputEvent;
 
 namespace {
-enum Key {
-	W = 17,
-	S = 31,
-	A = 30,
-	D = 32,
-	Space = 57,
-	Control = 29
-};
+	enum Key {
+		W       = 17,
+		S       = 31,
+		A       = 30,
+		D       = 32,
+		Space   = 57,
+		Control = 29
+	};
 
-struct Controls {
-	input::InputManager	manager;
+	struct Controls {
+		input::InputManager manager;
 
-	Controls() {
-		bind(W, InputEvent::MoveForward);
-		bind(S, InputEvent::MoveBackward);
-		bind(A, InputEvent::MoveLeft);
-		bind(D, InputEvent::MoveRight);
-		bind(Space, InputEvent::Jump);
-		bind(Control, InputEvent::Crouch);
-		manager.getKeyInputProcessor().bindEvent(input::createMouseInput(input::MouseButton::LeftButton, 0), InputEvent::ActionButton);
-	}
+		Controls() {
+			bind(W, InputEvent::MoveForward);
+			bind(S, InputEvent::MoveBackward);
+			bind(A, InputEvent::MoveLeft);
+			bind(D, InputEvent::MoveRight);
+			bind(Space, InputEvent::Jump);
+			bind(Control, InputEvent::Crouch);
+			manager.getKeyInputProcessor().bindEvent(input::createMouseInput(input::MouseButton::LeftButton, 0),
+													InputEvent::ActionButton);
+		}
 
-	void	bind(Key key, InputEvent event) {
-		manager.getKeyInputProcessor().bindEvent(input::createInput(key, 0), event);
-	}
+		void bind(Key key, InputEvent event) {
+			manager.getKeyInputProcessor().bindEvent(input::createInput(key, 0), event);
+		}
 
-	void	press(std::initializer_list<Key> keys) {
-		for (Key key : keys)
-			manager.processKey(key, InputAction::Press, 0);
-	}
+		void press(std::initializer_list<Key> keys) {
+			for (Key key: keys)
+				manager.processKey(key, InputAction::Press, 0);
+		}
 
-	void	release(std::initializer_list<Key> keys) {
-		for (Key key : keys)
-			manager.processKey(key, InputAction::Release, 0);
-	}
-};
+		void release(std::initializer_list<Key> keys) {
+			for (Key key: keys)
+				manager.processKey(key, InputAction::Release, 0);
+		}
+	};
 }
 
 SCENARIO("One command describes everything the player is doing at once", "[client][input][command]") {
@@ -97,7 +98,7 @@ SCENARIO("A released direction stops moving the player", "[client][input][comman
 	GIVEN("a player who held forward in the last command") {
 		Controls controls;
 		controls.press({W});
-		controls.manager.buildCommand();
+		[[maybe_unused]] const input::InputCommand heldForward = controls.manager.buildCommand();
 
 		WHEN("they release it and a new command is built") {
 			controls.release({W});

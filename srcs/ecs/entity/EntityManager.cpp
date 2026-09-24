@@ -2,9 +2,6 @@
 
 using namespace ecs;
 
-EntityManager::EntityManager() : lastEntity(1) {
-}
-
-Entity	EntityManager::createEntity() {
-	return lastEntity++;
+Entity EntityManager::createEntity() {
+	return m_lastEntity++;
 }
