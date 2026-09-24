@@ -22,22 +22,34 @@ else()
   message(STATUS "mold not found, using default linker")
 endif()
 
+option(SCOP_BUILD_TESTS "Build the Catch2 unit tests" ON)
+option(SCOP_COVERAGE "Instrument scop_core and the tests for coverage (gcovr)" OFF)
+
 file(GLOB_RECURSE SCOP_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.cpp"
 )
+list(REMOVE_ITEM SCOP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
 
-add_executable(scop ${SCOP_SOURCES})
+# Everything except main() lives in scop_core, shared by the game and the tests
+add_library(scop_core STATIC ${SCOP_SOURCES})
 
-target_compile_definitions(scop PRIVATE GLM_FORCE_CTOR_INIT NDEBUG
+add_executable(scop "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
+
+target_compile_definitions(scop_core PUBLIC GLM_FORCE_CTOR_INIT NDEBUG
   PROJECT_ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-target_compile_options(scop PRIVATE -Wall -Wextra -Werror -O0 -g)
+target_compile_options(scop_core PUBLIC -Wall -Wextra -Werror -O0 -g)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(scop PRIVATE -Wno-error=maybe-uninitialized)
+  target_compile_options(scop_core PUBLIC -Wno-error=maybe-uninitialized)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(scop PRIVATE -Wno-unknown-warning-option)
+  target_compile_options(scop_core PUBLIC -Wno-unknown-warning-option)
+endif()
+
+if(SCOP_COVERAGE)
+  target_compile_options(scop_core PUBLIC --coverage)
+  target_link_options(scop_core PUBLIC --coverage)
 endif()
 
 file(GLOB SRC_INCLUDE_DIR_CANDIDATES LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*")
@@ -48,7 +60,7 @@ foreach(CANDIDATE IN LISTS SRC_INCLUDE_DIR_CANDIDATES)
   endif()
 endforeach()
 
-target_include_directories(scop PRIVATE
+target_include_directories(scop_core PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}/srcs"
   ${SRC_INCLUDE_DIRS}
 )
@@ -86,7 +98,7 @@ FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(imgui)
 FetchContent_MakeAvailable(magic_enum)
 
-target_sources(scop PRIVATE
+target_sources(scop_core PRIVATE
   "${imgui_SOURCE_DIR}/imgui.cpp"
   "${imgui_SOURCE_DIR}/imgui_demo.cpp"
   "${imgui_SOURCE_DIR}/imgui_draw.cpp"
@@ -96,18 +108,25 @@ target_sources(scop PRIVATE
   "${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp"
 )
 
-target_include_directories(scop PRIVATE
+target_include_directories(scop_core PUBLIC
   "${imgui_SOURCE_DIR}"
   "${imgui_SOURCE_DIR}/backends"
   "${magic_enum_SOURCE_DIR}/include"
 )
 
-target_link_libraries(scop PRIVATE
+target_link_libraries(scop_core PUBLIC
   Vulkan::Vulkan
   glfw
   glm::glm
   magic_enum::magic_enum
 )
+
+target_link_libraries(scop PRIVATE scop_core)
+
+if(SCOP_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
 
 find_program(GLSLANG_VALIDATOR glslangValidator)
 if(NOT GLSLANG_VALIDATOR)
