@@ -56,4 +56,9 @@ namespace error {
 	public:
 		explicit InputError(const std::string& message);
 	};
+
+	class WindowError : public Exception {
+	public:
+		explicit WindowError(const std::string& message);
+	};
 }

@@ -56,7 +56,8 @@ namespace render::vulkan {
 							int32_t               texHeight, uint32_t mipLevels) const;
 		void transitionImageLayout(const VulkanContext& context, VkImage         image, VkFormat     format,
 									VkImageLayout       oldLayout, VkImageLayout newLayout, uint32_t mipLevels) const;
-		SwapChainImage     createTextureImage(const assets::TextureData& textureData, VulkanContext& context) const;
+		[[nodiscard]] SwapChainImage createTextureImage(const assets::TextureData& textureData,
+														const VulkanContext&       context) const;
 		static VkImageView createTextureImageView(const assets::TextureData& textureData, const VulkanContext& context,
 												VkImage                      textureImage);
 		static VkSampler createTextureSampler(const VulkanContext& context);

@@ -52,7 +52,7 @@ void VulkanSwapchain::createSwapChain(const VulkanContext& context) {
 		createInfo.pQueueFamilyIndices   = nullptr;
 	}
 	createInfo.preTransform   = swapChainSupport.capabilities.currentTransform;
-	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	createInfo.compositeAlpha = chooseCompositeAlpha(swapChainSupport.capabilities.supportedCompositeAlpha);
 	createInfo.presentMode    = presentMode;
 	createInfo.clipped        = VK_TRUE;
 	createInfo.oldSwapchain   = VK_NULL_HANDLE;
@@ -68,13 +68,30 @@ void VulkanSwapchain::createSwapChain(const VulkanContext& context) {
 }
 
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-	for (auto availableFormat: availableFormats) {
-		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace ==
-			VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-			return availableFormat;
+	constexpr VkSurfaceFormatKHR preferred = {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
+
+	if (availableFormats.size() == 1 && availableFormats.front().format == VK_FORMAT_UNDEFINED)
+		return preferred;
+
+	for (const VkFormat format: {VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_R8G8B8A8_SRGB}) {
+		for (const VkSurfaceFormatKHR& available: availableFormats) {
+			if (available.format == format && available.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				return available;
 		}
 	}
-	return availableFormats[0];
+	return availableFormats.front();
+}
+
+VkCompositeAlphaFlagBitsKHR VulkanSwapchain::chooseCompositeAlpha(
+	const VkCompositeAlphaFlagsKHR supportedCompositeAlpha) {
+	for (const VkCompositeAlphaFlagBitsKHR mode: {
+			VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+			VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR
+		}) {
+		if ((supportedCompositeAlpha & mode) != 0)
+			return mode;
+	}
+	return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 }
 
 VkPresentModeKHR VulkanSwapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {

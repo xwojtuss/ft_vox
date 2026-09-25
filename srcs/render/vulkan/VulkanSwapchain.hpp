@@ -34,12 +34,17 @@ namespace render::vulkan {
 		void createFramebuffers(const VulkanContext&);
 		void cleanupSwapChain(const VulkanContext& context) const;
 
-		static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-		static VkPresentModeKHR   chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-		static VkExtent2D         chooseSwapExtent(const platform::window::IWindow& window,
-											const VkSurfaceCapabilitiesKHR&         capabilities);
+		static VkExtent2D chooseSwapExtent(const platform::window::IWindow& window,
+											const VkSurfaceCapabilitiesKHR& capabilities);
 
 	public:
+		[[nodiscard]] static VkSurfaceFormatKHR chooseSwapSurfaceFormat(
+			const std::vector<VkSurfaceFormatKHR>& availableFormats);
+		[[nodiscard]] static VkPresentModeKHR chooseSwapPresentMode(
+			const std::vector<VkPresentModeKHR>& availablePresentModes);
+		[[nodiscard]] static VkCompositeAlphaFlagBitsKHR chooseCompositeAlpha(
+			VkCompositeAlphaFlagsKHR supportedCompositeAlpha);
+
 		explicit VulkanSwapchain(const VulkanContext&);
 		~VulkanSwapchain();
 
