@@ -48,7 +48,7 @@
       "displayName": "Coverage (Clang)",
       "inherits": "dev-clang",
       "cacheVariables": {
-        "SCOP_COVERAGE": "ON"
+        "FT_VOX_COVERAGE": "ON"
       }
     },
     {
@@ -56,7 +56,7 @@
       "displayName": "Coverage (GCC) - 42 Workstations",
       "inherits": "dev42",
       "cacheVariables": {
-        "SCOP_COVERAGE": "ON"
+        "FT_VOX_COVERAGE": "ON"
       }
     }
   ],

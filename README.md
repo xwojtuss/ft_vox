@@ -29,7 +29,7 @@ cmake --build --preset dev-clang
 
 Then run the executable:
 ```bash
-./build/dev-clang/scop
+./build/dev-clang/ft_vox
 ```
 
 ## Tests
@@ -43,7 +43,7 @@ cmake --workflow --preset test
 
 Run only some scenarios by tag, e.g. `[chunk]`:
 ```bash
-./build/dev-clang/tests/scop_tests "[chunk]"
+./build/dev-clang/tests/ft_vox_tests "[chunk]"
 ```
 
 Run the tests with a coverage report (fails if line coverage is below 80%):

@@ -1,5 +1,5 @@
 # Comprehensive Valgrind suppressions for Vulkan/OpenGL applications
-# Usage: valgrind --suppressions=valgrind.supp --suppressions=.nvidia-driver.supp ./scop
+# Usage: valgrind --suppressions=valgrind.supp --suppressions=.nvidia-driver.supp ./ft_vox
 
 # ===== D-Bus Leaks =====
 # D-Bus is a system message bus that doesn't cleanup on exit by design

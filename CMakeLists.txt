@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(scop LANGUAGES CXX)
+project(ft_vox LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,13 +22,13 @@ else()
   message(STATUS "mold not found, using default linker")
 endif()
 
-option(SCOP_BUILD_TESTS "Build the Catch2 unit tests" ON)
-option(SCOP_COVERAGE "Instrument the tests and the code they run for coverage (gcovr)" OFF)
+option(FT_VOX_BUILD_TESTS "Build the Catch2 unit tests" ON)
+option(FT_VOX_COVERAGE "Instrument the tests and the code they run for coverage (gcovr)" OFF)
 
-file(GLOB_RECURSE SCOP_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE FT_VOX_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.cpp"
 )
-list(REMOVE_ITEM SCOP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
+list(REMOVE_ITEM FT_VOX_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
 
 include(FetchContent)
 
@@ -71,8 +71,8 @@ foreach(CANDIDATE IN LISTS SRC_INCLUDE_DIR_CANDIDATES)
   endif()
 endforeach()
 
-function(scop_add_core target optimization)
-  add_library(${target} STATIC ${SCOP_SOURCES}
+function(ft_vox_add_core target optimization)
+  add_library(${target} STATIC ${FT_VOX_SOURCES}
     "${imgui_SOURCE_DIR}/imgui.cpp"
     "${imgui_SOURCE_DIR}/imgui_demo.cpp"
     "${imgui_SOURCE_DIR}/imgui_draw.cpp"
@@ -110,17 +110,17 @@ function(scop_add_core target optimization)
   )
 endfunction()
 
-scop_add_core(scop_core -O2)
+ft_vox_add_core(ft_vox_core -O2)
 
-add_executable(scop "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
-target_link_libraries(scop PRIVATE scop_core)
+add_executable(ft_vox "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
+target_link_libraries(ft_vox PRIVATE ft_vox_core)
 
-if(SCOP_BUILD_TESTS)
-  scop_add_core(scop_core_tests -O0)
+if(FT_VOX_BUILD_TESTS)
+  ft_vox_add_core(ft_vox_core_tests -O0)
 
-  if(SCOP_COVERAGE)
-    target_compile_options(scop_core_tests PUBLIC --coverage)
-    target_link_options(scop_core_tests PUBLIC --coverage)
+  if(FT_VOX_COVERAGE)
+    target_compile_options(ft_vox_core_tests PUBLIC --coverage)
+    target_link_options(ft_vox_core_tests PUBLIC --coverage)
   endif()
 
   enable_testing()
@@ -150,7 +150,7 @@ foreach(SHADER_FILE IN LISTS SHADER_SOURCES)
 endforeach()
 
 add_custom_target(shaders ALL DEPENDS ${SHADER_OUTPUTS})
-add_dependencies(scop shaders)
+add_dependencies(ft_vox shaders)
 
 set(DOCS_INDEX_HTML "${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/html/index.html")
 

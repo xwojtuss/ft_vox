@@ -9,24 +9,24 @@ FetchContent_MakeAvailable(Catch2)
 list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/extras")
 include(Catch)
 
-file(GLOB_RECURSE SCOP_TEST_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE FT_VOX_TEST_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 )
 
-add_executable(scop_tests ${SCOP_TEST_SOURCES})
+add_executable(ft_vox_tests ${FT_VOX_TEST_SOURCES})
 
-target_include_directories(scop_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(ft_vox_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_link_libraries(scop_tests PRIVATE
-  scop_core_tests
+target_link_libraries(ft_vox_tests PRIVATE
+  ft_vox_core_tests
   Catch2::Catch2WithMain
 )
 
-catch_discover_tests(scop_tests DISCOVERY_MODE PRE_TEST)
+catch_discover_tests(ft_vox_tests DISCOVERY_MODE PRE_TEST)
 
-set(SCOP_COVERAGE_DIR "${CMAKE_BINARY_DIR}/coverage")
+set(FT_VOX_COVERAGE_DIR "${CMAKE_BINARY_DIR}/coverage")
 
-if(NOT SCOP_COVERAGE)
+if(NOT FT_VOX_COVERAGE)
   add_custom_target(coverage
     COMMAND ${CMAKE_COMMAND} -E echo "Coverage is disabled in this build. Use: cmake --workflow --preset coverage"
     COMMAND ${CMAKE_COMMAND} -E false
@@ -50,40 +50,40 @@ else()
 endif()
 
 if(NOT GCOVR_COMMAND)
-  message(FATAL_ERROR "SCOP_COVERAGE is ON but gcovr was not found. Install it with: python3 -m pip install --user gcovr")
+  message(FATAL_ERROR "FT_VOX_COVERAGE is ON but gcovr was not found. Install it with: python3 -m pip install --user gcovr")
 endif()
 
-string(REGEX MATCH "^[0-9]+" SCOP_COMPILER_MAJOR "${CMAKE_CXX_COMPILER_VERSION}")
+string(REGEX MATCH "^[0-9]+" FT_VOX_COMPILER_MAJOR "${CMAKE_CXX_COMPILER_VERSION}")
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  find_program(SCOP_GCOV NAMES gcov-${SCOP_COMPILER_MAJOR} gcov REQUIRED)
-  set(SCOP_GCOV_EXECUTABLE "${SCOP_GCOV}")
+  find_program(FT_VOX_GCOV NAMES gcov-${FT_VOX_COMPILER_MAJOR} gcov REQUIRED)
+  set(FT_VOX_GCOV_EXECUTABLE "${FT_VOX_GCOV}")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-  set(SCOP_GCOV_EXECUTABLE "xcrun llvm-cov gcov")
+  set(FT_VOX_GCOV_EXECUTABLE "xcrun llvm-cov gcov")
 else()
-  find_program(SCOP_LLVM_COV NAMES llvm-cov-${SCOP_COMPILER_MAJOR} llvm-cov REQUIRED)
-  set(SCOP_GCOV_EXECUTABLE "${SCOP_LLVM_COV} gcov")
+  find_program(FT_VOX_LLVM_COV NAMES llvm-cov-${FT_VOX_COMPILER_MAJOR} llvm-cov REQUIRED)
+  set(FT_VOX_GCOV_EXECUTABLE "${FT_VOX_LLVM_COV} gcov")
 endif()
 
-string(REPLACE ";" "|" SCOP_GCOVR_COMMAND "${GCOVR_COMMAND}")
-set(SCOP_GCOVR_ARGS
+string(REPLACE ";" "|" FT_VOX_GCOVR_COMMAND "${GCOVR_COMMAND}")
+set(FT_VOX_GCOVR_ARGS
   --config "${PROJECT_SOURCE_DIR}/gcovr.cfg"
   --root "${PROJECT_SOURCE_DIR}"
-  --gcov-executable "${SCOP_GCOV_EXECUTABLE}"
+  --gcov-executable "${FT_VOX_GCOV_EXECUTABLE}"
   --txt
-  --html-details "${SCOP_COVERAGE_DIR}/index.html"
+  --html-details "${FT_VOX_COVERAGE_DIR}/index.html"
   "${CMAKE_BINARY_DIR}"
 )
-string(REPLACE ";" "|" SCOP_GCOVR_ARGS "${SCOP_GCOVR_ARGS}")
+string(REPLACE ";" "|" FT_VOX_GCOVR_ARGS "${FT_VOX_GCOVR_ARGS}")
 
 add_custom_target(coverage
   COMMAND ${CMAKE_COMMAND}
     -DBUILD_DIR=${CMAKE_BINARY_DIR}
-    -DREPORT_DIR=${SCOP_COVERAGE_DIR}
+    -DREPORT_DIR=${FT_VOX_COVERAGE_DIR}
     -DCTEST=${CMAKE_CTEST_COMMAND}
-    "-DGCOVR=${SCOP_GCOVR_COMMAND}"
-    "-DGCOVR_ARGS=${SCOP_GCOVR_ARGS}"
+    "-DGCOVR=${FT_VOX_GCOVR_COMMAND}"
+    "-DGCOVR_ARGS=${FT_VOX_GCOVR_ARGS}"
     -P "${PROJECT_SOURCE_DIR}/cmake/RunCoverage.cmake"
-  DEPENDS scop_tests
+  DEPENDS ft_vox_tests
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
   COMMENT "Running tests and measuring coverage"
   VERBATIM

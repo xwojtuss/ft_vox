@@ -1,7 +1,7 @@
 #pragma once
 
 namespace app {
-	constexpr const char* appName = "scop";
+	constexpr const char* appName = "ft_vox";
 
 	constexpr float simulationFrameRate = 1.0f / 60.0f;
 
