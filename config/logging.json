@@ -1,0 +1,12 @@
+{
+  "file": "logs/ft_vox.log",
+  "pattern": "[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [thread %t] %v",
+  "level": "info",
+  "flushLevel": "warn",
+  "flushIntervalSeconds": 1,
+  "maxFileSizeMegabytes": 5,
+  "maxFiles": 3,
+  "loggers": {
+    "Render": "info"
+  }
+}

@@ -7,7 +7,7 @@ A simple voxel engine built with modern C++ and Vulkan. The project is designed 
 
 ## Prerequisites
 
-- C++17 compatible compiler
+- C++26 compiler with `std::format` support
 - CMake 3.25 or later
 - Vulkan SDK
 - GLFW (auto-fetched)
@@ -15,7 +15,8 @@ A simple voxel engine built with modern C++ and Vulkan. The project is designed 
 - ImGui (auto-fetched)
 - stb_image (single header, included)
 - tinyobjloader (single header, included)
-- nlohmann/json (single header, included)
+- spdlog (auto-fetched)
+- nlohmann/json (auto-fetched)
 - Catch2 v3 (auto-fetched, tests only)
 - gcovr (coverage only): `python3 -m pip install --user gcovr`
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(ft_vox LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -61,7 +61,22 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glfw)
 FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(imgui)
+FetchContent_Declare(
+  spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog.git
+  GIT_TAG   79524ddd08a4ec981b7fea76afd08ee05f83755d # v1.17.0
+)
+
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG   55f93686c01528224f448c19128836e7df245f72 # v3.12.0
+)
+
 FetchContent_MakeAvailable(magic_enum)
+set(SPDLOG_USE_STD_FORMAT ON CACHE BOOL "Use std::format instead of the bundled fmt" FORCE)
+FetchContent_MakeAvailable(spdlog)
+FetchContent_MakeAvailable(nlohmann_json)
 
 file(GLOB SRC_INCLUDE_DIR_CANDIDATES LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*")
 set(SRC_INCLUDE_DIRS)
@@ -107,6 +122,8 @@ function(ft_vox_add_core target optimization)
     glfw
     glm::glm
     magic_enum::magic_enum
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
   )
 endfunction()
 

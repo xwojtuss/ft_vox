@@ -54,6 +54,9 @@ valgrind.log
 # CMake build directory
 build/
 
+# Log files
+logs/
+
 # Auto generated files
 docs/plantuml/plantuml*
 docs/doxygen/html

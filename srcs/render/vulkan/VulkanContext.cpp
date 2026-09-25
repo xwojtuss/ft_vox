@@ -8,6 +8,8 @@
 #include "VulkanValidationLayers.hpp"
 #include "../../app/ApplicationInfo.hpp"
 #include "VulkanError.hpp"
+#include "../../log/Log.hpp"
+#include <vulkan/vk_enum_string_helper.h>
 
 using namespace render::vulkan;
 
@@ -44,7 +46,8 @@ namespace {
 	}
 
 	void addExtensionOnce(std::vector<const char*>& extensions, const char* name) {
-		if (const auto sameName = [name](const char* extension) { return std::string_view(extension) == name; }; std::none_of(extensions.begin(), extensions.end(), sameName))
+		if (const auto sameName = [name](const char* extension) { return std::string_view(extension) == name; };
+			std::ranges::none_of(extensions, sameName))
 			extensions.push_back(name);
 	}
 }
@@ -59,12 +62,13 @@ void VulkanContext::createInstance() {
 	uint32_t           windowExtensionCount = 0;
 	const char* const* windowExtensions     = m_window.getExtensions(&windowExtensionCount);
 
-	std::vector extensions(windowExtensions, windowExtensions + windowExtensionCount);
-	VkInstanceCreateFlags    flags = 0;
+	std::vector           extensions(windowExtensions, windowExtensions + windowExtensionCount);
+	VkInstanceCreateFlags flags = 0;
 
 	if (hasExtension(availableExtensions, portabilityEnumerationExtension)) {
 		addExtensionOnce(extensions, portabilityEnumerationExtension);
 		flags |= portabilityEnumerationFlag;
+		logging::get(error::Domain::Render).info("Vulkan portability drivers (such as MoltenVK) are allowed");
 		if (hasExtension(availableExtensions, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 			addExtensionOnce(extensions, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	}
@@ -77,7 +81,10 @@ void VulkanContext::createInstance() {
 	appInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion         = VK_API_VERSION_1_0;
 
-	constexpr bool validationEnabled = VulkanValidationLayers::isEnabled && VulkanValidationLayers::checkSupport();
+	const bool validationEnabled = VulkanValidationLayers::isEnabled && VulkanValidationLayers::checkSupport();
+	if (VulkanValidationLayers::isEnabled && !validationEnabled)
+		logging::get(error::Domain::Render).warn(
+			"Vulkan validation layers were requested but are not installed, continuing without them");
 
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -202,6 +209,11 @@ void VulkanContext::choosePhysicalDevice() {
 
 	m_queueFamilyIndices = findQueueFamilies(m_physicalDevice);
 	m_swapChainSupport   = querySwapChainSupport(m_physicalDevice);
+
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
+	logging::get(error::Domain::Render).info("Using GPU {} ({})", properties.deviceName,
+											string_VkPhysicalDeviceType(properties.deviceType));
 }
 
 void VulkanContext::createLogicalDevice() {
@@ -222,6 +234,9 @@ void VulkanContext::createLogicalDevice() {
 	VkPhysicalDeviceFeatures supportedFeatures;
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
 	m_samplerAnisotropyEnabled = supportedFeatures.samplerAnisotropy == VK_TRUE;
+	if (!m_samplerAnisotropyEnabled)
+		logging::get(error::Domain::Render).warn(
+			"Anisotropic filtering is not supported, textures will look blurrier at an angle");
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
@@ -304,9 +319,9 @@ QueueFamilyIndices VulkanContext::findQueueFamilies(VkPhysicalDevice device) con
 			indices.presentFamily  = i;
 			return indices;
 		}
-		if (graphics && !indices.graphicsFamily)
+		if (graphics && !indices.graphicsFamily.has_value())
 			indices.graphicsFamily = i;
-		if (presentSupport == VK_TRUE && !indices.presentFamily)
+		if (presentSupport == VK_TRUE && !indices.presentFamily.has_value())
 			indices.presentFamily = i;
 	}
 
