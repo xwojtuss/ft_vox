@@ -53,4 +53,7 @@ namespace error {
 
 	InputError::InputError(const std::string& message) : Exception(Domain::Input, message) {
 	}
+
+	WindowError::WindowError(const std::string& message) : Exception(Domain::Window, message) {
+	}
 }

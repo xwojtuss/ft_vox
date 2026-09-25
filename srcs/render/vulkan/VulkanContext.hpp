@@ -35,22 +35,25 @@ namespace render::vulkan {
 		QueueFamilyIndices         m_queueFamilyIndices;
 		VkSampleCountFlagBits      m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 		std::optional<uint32_t>    m_memoryType;
+		bool                       m_samplerAnisotropyEnabled = false;
 
-		void        createInstance();
-		void        createSurface();
-		void        updateMaxUsableSampleCount();
-		bool        isSuitable(VkPhysicalDevice device);
-		static bool checkExtensionSupport(VkPhysicalDevice device);
+		void               createInstance();
+		void               createSurface();
+		void               updateMaxUsableSampleCount();
+		[[nodiscard]] bool isSuitable(VkPhysicalDevice device) const;
+		static bool        checkExtensionSupport(VkPhysicalDevice device);
 
 	public:
 		static const DeviceExtensions deviceExtensions;
+
+		[[nodiscard]] static int deviceTypeScore(VkPhysicalDeviceType type);
 
 		explicit VulkanContext(platform::window::IWindow&);
 		~VulkanContext();
 
 		void                   choosePhysicalDevice();
 		void                   createLogicalDevice();
-		uint32_t               findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+		[[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 		[[nodiscard]] VkFormat findDepthFormat() const;
 		[[nodiscard]] VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
 													VkFormatFeatureFlags        features) const;
@@ -63,7 +66,8 @@ namespace render::vulkan {
 		[[nodiscard]] const VkPhysicalDevice&      getPhysicalDevice() const;
 		[[nodiscard]] const VkQueue&               getGraphicsQueue() const;
 		[[nodiscard]] const VkQueue&               getPresentQueue() const;
-		platform::window::IWindow&                 getWindow() const;
+		[[nodiscard]] platform::window::IWindow&   getWindow() const;
 		[[nodiscard]] const VkSampleCountFlagBits& getMsaaSamples() const;
+		[[nodiscard]] bool                         isSamplerAnisotropyEnabled() const;
 	};
 }

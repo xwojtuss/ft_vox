@@ -6,6 +6,19 @@
 
 using namespace render::vulkan;
 
+namespace {
+	uint32_t supportedMipLevels(const VulkanContext& context, const uint32_t requestedMipLevels) {
+		constexpr VkFormatFeatureFlags mipmapFeatures = VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT |
+														VK_FORMAT_FEATURE_BLIT_SRC_BIT | VK_FORMAT_FEATURE_BLIT_DST_BIT;
+		VkFormatProperties formatProperties;
+		vkGetPhysicalDeviceFormatProperties(context.getPhysicalDevice(), VK_FORMAT_R8G8B8A8_SRGB, &formatProperties);
+
+		if ((formatProperties.optimalTilingFeatures & mipmapFeatures) != mipmapFeatures)
+			return 1;
+		return requestedMipLevels;
+	}
+}
+
 VulkanResourceManager::VulkanResourceManager(const VulkanContext& context) {
 	createCommandPool(context);
 }
@@ -138,15 +151,9 @@ void VulkanResourceManager::copyBufferToImage(const VulkanContext& context, VkBu
 											context.getLogicalDevice());
 }
 
-void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImage image, VkFormat imageFormat,
+void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImage image,
+											[[maybe_unused]] VkFormat imageFormat,
 											int32_t texWidth, int32_t texHeight, uint32_t mipLevels) const {
-	VkFormatProperties formatProperties;
-	vkGetPhysicalDeviceFormatProperties(context.getPhysicalDevice(), imageFormat, &formatProperties);
-
-	if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
-		throw VulkanError("texture image format does not support linear blitting");
-	}
-
 	VkCommandBuffer commandBuffer = VulkanFrameData::beginSingleTimeCommands(m_commandPool, context.getLogicalDevice());
 
 	VkImageMemoryBarrier barrier{};
@@ -230,7 +237,7 @@ void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImag
 }
 
 SwapChainImage
-VulkanResourceManager::createTextureImage(const assets::TextureData& textureData, VulkanContext& context) const {
+VulkanResourceManager::createTextureImage(const assets::TextureData& textureData, const VulkanContext& context) const {
 	const VkDeviceSize imageSize = static_cast<VkDeviceSize>(textureData.width) * textureData.height * 4;
 
 	VkBuffer       stagingBuffer       = nullptr;
@@ -286,19 +293,19 @@ VkSampler VulkanResourceManager::createTextureSampler(const VulkanContext& conte
 	samplerInfo.addressModeU     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeV     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeW     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.anisotropyEnable = context.isSamplerAnisotropyEnabled() ? VK_TRUE : VK_FALSE;
 
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(context.getPhysicalDevice(), &properties);
-	samplerInfo.maxAnisotropy           = properties.limits.maxSamplerAnisotropy;
-	samplerInfo.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.maxAnisotropy = context.isSamplerAnisotropyEnabled() ? properties.limits.maxSamplerAnisotropy : 1.0f;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable           = VK_FALSE;
-	samplerInfo.compareOp               = VK_COMPARE_OP_ALWAYS;
-	samplerInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	samplerInfo.mipLodBias              = 0.0f;
-	samplerInfo.minLod                  = 0.0f;
-	samplerInfo.maxLod                  = VK_LOD_CLAMP_NONE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
 
 	if (const VkResult result = vkCreateSampler(context.getLogicalDevice(), &samplerInfo, nullptr, &textureSampler);
 		result != VK_SUCCESS) {
@@ -340,11 +347,14 @@ VkSampler VulkanResourceManager::createPixelPerfectTextureSampler(const VulkanCo
 
 assets::TextureHandle VulkanResourceManager::createTexture(const assets::TextureData& textureData,
 															VulkanContext& context, const VulkanFrameData& frameData) {
-	const SwapChainImage textureImage     = createTextureImage(textureData, context);
-	VkImageView          textureImageView = createTextureImageView(textureData, context, textureImage.image);
+	assets::TextureData supportedTexture = textureData;
+	supportedTexture.mipLevels           = supportedMipLevels(context, textureData.mipLevels);
+
+	const SwapChainImage textureImage     = createTextureImage(supportedTexture, context);
+	VkImageView          textureImageView = createTextureImageView(supportedTexture, context, textureImage.image);
 	VkSampler            textureSampler   = textureData.pixelPerfect
-									? createPixelPerfectTextureSampler(context)
-									: createTextureSampler(context);
+												? createPixelPerfectTextureSampler(context)
+												: createTextureSampler(context);
 
 	VkDescriptorSet descriptorSet = frameData.createTextureDescriptorSet(context);
 

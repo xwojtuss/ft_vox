@@ -1,14 +1,24 @@
 #include "GLFWWindow.hpp"
 #include "../app/ApplicationInfo.hpp"
 #include "../../input/glfw/GLFWInput.hpp"
+#include "../../../error/Exception.hpp"
 
 using namespace platform::window::glfw;
 
 GLFWWindow::GLFWWindow() {
-	glfwInit();
+	if (glfwInit() != GLFW_TRUE)
+		throw error::WindowError("GLFW could not be initialized, is a display available?");
+	if (glfwVulkanSupported() != GLFW_TRUE) {
+		glfwTerminate();
+		throw error::WindowError("no Vulkan loader or driver was found on this system");
+	}
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	m_window = glfwCreateWindow(winWidth, winHeight, app::appName, nullptr, nullptr);
+	if (m_window == nullptr) {
+		glfwTerminate();
+		throw error::WindowError("the window could not be created");
+	}
 	glfwSetWindowUserPointer(m_window, this);
 	glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
 
