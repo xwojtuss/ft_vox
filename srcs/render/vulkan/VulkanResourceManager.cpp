@@ -1,6 +1,7 @@
 #include "VulkanResourceManager.hpp"
 #include "../../render/GpuTypes.hpp"
 #include "VulkanError.hpp"
+#include "../../log/Log.hpp"
 #include "VulkanContext.hpp"
 #include "VulkanFrameData.hpp"
 
@@ -13,8 +14,10 @@ namespace {
 		VkFormatProperties formatProperties;
 		vkGetPhysicalDeviceFormatProperties(context.getPhysicalDevice(), VK_FORMAT_R8G8B8A8_SRGB, &formatProperties);
 
-		if ((formatProperties.optimalTilingFeatures & mipmapFeatures) != mipmapFeatures)
+		if (requestedMipLevels > 1 && (formatProperties.optimalTilingFeatures & mipmapFeatures) != mipmapFeatures) {
+			logging::get(error::Domain::Render).warn("The GPU cannot generate mipmaps, distant textures may flicker");
 			return 1;
+		}
 		return requestedMipLevels;
 	}
 }
@@ -353,8 +356,8 @@ assets::TextureHandle VulkanResourceManager::createTexture(const assets::Texture
 	const SwapChainImage textureImage     = createTextureImage(supportedTexture, context);
 	VkImageView          textureImageView = createTextureImageView(supportedTexture, context, textureImage.image);
 	VkSampler            textureSampler   = textureData.pixelPerfect
-												? createPixelPerfectTextureSampler(context)
-												: createTextureSampler(context);
+									? createPixelPerfectTextureSampler(context)
+									: createTextureSampler(context);
 
 	VkDescriptorSet descriptorSet = frameData.createTextureDescriptorSet(context);
 
