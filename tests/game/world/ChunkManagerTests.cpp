@@ -15,9 +15,9 @@ using game::world::chunkZSize;
 namespace worldinfo = scene::worldinfo;
 
 namespace {
-	constexpr int chunksAroundSpawn = (worldinfo::maxHorizontalRenderDistance + 1)
-									* (worldinfo::maxHorizontalRenderDistance + 1)
-									* worldinfo::maxVerticalRenderDistance;
+	constexpr glm::vec<3, unsigned short> spawnRenderDistance = {2, worldinfo::maxVerticalRenderDistance, 2};
+
+	constexpr int chunksAroundSpawn = (spawnRenderDistance.x + 1) * (spawnRenderDistance.z + 1) * spawnRenderDistance.y;
 
 	constexpr size_t trianglesInSolidChunk = 6 * chunkXSize * chunkZSize * 2;
 
@@ -33,7 +33,7 @@ namespace {
 
 		SpawnedWorld() {
 			world.createSystem<ecs::RenderSystem>();
-			manager       = std::make_unique<ChunkManager>(blockDatas, world, renderer);
+			manager       = std::make_unique<ChunkManager>(blockDatas, world, renderer, spawnRenderDistance);
 			meshesAtSpawn = renderer.createdMeshes.size();
 		}
 
@@ -85,7 +85,7 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 		}
 		AND_THEN("every chunk entity sits on the 16-block chunk grid, inside the render distance") {
 			const glm::ivec3 chunkSize(chunkXSize, chunkYSize, chunkZSize);
-			const int        halfDistance = worldinfo::maxHorizontalRenderDistance / 2;
+			const int        halfDistance = spawnRenderDistance.x / 2;
 
 			for (size_t i = 0; i < env.meshesAtSpawn; ++i) {
 				const glm::vec3  position = env.entityOfMesh(i).getComponent<ecs::component::Transform>()->position;
@@ -95,7 +95,7 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 				REQUIRE(std::abs(chunk.x) <= halfDistance);
 				REQUIRE(std::abs(chunk.z) <= halfDistance);
 				REQUIRE(chunk.y >= 0);
-				REQUIRE(chunk.y < worldinfo::maxVerticalRenderDistance);
+				REQUIRE(chunk.y < spawnRenderDistance.y);
 			}
 		}
 	}

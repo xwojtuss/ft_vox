@@ -3,9 +3,8 @@
 
 using namespace ecs;
 
-ChunkSystem::ChunkSystem(World& world, render::IRenderer& renderer) : ASystem(Dependencies()),
-																	m_chunkManager(
-																		world.getBlockDatas(), world, renderer) {
+ChunkSystem::ChunkSystem(World& world, render::IRenderer& renderer, const glm::vec<3, unsigned short> renderDistance)
+	: ASystem(Dependencies()), m_chunkManager(world.getBlockDatas(), world, renderer, renderDistance) {
 }
 
 void ChunkSystem::bindEvents(Dispatcher& dispatcher) {

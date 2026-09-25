@@ -13,7 +13,7 @@ namespace {
 		test::FakeRenderer      renderer;
 
 		ChunkSystemWorld() {
-			world.createSystem<ecs::ChunkSystem>(world, renderer);
+			world.createSystem<ecs::ChunkSystem>(world, renderer, glm::vec<3, unsigned short>{2, 4, 2});
 		}
 
 		size_t meshCount() const {

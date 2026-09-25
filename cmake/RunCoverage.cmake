@@ -6,8 +6,10 @@ if(SCOP_GCDA_FILES)
   file(REMOVE ${SCOP_GCDA_FILES})
 endif()
 
+cmake_host_system_information(RESULT SCOP_CORES QUERY NUMBER_OF_LOGICAL_CORES)
+
 execute_process(
-  COMMAND "${CTEST}" --test-dir "${BUILD_DIR}" --output-on-failure
+  COMMAND "${CTEST}" --test-dir "${BUILD_DIR}" --output-on-failure --parallel ${SCOP_CORES}
   RESULT_VARIABLE SCOP_TESTS_RESULT
 )
 

@@ -9,6 +9,7 @@
 #include "ChunkLoader.hpp"
 #include "../../ecs/World.hpp"
 #include "../../render/IRenderer.hpp"
+#include "../../scene/WorldInfo.hpp"
 
 namespace game::world {
 	class ChunkManager {
@@ -16,13 +17,15 @@ namespace game::world {
 		std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>> m_chunks;
 		ChunkMesher                                            m_chunkMesher;
 		ChunkLoader                                            m_chunkLoader;
-		game::block::BlockDatas&                               m_blockDatas;
+		block::BlockDatas&                                     m_blockDatas;
 		ecs::World&                                            m_world;
 		render::IRenderer&                                     m_renderer;
 		assets::TextureHandle                                  m_chunkTexture;
+		glm::vec<3, unsigned short>                            m_renderDistance;
 
 	public:
-		ChunkManager(game::block::BlockDatas& blockDatas, ecs::World& world, render::IRenderer& renderer);
+		ChunkManager(block::BlockDatas&         blockDatas, ecs::World& world, render::IRenderer& renderer,
+					glm::vec<3, unsigned short> renderDistance = scene::worldinfo::renderDistance);
 
 		void makeAllChunksRenderable(const ecs::World& world, const render::IRenderer& renderer) const;
 		void makeChunkRenderable(ecs::World& world, render::IRenderer& renderer, glm::ivec3 chunkPosition);
