@@ -1,5 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
+#include "assets/TinyObjLoader.hpp"
 #include "game/world/ChunkMesher.hpp"
 #include "support/Blocks.hpp"
 
@@ -19,7 +21,10 @@ namespace {
 		for (int x = from.x; x <= to.x; ++x)
 			for (int y = from.y; y <= to.y; ++y)
 				for (int z = from.z; z <= to.z; ++z)
-					chunk.setBlock(x, y, z, Block(id));
+					chunk.setBlock(static_cast<unsigned short>(x),
+									static_cast<unsigned short>(y),
+									static_cast<unsigned short>(z),
+									Block(id));
 	}
 }
 
@@ -182,6 +187,35 @@ SCENARIO("Broken triangles in a block model are skipped", "[mesher]") {
 
 		THEN("the flat triangle is skipped and the cube is drawn as usual") {
 			REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 12);
+		}
+	}
+}
+
+SCENARIO("The game's block model fills exactly its own cell", "[mesher][assets]") {
+	GIVEN("the cube model the game loads for its blocks") {
+		assets::TinyObjLoader   loader;
+		const assets::MeshData  cube = loader.toMeshData("models/cube.obj");
+		game::block::BlockDatas blockDatas(cube, assets::TextureData{});
+		ChunkMesher             mesher(blockDatas);
+
+		THEN("every corner lies between 0 and 1 on every axis") {
+			for (const render::Vertex& vertex: cube.vertices) {
+				for (int axis = 0; axis < 3; ++axis) {
+					REQUIRE(vertex.pos[axis] >= 0.0f);
+					REQUIRE(vertex.pos[axis] <= 1.0f);
+				}
+			}
+		}
+
+		WHEN("two blocks touch along the x, the y or the z axis") {
+			const glm::ivec3 direction = GENERATE(glm::ivec3(1, 0, 0), glm::ivec3(0, 1, 0), glm::ivec3(0, 0, 1));
+			Chunk            chunk;
+			chunk.setBlock(8, 8, 8, Block(test::dirt));
+			chunk.setBlock(8 + direction.x, 8 + direction.y, 8 + direction.z, Block(test::dirt));
+
+			THEN("the faces between them are hidden and only the 10 outer faces are drawn") {
+				REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 10 * 2);
+			}
 		}
 	}
 }

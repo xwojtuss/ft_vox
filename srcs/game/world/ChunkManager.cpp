@@ -1,5 +1,4 @@
 #include "ChunkManager.hpp"
-#include "../../scene/WorldInfo.hpp"
 #include "../../ecs/component/Components.hpp"
 #include "../../ecs/system/types/RenderSystem.hpp"
 
@@ -7,16 +6,19 @@
 
 using namespace game::world;
 
-ChunkManager::ChunkManager(block::BlockDatas&  blockDatas, ecs::World& world,
-							render::IRenderer& renderer) : m_chunkMesher(blockDatas), m_blockDatas(blockDatas),
-															m_world(world), m_renderer(renderer) {
+ChunkManager::ChunkManager(block::BlockDatas& blockDatas, ecs::World& world, render::IRenderer& renderer,
+							const glm::vec<3, unsigned short> renderDistance) : m_chunkMesher(blockDatas),
+	m_blockDatas(blockDatas),
+	m_world(world), m_renderer(renderer),
+	m_renderDistance(renderDistance) {
 	m_chunkTexture = renderer.createTexture(m_blockDatas.getBlockData(1).textureData);
 
-	for (short x = -scene::worldinfo::maxHorizontalRenderDistance / 2;
-		x <= scene::worldinfo::maxHorizontalRenderDistance / 2; ++x) {
-		for (short z = -scene::worldinfo::maxHorizontalRenderDistance / 2;
-			z <= scene::worldinfo::maxHorizontalRenderDistance / 2; ++z) {
-			for (short y = 0; y < scene::worldinfo::maxVerticalRenderDistance; ++y) {
+	const int halfWidth = m_renderDistance.x / 2;
+	const int halfDepth = m_renderDistance.z / 2;
+
+	for (int x = -halfWidth; x <= halfWidth; ++x) {
+		for (int z = -halfDepth; z <= halfDepth; ++z) {
+			for (int y = 0; y < m_renderDistance.y; ++y) {
 				loadChunk({x, y, z});
 			}
 		}

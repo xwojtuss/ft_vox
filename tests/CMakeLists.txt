@@ -18,7 +18,7 @@ add_executable(scop_tests ${SCOP_TEST_SOURCES})
 target_include_directories(scop_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 target_link_libraries(scop_tests PRIVATE
-  scop_core
+  scop_core_tests
   Catch2::Catch2WithMain
 )
 
