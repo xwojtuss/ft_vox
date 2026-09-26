@@ -7,6 +7,8 @@
 #include "../../platform/window/IWindow.hpp"
 
 namespace render::vulkan {
+	constexpr uint32_t vulkanApiVersion = VK_API_VERSION_1_0;
+
 	using DeviceExtensions = std::vector<const char*>;
 
 	struct QueueFamilyIndices {

@@ -1,5 +1,4 @@
 #include "TinyObjLoader.hpp"
-#include <stdexcept>
 #include "../render/GpuTypes.hpp"
 #include "../platform/filesystem/resolvePath.hpp"
 
@@ -42,13 +41,12 @@ MeshData TinyObjLoader::toMeshData(const char* path) {
 				};
 			}
 
-			vertex.color = {1.0f, 1.0f, 1.0f};
-			if (uniqueVertices.count(vertex) == 0) {
-				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+			vertex.color              = {1.0f, 1.0f, 1.0f};
+			const auto [it, inserted] = uniqueVertices.try_emplace(vertex, static_cast<uint32_t>(vertices.size()));
+			if (inserted)
 				vertices.push_back(vertex);
-			}
 
-			indices.push_back(uniqueVertices[vertex]);
+			indices.push_back(it->second);
 		}
 	}
 

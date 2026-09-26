@@ -9,7 +9,7 @@ namespace render::gui {
 	class APanel {
 	protected:
 		IGui&       m_gui;
-		ecs::Entity m_caller{};
+		ecs::Entity m_caller = ecs::nullEntity;
 		bool        m_isOpen = false;
 
 		explicit APanel(IGui& gui);

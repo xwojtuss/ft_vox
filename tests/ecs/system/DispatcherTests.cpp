@@ -121,7 +121,7 @@ SCENARIO("Every event type has a readable name", "[ecs][dispatcher]") {
 	}
 	AND_THEN("an input event starts with no source entity and no elapsed time") {
 		const ecs::InputEvent event;
-		REQUIRE(event.source == -1);
+		REQUIRE(event.source == ecs::nullEntity);
 		REQUIRE(event.deltaTime == 0.0f);
 	}
 }

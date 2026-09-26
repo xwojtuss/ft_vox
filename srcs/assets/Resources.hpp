@@ -1,14 +1,14 @@
 #pragma once
 
+#include <cstdint> // for std::uint32_t
 #include <vector>
-#include <functional>
 
 #include "../render/GpuTypes.hpp"
 
 namespace assets {
 	struct MeshData {
 		std::vector<render::Vertex> vertices;
-		std::vector<uint32_t>       indices;
+		std::vector<std::uint32_t>  indices;
 
 		void scaleTextureCoordinates(float scale);
 	};
@@ -17,9 +17,8 @@ namespace assets {
 		uint32_t                   width{};
 		uint32_t                   height{};
 		uint32_t                   mipLevels{};
-		void*                      pixels{};
+		std::vector<unsigned char> pixels;
 		bool                       pixelPerfect = false;
-		std::function<void(void*)> freePixels;
 	};
 
 	enum class PipelineType {

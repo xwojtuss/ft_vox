@@ -28,7 +28,7 @@ SCENARIO("A block created with a type keeps that type", "[block]") {
 		}
 
 		WHEN("it is linked to an entity") {
-			block.entity = 42;
+			block.entity = ecs::Entity{42};
 
 			THEN("it reports having an entity") {
 				REQUIRE(block.hasEntity());

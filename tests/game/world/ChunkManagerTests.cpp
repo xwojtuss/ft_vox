@@ -21,11 +21,9 @@ namespace {
 
 	constexpr size_t trianglesInSolidChunk = 6 * chunkXSize * chunkZSize * 2;
 
-	constexpr ecs::Entity firstEntity = 1;
-
 	struct SpawnedWorld {
-		int                           dirtPixels = 0;
-		game::block::BlockDatas       blockDatas = test::makeBlockDatas(&dirtPixels);
+		std::vector<unsigned char>    dirtPixels = {10, 20, 30, 255};
+		game::block::BlockDatas       blockDatas = test::makeBlockDatas(dirtPixels);
 		ecs::World                    world{blockDatas};
 		test::FakeRenderer            renderer;
 		std::unique_ptr<ChunkManager> manager;
@@ -41,8 +39,14 @@ namespace {
 			return renderer.createdMeshes.size();
 		}
 
-		ecs::EntityHandle entityOfMesh(size_t meshIndex) {
-			return ecs::EntityHandle{firstEntity + static_cast<ecs::Entity>(meshIndex), &world};
+		ecs::EntityHandle entityOfMesh(const size_t meshIndex) {
+			const uint64_t meshId = renderer.createdMeshes.at(meshIndex).id;
+
+			for (auto&& [entity, mesh]: world.query<const ecs::component::Mesh>()) {
+				if (mesh.mesh.id == meshId)
+					return world.getEntity(entity);
+			}
+			return world.getEntity(ecs::nullEntity);
 		}
 	};
 
@@ -58,7 +62,7 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 
 		THEN("exactly one texture is created, from the dirt block's texture") {
 			REQUIRE(env.renderer.createdTextures.size() == 1);
-			REQUIRE(env.renderer.createdTexturePixels.front() == &env.dirtPixels);
+			REQUIRE(env.renderer.createdTexturePixels.front() == env.dirtPixels);
 		}
 		AND_THEN("every chunk in the render distance with visible blocks gets one mesh, and no more") {
 			REQUIRE(env.meshesAtSpawn > 0);
@@ -71,16 +75,16 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 
 			for (size_t i = 0; i < env.meshesAtSpawn; ++i) {
 				ecs::EntityHandle           entity = env.entityOfMesh(i);
-				const ecs::component::Mesh* mesh   = entity.getComponent<ecs::component::Mesh>();
+				const ecs::component::Mesh* mesh   = entity.tryGet<ecs::component::Mesh>();
 
 				REQUIRE(mesh != nullptr);
 				REQUIRE(mesh->mesh.id == env.renderer.createdMeshes[i].id);
 				REQUIRE(mesh->pipelineType == assets::PipelineType::Textured);
 				REQUIRE(
-					entity.getComponent<ecs::component::Texture>()->texture.id == env.renderer.createdTextures.front().
+					entity.get<ecs::component::Texture>().texture.id == env.renderer.createdTextures.front().
 					id);
-				REQUIRE(entity.hasComponent<ecs::component::Transform>());
-				REQUIRE(renderSystem->hasEntity(entity.entity));
+				REQUIRE(entity.has<ecs::component::Transform>());
+				REQUIRE(renderSystem->processes(entity.id()));
 			}
 		}
 		AND_THEN("every chunk entity sits on the 16-block chunk grid, inside the render distance") {
@@ -88,7 +92,7 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 			const int        halfDistance = spawnRenderDistance.x / 2;
 
 			for (size_t i = 0; i < env.meshesAtSpawn; ++i) {
-				const glm::vec3  position = env.entityOfMesh(i).getComponent<ecs::component::Transform>()->position;
+				const glm::vec3  position = env.entityOfMesh(i).get<ecs::component::Transform>().position;
 				const glm::ivec3 chunk    = glm::ivec3(position) / chunkSize;
 
 				REQUIRE(glm::vec3(chunk * chunkSize) == position);
@@ -115,7 +119,7 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 				REQUIRE(env.renderer.createdMeshTriangleCounts.back() == trianglesInSolidChunk);
 			}
 			AND_THEN("its entity is placed at that chunk's world position") {
-				const glm::vec3 position = env.entityOfMesh(meshesBefore).getComponent<ecs::component::Transform>()->
+				const glm::vec3 position = env.entityOfMesh(meshesBefore).get<ecs::component::Transform>().
 						position;
 				REQUIRE(position == glm::vec3(40 * chunkXSize, -1 * chunkYSize, -40 * chunkZSize));
 			}
@@ -168,15 +172,15 @@ SCENARIO("Unloading a chunk forgets it", "[chunk-manager]") {
 			const size_t meshIndex = env.meshCount();
 			env.manager->loadChunk(65, -1, 65);
 			ecs::EntityHandle chunkEntity = env.entityOfMesh(meshIndex);
-			REQUIRE(chunkEntity.hasComponent<ecs::component::Mesh>());
+			REQUIRE(chunkEntity.has<ecs::component::Mesh>());
 
 			env.manager->unloadChunk(65, -1, 65);
 
 			THEN("it disappears from the world: it is no longer drawn") {
 				ecs::RenderSystem* renderSystem = env.world.getSystemManager().getSystem<ecs::RenderSystem>();
 
-				REQUIRE_FALSE(renderSystem->hasEntity(chunkEntity.entity));
-				REQUIRE_FALSE(chunkEntity.hasComponent<ecs::component::Mesh>());
+				REQUIRE_FALSE(renderSystem->processes(chunkEntity.id()));
+				REQUIRE_FALSE(chunkEntity.has<ecs::component::Mesh>());
 			}
 		}
 

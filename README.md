@@ -15,6 +15,7 @@ A simple voxel engine built with modern C++ and Vulkan. The project is designed 
 - ImGui (auto-fetched)
 - stb_image (single header, included)
 - tinyobjloader (single header, included)
+- EnTT (auto-fetched)
 - spdlog (auto-fetched)
 - nlohmann/json (auto-fetched)
 - Catch2 v3 (auto-fetched, tests only)

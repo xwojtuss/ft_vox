@@ -26,10 +26,9 @@ namespace ecs {
 		if (it == m_listeners.end())
 			return;
 
-		auto startTime = std::chrono::system_clock::now();
+		const auto startTime = std::chrono::steady_clock::now();
 		for (auto& listener: it->second)
 			listener(&event);
-		auto endTime                     = std::chrono::system_clock::now();
-		m_eventRuntimes[event.getName()] = std::chrono::duration<float>(endTime - startTime);
+		m_eventRuntimes[event.getName()] = std::chrono::steady_clock::now() - startTime;
 	}
 }

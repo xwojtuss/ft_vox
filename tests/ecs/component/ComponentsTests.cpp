@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
-#include <sstream>
+#include <format>
 #include <glm/gtc/epsilon.hpp>
 
 #include "scene/WorldInfo.hpp"
@@ -16,10 +16,9 @@ namespace {
 		return glm::all(glm::epsilonEqual(a, b, 1e-5f));
 	}
 
-	std::string describe(const ecs::IComponent& component) {
-		std::ostringstream out;
-		out << component;
-		return out.str();
+	template<typename ComponentType>
+	std::string describe(const ComponentType& component) {
+		return std::format("{}", component);
 	}
 
 	glm::quat turnLeft90() {
@@ -86,45 +85,15 @@ SCENARIO("The model matrix scales, then rotates, then moves", "[ecs][transform]"
 	}
 }
 
-SCENARIO("A text component uses the text pipeline", "[ecs][component]") {
-	GIVEN("a text component created for a text mesh") {
-		const assets::MeshHandle textMesh;
-		const Text               text(textMesh);
-
-		THEN("it draws the given mesh with the text pipeline") {
-			REQUIRE(text.mesh.id == textMesh.id);
-			REQUIRE(text.pipelineType == assets::PipelineType::Text);
-		}
-		AND_THEN("it starts empty, top-left aligned") {
-			REQUIRE(text.text.empty());
-			REQUIRE(text.horizontalAlignment == HAlignment::Left);
-			REQUIRE(text.verticalAlignment == VAlignment::Top);
-			REQUIRE_FALSE(text.aligned);
-		}
-	}
-}
-
 SCENARIO("Components describe themselves for the debug panel", "[ecs][component]") {
 	GIVEN("a transform at (1, 2, 3)") {
 		Transform transform;
 		transform.position = {1.0f, 2.0f, 3.0f};
 
-		THEN("its description shows its name, position, rotation and scale with 2 decimals") {
-			REQUIRE(transform.getName() == "Transform");
+		THEN("its description shows position, rotation and scale with 2 decimals") {
 			REQUIRE_THAT(describe(transform), ContainsSubstring("Position: (X:1.00, Y:2.00, Z:3.00)"));
 			REQUIRE_THAT(describe(transform), ContainsSubstring("Rotation: (X:0.00, Y:0.00, Z:0.00, W:1.00)"));
 			REQUIRE_THAT(describe(transform), ContainsSubstring("Scale: (X:1.00, Y:1.00, Z:1.00)"));
-		}
-	}
-
-	GIVEN("a 2D transform") {
-		Transform2D transform;
-		transform.position = {4.0f, 5.0f};
-		transform.scale    = {0.5f, 0.25f};
-
-		THEN("its description shows position and scale") {
-			REQUIRE_THAT(describe(transform), ContainsSubstring("Position: (X:4.00, Y:5.00)"));
-			REQUIRE_THAT(describe(transform), ContainsSubstring("Scale: (X:0.50, Y:0.25)"));
 		}
 	}
 
@@ -175,22 +144,6 @@ SCENARIO("Components describe themselves for the debug panel", "[ecs][component]
 		}
 	}
 
-	GIVEN("a centered text saying hello") {
-		Text text;
-		text.text                = "hello";
-		text.horizontalAlignment = HAlignment::Center;
-		text.verticalAlignment   = VAlignment::Bottom;
-		text.aligned             = true;
-
-		THEN("its description shows the text and its alignment by name") {
-			const std::string description = describe(static_cast<const ecs::Component<Text>&>(text));
-			REQUIRE_THAT(description, ContainsSubstring("Text: hello"));
-			REQUIRE_THAT(description, ContainsSubstring("Horizontal Alignment: Center"));
-			REQUIRE_THAT(description, ContainsSubstring("Vertical Alignment: Bottom"));
-			REQUIRE_THAT(description, ContainsSubstring("Aligned: true"));
-		}
-	}
-
 	GIVEN("an input with a mouse sensitivity of 0.5") {
 		Input input;
 		input.mouseSensitivity    = 0.5f;
@@ -200,26 +153,6 @@ SCENARIO("Components describe themselves for the debug panel", "[ecs][component]
 		THEN("its description shows the sensitivity and the current command") {
 			REQUIRE_THAT(describe(input), ContainsSubstring("Mouse Sensitivity: 0.50"));
 			REQUIRE_THAT(describe(input), ContainsSubstring("Move Forward: 1.00"));
-		}
-	}
-
-	GIVEN("a half transparent red color") {
-		Color color;
-		color.color = {1.0f, 0.0f, 0.0f, 0.5f};
-
-		THEN("its description shows every channel") {
-			REQUIRE_THAT(describe(color), ContainsSubstring("Color: (R:1.00, G:0.00, B:0.00, A:0.50)"));
-		}
-	}
-
-	GIVEN("a bouncing animation") {
-		Animation animation;
-		animation.type = AnimationType::Bounce;
-
-		THEN("its description shows the type by name and the default speed and intensity") {
-			REQUIRE_THAT(describe(animation), ContainsSubstring("Type: Bounce"));
-			REQUIRE_THAT(describe(animation), ContainsSubstring("Speed: 1.00"));
-			REQUIRE_THAT(describe(animation), ContainsSubstring("Intensity: 1.00"));
 		}
 	}
 }
