@@ -6,7 +6,7 @@
 
 using namespace ecs;
 
-GuiSystem::GuiSystem(render::gui::IGui& gui) : ASystem(Dependencies()), m_gui(gui) {
+GuiSystem::GuiSystem(render::gui::IGui& gui) : m_gui(gui) {
 }
 
 void GuiSystem::onWorldReady([[maybe_unused]] const WorldReadyEvent& event) {

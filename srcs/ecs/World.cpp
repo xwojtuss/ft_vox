@@ -2,47 +2,35 @@
 
 #include <utility>
 
-#include "entity/EntityHandle.hpp"
+#include "component/Components.hpp"
 
 using namespace ecs;
 
+static_assert(nullEntity == entt::null);
+
 World::World(game::block::BlockDatas blockDatas) : m_blockDatas(std::move(blockDatas)) {
+	describeComponentAs<component::Transform>("Transform");
+	describeComponentAs<component::Velocity>("Velocity");
+	describeComponentAs<component::Camera>("Camera");
+	describeComponentAs<component::Mesh>("Mesh");
+	describeComponentAs<component::Texture>("Texture");
+	describeComponentAs<component::Input>("Input");
 }
 
 EntityHandle World::createEntity() {
-	const Entity entity = m_entityManager.createEntity();
-	return EntityHandle{.entity = entity, .world = this};
+	return {m_registry, m_registry.create()};
 }
 
-void World::destroyEntity(const Entity& entity) const {
-	m_systemManager.unregisterEntity(entity);
-	for (const auto& [componentId, manager]: m_componentManagers) {
-		if (manager->hasComponent(entity)) {
-			manager->removeComponent(entity);
-		}
-	}
+EntityHandle World::getEntity(const Entity entity) {
+	return {m_registry, entity};
 }
 
-IComponentManager* World::getComponentManager(int componentId) {
-	const auto it = m_componentManagers.find(componentId);
-	if (it == m_componentManagers.end()) {
-		return nullptr;
-	}
-	return it->second.get();
+void World::destroyEntity(const Entity entity) {
+	getEntity(entity).destroy();
 }
 
-std::vector<IComponent*> World::getAllComponents(const Entity& entity) const {
-	std::vector<IComponent*> components;
-	IComponent*              component = nullptr;
-
-	for (const auto& [id, manager]: m_componentManagers) {
-		if (manager->hasComponent(entity)) {
-			manager->getComponent(entity, component);
-			components.push_back(component);
-		}
-	}
-
-	return components;
+std::vector<ComponentDescription> World::describe(const Entity entity) const {
+	return m_componentDescriber.describe(m_registry, entity);
 }
 
 SystemManager& World::getSystemManager() {

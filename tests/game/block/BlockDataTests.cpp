@@ -5,8 +5,8 @@
 
 SCENARIO("The block registry knows air and dirt", "[block][registry]") {
 	GIVEN("a registry built from a cube model and a texture") {
-		int                     texturePixels = 0;
-		game::block::BlockDatas blockDatas    = test::makeBlockDatas(&texturePixels);
+		const std::vector<unsigned char> texturePixels = {10, 20, 30, 255};
+		game::block::BlockDatas          blockDatas    = test::makeBlockDatas(texturePixels);
 
 		THEN("block 0 is air and has nothing to draw") {
 			const game::block::BlockData& air = blockDatas.getBlockData(test::air);
@@ -21,7 +21,7 @@ SCENARIO("The block registry knows air and dirt", "[block][registry]") {
 			REQUIRE(dirt.prettyName == "Dirt");
 			REQUIRE(dirt.meshData.vertices == test::makeCubeMesh().vertices);
 			REQUIRE(dirt.meshData.indices == test::makeCubeMesh().indices);
-			REQUIRE(dirt.textureData.pixels == &texturePixels);
+			REQUIRE(dirt.textureData.pixels == texturePixels);
 		}
 		AND_THEN("unregistered block types have no name and no model") {
 			const game::block::BlockData& unknown = blockDatas.getBlockData(test::blockWithoutModel);

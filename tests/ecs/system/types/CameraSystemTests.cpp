@@ -32,16 +32,16 @@ SCENARIO("The camera sees the world from its entity's position and direction", "
 		transform.position = {1.0f, 2.0f, 3.0f};
 		transform.rotation = glm::angleAxis(glm::radians(90.0f), worldinfo::up);
 		camera.fov         = 70.0f;
-		cameraEntity.addComponent(transform);
-		cameraEntity.addComponent(camera);
-		cameraEntity.registerToSystem<ecs::CameraSystem>();
+		cameraEntity.add(transform);
+		cameraEntity.add(camera);
 
 		WHEN("a frame is rendered in a 16:9 window") {
 			testWorld.world.getSystemManager().onRender(16.0f / 9.0f, 1.0);
-			const Camera& updated = *cameraEntity.getComponent<Camera>();
+			const Camera& updated = cameraEntity.get<Camera>();
 
 			THEN("the projection uses its field of view and the window's aspect ratio") {
-				REQUIRE(updated.projection == glm::perspective(glm::radians(70.0f), 16.0f / 9.0f, 0.1f, 1e10f));
+				REQUIRE(updated.projection == glm::perspective(glm::radians(70.0f), 16.0f / 9.0f, updated.nearPlane,
+					updated.farPlane));
 			}
 			AND_THEN("the camera's position is the center of the view") {
 				REQUIRE(nearlyEqual(seenFromCamera(updated, transform.position), glm::vec3(0.0f)));

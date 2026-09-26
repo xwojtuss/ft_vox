@@ -30,6 +30,8 @@ namespace render::gui::vulkan {
 	public:
 		ImGuiGui(render::vulkan::VulkanContext& context, render::vulkan::VulkanSwapchain& swapchain,
 				platform::window::IWindow&      window);
+		ImGuiGui(const ImGuiGui&)            = delete;
+		ImGuiGui& operator=(const ImGuiGui&) = delete;
 		~ImGuiGui() override;
 
 		void               beginFrame() override;

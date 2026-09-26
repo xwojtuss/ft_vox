@@ -1,26 +1,16 @@
 #include "PlayerInputSystem.hpp"
-#include "../../component/Components.hpp"
-#include "../../../render/input/InputTypes.hpp"
-#include "../../World.hpp"
 
 using namespace ecs;
 
-PlayerInputSystem::PlayerInputSystem(render::input::InputManager& inputManager) : ASystem(Dependencies()),
-	m_inputManager(inputManager) {
-	m_dependencies.addDependency<component::Input>();
+PlayerInputSystem::PlayerInputSystem(render::input::InputManager& inputManager) : m_inputManager(inputManager) {
 }
 
 void PlayerInputSystem::onSimulate(const SimulateEvent& event) const {
 	const render::input::InputCommand command = m_inputManager.buildCommand();
 	InputEvent                        inputEvent{};
 
-	for (const Entity& entity: m_entities) {
-		component::Input* input = m_world->getComponentManager<component::Input>().getComponent(entity);
-
-		if (!input)
-			continue;
-
-		input->command     = command;
+	for (auto&& [entity, input]: entities()) {
+		input.command      = command;
 		inputEvent.source  = entity;
 		inputEvent.command = command;
 		break;

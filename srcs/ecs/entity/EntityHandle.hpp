@@ -1,31 +1,41 @@
 #pragma once
 
 #include "Entity.hpp"
+#include "../Registry.hpp"
 
 namespace ecs {
-	class World;
+	class EntityHandle {
+	private:
+		Registry* m_registry{};
+		Entity    m_entity;
 
-	struct EntityHandle {
-		Entity entity;
-		World* world;
+	public:
+		EntityHandle(Registry& registry, Entity entity);
 
-		template<typename ComponentType>
-		[[nodiscard]] ComponentType* getComponent();
-
-		template<typename ComponentType>
-		[[nodiscard]] bool hasComponent() const;
-
-		template<typename ComponentType>
-		void addComponent(const ComponentType& component);
+		[[nodiscard]] Entity id() const;
+		[[nodiscard]] bool   isAlive() const;
+		void                 destroy();
 
 		template<typename ComponentType>
-		void removeComponent();
+		decltype(auto) add(ComponentType component);
 
-		template<typename SystemType>
-		void registerToSystem();
+		template<typename ComponentType>
+		void remove();
 
-		template<typename SystemType>
-		void unregisterFromSystem();
+		template<typename ComponentType>
+		[[nodiscard]] bool has() const;
+
+		template<typename ComponentType>
+		[[nodiscard]] ComponentType& get();
+
+		template<typename ComponentType>
+		[[nodiscard]] const ComponentType& get() const;
+
+		template<typename ComponentType>
+		[[nodiscard]] ComponentType* tryGet();
+
+		template<typename ComponentType>
+		[[nodiscard]] const ComponentType* tryGet() const;
 	};
 }
 

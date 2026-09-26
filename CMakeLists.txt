@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25)
 
 project(ft_vox LANGUAGES CXX)
 
@@ -73,7 +73,14 @@ FetchContent_Declare(
   GIT_TAG   55f93686c01528224f448c19128836e7df245f72 # v3.12.0
 )
 
+FetchContent_Declare(
+  EnTT
+  GIT_REPOSITORY https://github.com/skypjack/entt.git
+  GIT_TAG   b4e58bdd364ad72246c123a0c28538eab3252672 # v3.16.0
+)
+
 FetchContent_MakeAvailable(magic_enum)
+FetchContent_MakeAvailable(EnTT)
 set(SPDLOG_USE_STD_FORMAT ON CACHE BOOL "Use std::format instead of the bundled fmt" FORCE)
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(nlohmann_json)
@@ -97,7 +104,10 @@ function(ft_vox_add_core target optimization)
     "${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp"
   )
 
-  target_compile_definitions(${target} PUBLIC GLM_FORCE_CTOR_INIT NDEBUG
+  target_compile_definitions(${target} PUBLIC
+    GLM_FORCE_CTOR_INIT
+    GLM_FORCE_DEPTH_ZERO_TO_ONE
+    GLM_ENABLE_EXPERIMENTAL
     PROJECT_ROOT_DIR="${PROJECT_SOURCE_DIR}"
   )
 
@@ -122,10 +132,23 @@ function(ft_vox_add_core target optimization)
     glfw
     glm::glm
     magic_enum::magic_enum
+    EnTT::EnTT
     spdlog::spdlog
     nlohmann_json::nlohmann_json
   )
 endfunction()
+
+file(GLOB_RECURSE FT_VOX_FILES_OUTSIDE_ECS CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.tpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.hpp"
+)
+list(FILTER FT_VOX_FILES_OUTSIDE_ECS EXCLUDE REGEX "/srcs/ecs/")
+foreach(FILE IN LISTS FT_VOX_FILES_OUTSIDE_ECS)
+  file(STRINGS "${FILE}" ENTT_INCLUDES REGEX "#include [<\"]entt/")
+  if(ENTT_INCLUDES)
+    message(FATAL_ERROR "${FILE} includes EnTT directly; only srcs/ecs may, everything else uses the ecs API")
+  endif()
+endforeach()
 
 ft_vox_add_core(ft_vox_core -O2)
 

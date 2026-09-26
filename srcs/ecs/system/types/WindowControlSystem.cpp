@@ -1,51 +1,41 @@
 #include "WindowControlSystem.hpp"
-#include "../../component/Components.hpp"
 #include "../../../render/input/InputTypes.hpp"
-#include "../../../render/input/InputManager.hpp"
-#include "../../World.hpp"
 
 using namespace ecs;
 
-WindowControlSystem::WindowControlSystem(platform::window::IWindow& window,
-										render::gui::IGui&          gui) : ASystem(Dependencies()), m_window(window),
-																m_gui(gui) {
-	m_dependencies.addDependency<component::Input>();
+WindowControlSystem::WindowControlSystem(platform::window::IWindow& window, render::gui::IGui& gui) : m_window(window),
+	m_gui(gui) {
 }
 
 void WindowControlSystem::onInput([[maybe_unused]] const InputEvent& event) const {
-	for (const Entity& entity: m_entities) {
-		const component::Input* input = m_world->getComponentManager<component::Input>().getComponent(entity);
+	for (auto&& [entity, input]: entities()) {
+		const render::input::InputEvents started = input.command.startedEvents;
 
-		if (!input)
-			continue;
-
-		if (!m_window.isMouseCursorVisible()
-			&& render::input::hasEvent(input->command.startedEvents, render::input::InputEvent::ToggleCursor)) {
-			m_window.setMouseCursorVisible(true);
-			m_window.setMouseCursorPositionToCenter();
-
-			if (component::Transform* transform = m_world->getComponentManager<component::Transform>().
-															getComponent(entity))
-				transform->canRotate = false;
-
-			if (component::Velocity* velocity = m_world->getComponentManager<component::Velocity>().
-														getComponent(entity))
-				velocity->canMove = false;
-		} else if (m_window.isMouseCursorVisible()
-					&& !m_gui.wantsMouseCapture()
-					&& render::input::hasAnyEvent(input->command.startedEvents,
-												render::input::InputEvent::AnyMouseButton)) {
-			m_window.setMouseCursorVisible(false);
-
-			if (component::Velocity* velocity = m_world->getComponentManager<component::Velocity>().
-														getComponent(entity))
-				velocity->canMove = true;
-
-			if (component::Transform* transform = m_world->getComponentManager<component::Transform>().
-															getComponent(entity))
-				transform->canRotate = true;
-		}
+		if (!m_window.isMouseCursorVisible() && hasEvent(started, render::input::InputEvent::ToggleCursor))
+			releaseCursor(m_world->getEntity(entity));
+		else if (m_window.isMouseCursorVisible() && !m_gui.wantsMouseCapture()
+				&& hasAnyEvent(started, render::input::InputEvent::AnyMouseButton))
+			captureCursor(m_world->getEntity(entity));
 	}
+}
+
+void WindowControlSystem::releaseCursor(EntityHandle player) const {
+	m_window.setMouseCursorVisible(true);
+	m_window.setMouseCursorPositionToCenter();
+
+	if (auto* transform = player.tryGet<component::Transform>())
+		transform->canRotate = false;
+	if (auto* velocity = player.tryGet<component::Velocity>())
+		velocity->canMove = false;
+}
+
+void WindowControlSystem::captureCursor(EntityHandle player) const {
+	m_window.setMouseCursorVisible(false);
+
+	if (auto* velocity = player.tryGet<component::Velocity>())
+		velocity->canMove = true;
+	if (auto* transform = player.tryGet<component::Transform>())
+		transform->canRotate = true;
 }
 
 void WindowControlSystem::bindEvents(Dispatcher& dispatcher) {

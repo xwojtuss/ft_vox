@@ -1,12 +1,13 @@
 #pragma once
 
-#include "../ASystem.hpp"
+#include "../System.hpp"
 #include "../Dispatcher.hpp"
 #include "../DispatcherEvents.hpp"
+#include "../../component/Components.hpp"
 #include "../../../render/input/InputManager.hpp"
 
 namespace ecs {
-	class PlayerInputSystem : public ASystem {
+	class PlayerInputSystem : public System<component::Input> {
 	private:
 		render::input::InputManager& m_inputManager;
 		Dispatcher*                  m_dispatcher{nullptr};

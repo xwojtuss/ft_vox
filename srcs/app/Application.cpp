@@ -1,4 +1,5 @@
 #include "Application.hpp"
+#include "../ecs/component/Components.hpp"
 #include "../ecs/system/types/RenderSystem.hpp"
 #include "ApplicationInfo.hpp"
 #include "../assets/StbTextureLoader.hpp"
@@ -30,8 +31,8 @@ Application::Application() {
 
 	auto defaultTextureData         = m_textureLoader->toTextureData("textures/default.png");
 	defaultTextureData.pixelPerfect = true;
-	const game::block::BlockDatas blockDatas(m_modelLoader->toMeshData("models/cube.obj"), defaultTextureData);
-	m_world = std::make_unique<ecs::World>(blockDatas);
+	game::block::BlockDatas blockDatas(m_modelLoader->toMeshData("models/cube.obj"), std::move(defaultTextureData));
+	m_world = std::make_unique<World>(std::move(blockDatas));
 
 	m_window->getInputManager().getKeyInputProcessor().resetBindings();
 
@@ -48,31 +49,11 @@ void Application::init() const {
 	m_world->createSystem<ChunkSystem>(*m_world, *m_renderer);
 	m_world->getSystemManager().onWorldReady();
 
-	EntityHandle         camera = m_world->createEntity();
-	component::Transform transform{};
-	component::Velocity  velocity{};
-	component::Camera    cameraComponent{};
-	component::Input     inputComponent{};
-
-	transform.position              = glm::vec3(0.0f, 0.0f, 0.0f);
-	transform.rotation              = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
-	transform.scale                 = glm::vec3(1.0f, 1.0f, 1.0f);
-	velocity.acceleration           = 4.5f;
-	velocity.deceleration           = 10.0f;
-	velocity.maxSpeed               = 10.0f;
-	velocity.velocity               = glm::vec3(0.0f);
-	velocity.desiredVelocity        = glm::vec3(0.0f);
-	cameraComponent.fov             = 90.0f;
-	inputComponent.mouseSensitivity = 0.002f;
-	camera.addComponent(transform);
-	camera.addComponent(velocity);
-	camera.addComponent(cameraComponent);
-	camera.addComponent(inputComponent);
-
-	camera.registerToSystem<MovementSystem>();
-	camera.registerToSystem<PlayerInputSystem>();
-	camera.registerToSystem<CameraSystem>();
-	camera.registerToSystem<WindowControlSystem>();
+	EntityHandle player = m_world->createEntity();
+	player.add(component::Transform{});
+	player.add(component::Velocity{.maxSpeed = 10.0f, .acceleration = 4.5f, .deceleration = 10.0f});
+	player.add(component::Camera{.fov = 90.0f});
+	player.add(component::Input{.mouseSensitivity = 0.002f});
 
 	m_renderer->setClearColor(0x0a2882);
 }

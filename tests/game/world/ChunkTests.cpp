@@ -81,7 +81,7 @@ SCENARIO("A removed block forgets its entity", "[chunk]") {
 	GIVEN("a block linked to an entity") {
 		Chunk chunk;
 		Block block(test::dirt);
-		block.entity = 7;
+		block.entity = ecs::Entity{7};
 		chunk.setBlock(0, 0, 0, block);
 
 		REQUIRE(chunk.getBlock(0, 0, 0).hasEntity());

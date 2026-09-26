@@ -7,7 +7,7 @@ namespace game {
 
 	struct Block {
 		BlockId     id;
-		ecs::Entity entity = -1;
+		ecs::Entity entity = ecs::nullEntity;
 
 		Block();
 		explicit Block(BlockId id);

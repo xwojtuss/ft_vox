@@ -38,7 +38,6 @@ SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]"
 		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
 		testWorld.dispatcher().subscribe(&recorder, &InputRecorder::onInput);
 		ecs::EntityHandle player = test::createPlayer(testWorld);
-		player.registerToSystem<ecs::PlayerInputSystem>();
 		inputManager.getKeyInputProcessor().bindEvent(render::input::createInput(forwardKey, 0),
 													input::InputEvent::MoveForward);
 
@@ -47,13 +46,13 @@ SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]"
 			testWorld.simulate(0.016f, 1.0f);
 
 			THEN("the player's command says they started moving forward") {
-				const render::input::InputCommand& command = player.getComponent<Input>()->command;
+				const render::input::InputCommand& command = player.get<Input>().command;
 				REQUIRE(command.moveForward == 1.0f);
 				REQUIRE(render::input::hasEvent(command.startedEvents, input::InputEvent::MoveForward));
 			}
 			AND_THEN("one input event from the player, with that command and the time step, is sent") {
 				REQUIRE(recorder.events.size() == 1);
-				REQUIRE(recorder.events.front().source == player.entity);
+				REQUIRE(recorder.events.front().source == player.id());
 				REQUIRE(recorder.events.front().command.moveForward == 1.0f);
 				REQUIRE(recorder.events.front().deltaTime == 0.016f);
 			}
@@ -62,7 +61,7 @@ SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]"
 				testWorld.simulate(0.016f, 1.016f);
 
 				THEN("the player still moves forward, but it no longer counts as just started") {
-					const render::input::InputCommand& command = player.getComponent<Input>()->command;
+					const render::input::InputCommand& command = player.get<Input>().command;
 					REQUIRE(command.moveForward == 1.0f);
 					REQUIRE(render::input::hasEvent(command.activeEvents, input::InputEvent::MoveForward));
 					REQUIRE_FALSE(render::input::hasEvent(command.startedEvents, input::InputEvent::MoveForward));
@@ -98,8 +97,6 @@ SCENARIO("The mouse turns the player the way it moves", "[ecs][player-input][mov
 		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
 		testWorld.addSystem<ecs::MovementSystem>();
 		ecs::EntityHandle player = test::createPlayer(testWorld, glm::radians(1.0f));
-		player.registerToSystem<ecs::PlayerInputSystem>();
-		player.registerToSystem<ecs::MovementSystem>();
 		inputManager.processMouseMove(0.0, 0.0);
 
 		WHEN("the mouse moves 90 pixels to the right") {
@@ -107,7 +104,7 @@ SCENARIO("The mouse turns the player the way it moves", "[ecs][player-input][mov
 			testWorld.simulate(0.016f, 1.0f);
 
 			THEN("the player turns 90 degrees to the right") {
-				REQUIRE(nearlyEqual(player.getComponent<Transform>()->forward(), worldinfo::right));
+				REQUIRE(nearlyEqual(player.get<Transform>().forward(), worldinfo::right));
 			}
 		}
 
@@ -117,7 +114,7 @@ SCENARIO("The mouse turns the player the way it moves", "[ecs][player-input][mov
 
 			THEN("the player looks 30 degrees up") {
 				REQUIRE(
-					player.getComponent<Transform>()->forward().y == Approx(std::sin(glm::radians(30.0f))).epsilon(1e-4
+					player.get<Transform>().forward().y == Approx(std::sin(glm::radians(30.0f))).epsilon(1e-4
 					));
 			}
 		}

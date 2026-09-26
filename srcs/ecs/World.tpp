@@ -1,21 +1,23 @@
 #pragma once
 
+#include <utility>
+
 namespace ecs {
+	template<typename... Components>
+	Query<Components...> World::query() {
+		return Query < Components...>(m_registry);
+	}
+
 	template<typename ComponentType>
-	ComponentManager<ComponentType>& World::getComponentManager() {
-		const int componentId = Component<ComponentType>::getId();
-
-		if (m_componentManagers.find(componentId) == m_componentManagers.end()) {
-			m_componentManagers[componentId] = std::make_unique<ComponentManager<ComponentType>>();
-		}
-
-		return *static_cast<ComponentManager<ComponentType>*>(m_componentManagers[componentId].get());
+	void World::describeComponentAs(std::string name) {
+		m_componentDescriber.add<ComponentType>(std::move(name));
 	}
 
 	template<typename SystemType, typename... Args>
-	void World::createSystem(Args&&... args) {
+	SystemType& World::createSystem(Args&&... args) {
 		auto& system = m_systemManager.addSystem<SystemType>(std::forward<Args>(args)...);
 		system.registerWorld(this);
 		system.bindEvents(m_systemManager.getDispatcher());
+		return system;
 	}
 }

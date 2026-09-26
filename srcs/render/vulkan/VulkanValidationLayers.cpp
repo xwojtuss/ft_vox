@@ -1,6 +1,6 @@
 #include "VulkanValidationLayers.hpp"
 
-#include "gui/PlayerComponentsPanel.hpp"
+#include <vulkan/vulkan.h>
 
 using namespace render::vulkan;
 

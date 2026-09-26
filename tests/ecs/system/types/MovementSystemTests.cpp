@@ -45,14 +45,13 @@ SCENARIO("Movement input sets where the player wants to go, relative to where th
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
 		ecs::EntityHandle player = test::createPlayer(testWorld);
-		player.registerToSystem<ecs::MovementSystem>();
-		player.getComponent<Transform>()->rotation = glm::angleAxis(glm::radians(90.0f), worldinfo::up);
+		player.get<Transform>().rotation = glm::angleAxis(glm::radians(90.0f), worldinfo::up);
 
 		WHEN("forward is pressed") {
 			testWorld.dispatcher().emit(test::inputFrom(player, moving(1.0f, 0.0f, 0.0f)));
 
 			THEN("the player wants to go towards what used to be left") {
-				REQUIRE(nearlyEqual(player.getComponent<Velocity>()->desiredVelocity, worldinfo::left));
+				REQUIRE(nearlyEqual(player.get<Velocity>().desiredVelocity, worldinfo::left));
 			}
 		}
 
@@ -61,7 +60,7 @@ SCENARIO("Movement input sets where the player wants to go, relative to where th
 
 			THEN("the player wants to go to their own right, and straight up in the world") {
 				REQUIRE(
-					nearlyEqual(player.getComponent<Velocity>()->desiredVelocity, worldinfo::forward + worldinfo::up));
+					nearlyEqual(player.get<Velocity>().desiredVelocity, worldinfo::forward + worldinfo::up));
 			}
 		}
 
@@ -70,7 +69,7 @@ SCENARIO("Movement input sets where the player wants to go, relative to where th
 			testWorld.dispatcher().emit(test::inputFrom(stranger, moving(1.0f, 0.0f, 0.0f)));
 
 			THEN("the player is not affected") {
-				REQUIRE(player.getComponent<Velocity>()->desiredVelocity == glm::vec3(0.0f));
+				REQUIRE(player.get<Velocity>().desiredVelocity == glm::vec3(0.0f));
 			}
 		}
 	}
@@ -81,14 +80,13 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
 		ecs::EntityHandle player = test::createPlayer(testWorld);
-		player.registerToSystem<ecs::MovementSystem>();
 
 		WHEN("they look up by 30 degrees") {
 			testWorld.dispatcher().emit(test::inputFrom(player, looking(glm::radians(30.0f), 0.0f)));
 
 			THEN("they face 30 degrees above the horizon") {
 				REQUIRE(
-					nearlyEqual(player.getComponent<Transform>()->forward(), {0.0f, std::sin(glm::radians(30.0f)), -std
+					nearlyEqual(player.get<Transform>().forward(), {0.0f, std::sin(glm::radians(30.0f)), -std
 						::cos(glm::radians(30.0f))}));
 			}
 		}
@@ -98,9 +96,9 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 
 			THEN("they stop at the maximum pitch of 89 degrees instead of flipping over") {
 				REQUIRE(
-					player.getComponent<Transform>()->forward().y == Approx(std::sin(glm::radians(89.0f))).epsilon(1e-4
+					player.get<Transform>().forward().y == Approx(std::sin(glm::radians(89.0f))).epsilon(1e-4
 					));
-				REQUIRE(player.getComponent<Transform>()->forward().z < 0.0f);
+				REQUIRE(player.get<Transform>().forward().z < 0.0f);
 			}
 		}
 
@@ -109,17 +107,17 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 
 			THEN("they stop at the minimum pitch of -89 degrees") {
 				REQUIRE(
-					player.getComponent<Transform>()->forward().y == Approx(-std::sin(glm::radians(89.0f))).epsilon(1e-4
+					player.get<Transform>().forward().y == Approx(-std::sin(glm::radians(89.0f))).epsilon(1e-4
 					));
 			}
 		}
 
 		WHEN("they cannot rotate and try to look around") {
-			player.getComponent<Transform>()->canRotate = false;
+			player.get<Transform>().canRotate = false;
 			testWorld.dispatcher().emit(test::inputFrom(player, looking(1.0f, 1.0f)));
 
 			THEN("they keep facing forward") {
-				REQUIRE(nearlyEqual(player.getComponent<Transform>()->forward(), worldinfo::forward));
+				REQUIRE(nearlyEqual(player.get<Transform>().forward(), worldinfo::forward));
 			}
 		}
 	}
@@ -130,8 +128,7 @@ SCENARIO("The player speeds up towards where they want to go, up to their top sp
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
 		ecs::EntityHandle player = test::createPlayer(testWorld);
-		player.registerToSystem<ecs::MovementSystem>();
-		Velocity& velocity       = *player.getComponent<Velocity>();
+		Velocity& velocity       = player.get<Velocity>();
 		velocity.desiredVelocity = worldinfo::forward;
 
 		WHEN("0.1 s passes") {
@@ -141,7 +138,7 @@ SCENARIO("The player speeds up towards where they want to go, up to their top sp
 				REQUIRE(nearlyEqual(velocity.velocity, 0.5f * worldinfo::forward));
 			}
 			AND_THEN("they have moved 0.05 units forward") {
-				REQUIRE(nearlyEqual(player.getComponent<Transform>()->position, 0.05f * worldinfo::forward));
+				REQUIRE(nearlyEqual(player.get<Transform>().position, 0.05f * worldinfo::forward));
 			}
 		}
 
@@ -159,7 +156,7 @@ SCENARIO("The player speeds up towards where they want to go, up to their top sp
 			testWorld.simulate(0.1f, 1.0f);
 
 			THEN("they stay where they are") {
-				REQUIRE(player.getComponent<Transform>()->position == glm::vec3(0.0f));
+				REQUIRE(player.get<Transform>().position == glm::vec3(0.0f));
 			}
 		}
 	}
@@ -170,8 +167,7 @@ SCENARIO("The player slows down to a stop when no direction is held", "[ecs][mov
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
 		ecs::EntityHandle player = test::createPlayer(testWorld);
-		player.registerToSystem<ecs::MovementSystem>();
-		Velocity& velocity = *player.getComponent<Velocity>();
+		Velocity& velocity = player.get<Velocity>();
 		velocity.velocity  = worldinfo::forward;
 
 		WHEN("0.1 s passes") {
@@ -199,16 +195,15 @@ SCENARIO("Every step the player moves is announced", "[ecs][movement]") {
 		testWorld.addSystem<ecs::MovementSystem>();
 		testWorld.dispatcher().subscribe(&recorder, &MoveRecorder::onPlayerMove);
 		ecs::EntityHandle player = test::createPlayer(testWorld);
-		player.registerToSystem<ecs::MovementSystem>();
 
 		WHEN("the player moves") {
-			player.getComponent<Velocity>()->velocity = worldinfo::right;
+			player.get<Velocity>().velocity = worldinfo::right;
 			testWorld.simulate(1.0f, 1.0f);
 
 			THEN("one move is announced, from the old position to the new one") {
 				REQUIRE(recorder.moves.size() == 1);
 				REQUIRE(recorder.moves.front().previousPosition == glm::vec3(0.0f));
-				REQUIRE(recorder.moves.front().currentPosition == player.getComponent<Transform>()->position);
+				REQUIRE(recorder.moves.front().currentPosition == player.get<Transform>().position);
 			}
 		}
 

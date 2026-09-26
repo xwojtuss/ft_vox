@@ -1,8 +1,6 @@
 #include "PlayerComponentsPanel.hpp"
 
-#include <sstream>
-
-#include "component/Components.hpp"
+#include "../../ecs/component/Components.hpp"
 
 using namespace render::gui;
 
@@ -10,23 +8,15 @@ PlayerComponentsPanel::PlayerComponentsPanel(IGui& gui, ecs::World& world) : APa
 }
 
 void PlayerComponentsPanel::display() {
-	if (!m_isOpen)
+	if (!m_isOpen || !m_world.getEntity(m_caller).has<ecs::component::Transform>())
 		return;
 
-	if (const ecs::component::Transform* transform = m_world.getComponentManager<ecs::component::Transform>().
-															getComponent(m_caller); !transform)
-		return;
+	const std::vector<ecs::ComponentDescription> components = m_world.describe(m_caller);
 
-	const std::vector<ecs::IComponent*> components = m_world.getAllComponents(m_caller);
 	if (m_gui.beginWindow("Player Components", &m_isOpen)) {
-		std::stringstream ss;
-
-		for (const auto& component: components) {
-			if (m_gui.beginSection(component->getName(), nullptr)) {
-				ss << *component;
-				m_gui.text(ss.str());
-				ss.str("");
-			}
+		for (const auto& [name, details]: components) {
+			if (m_gui.beginSection(name, nullptr))
+				m_gui.text(details);
 			m_gui.endSection();
 		}
 	}

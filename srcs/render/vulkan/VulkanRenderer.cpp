@@ -5,6 +5,7 @@
 #include "pipeline/VertexColorPipeline.hpp"
 #include "../../platform/filesystem/readFile.hpp"
 #include "VulkanError.hpp"
+#include "../../ecs/component/Components.hpp"
 
 using namespace render::vulkan;
 
@@ -136,7 +137,7 @@ void VulkanRenderer::cleanupRenderFinishedSemaphores() {
 
 void VulkanRenderer::drawMesh(const ecs::component::Mesh&    mesh, const ecs::component::Texture* texture,
 							const ecs::component::Transform& transform) {
-	const APipeline& pipeline = *m_pipelineHandles[mesh.pipelineType];
+	const APipeline& pipeline = *m_pipelineHandles.at(mesh.pipelineType);
 	const GpuMesh&   gpuMesh  = m_resourceManager->getMesh(mesh.mesh);
 	vkCmdSetViewport(m_frameData->getCurrentCommandBuffer(), 0, 1, &pipeline.getViewport());
 	vkCmdSetScissor(m_frameData->getCurrentCommandBuffer(), 0, 1, &pipeline.getScissor());
