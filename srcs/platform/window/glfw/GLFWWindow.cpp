@@ -124,6 +124,8 @@ float GLFWWindow::getAspectRatio() const {
 	int width  = 0;
 	int height = 0;
 	glfwGetFramebufferSize(m_window, &width, &height);
+	if (width == 0 || height == 0)
+		return aspectRatio;
 	return static_cast<float>(width) / static_cast<float>(height);
 }
 
@@ -138,7 +140,7 @@ void GLFWWindow::setMouseCursorPosition(const double x, const double y) {
 void GLFWWindow::setMouseCursorPositionToCenter() {
 	int width  = 0;
 	int height = 0;
-	glfwGetFramebufferSize(m_window, &width, &height);
+	glfwGetWindowSize(m_window, &width, &height);
 	GLFWWindow::setMouseCursorPosition(width / 2.0, height / 2.0);
 }
 

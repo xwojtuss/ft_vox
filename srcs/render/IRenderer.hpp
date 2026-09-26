@@ -2,11 +2,16 @@
 
 #include "gui/IGui.hpp"
 #include "../assets/Resources.hpp"
-#include "../ecs/component/Components.hpp"
-#include "../ecs/system/SystemManager.hpp"
 
 namespace ecs {
 	class SystemManager;
+}
+
+namespace ecs::component {
+	struct Mesh;
+	struct Texture;
+	struct Transform;
+	struct Camera;
 }
 
 namespace render {
@@ -23,7 +28,7 @@ namespace render {
 		virtual void setClearColor(int hexColor) = 0;
 		virtual void cleanup() = 0;
 		virtual void drawMesh(const ecs::component::Mesh& mesh, const ecs::component::Texture* texture,
-							const ecs::component::Transform& transform) = 0;;
+							const ecs::component::Transform& transform) = 0;
 		virtual void updateCamera(const ecs::component::Camera& camera) = 0;
 	};
 }

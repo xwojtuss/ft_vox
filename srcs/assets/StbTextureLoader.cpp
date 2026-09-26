@@ -1,5 +1,4 @@
 #include "StbTextureLoader.hpp"
-#include <stdexcept>
 
 #include "stb_image.h"
 #include "../platform/filesystem/resolvePath.hpp"
@@ -24,11 +23,11 @@ TextureData StbTextureLoader::toTextureData(const char* path) {
 		throw error::AssetError(path, "image has no pixels");
 	}
 
-	textureData.width      = static_cast<unsigned int>(width);
-	textureData.height     = static_cast<unsigned int>(height);
-	textureData.mipLevels  = 1;
-	textureData.pixels     = data;
-	textureData.freePixels = stbi_image_free;
+	textureData.width     = static_cast<unsigned int>(width);
+	textureData.height    = static_cast<unsigned int>(height);
+	textureData.mipLevels = 1;
+	textureData.pixels.assign(data, data + static_cast<size_t>(width) * static_cast<size_t>(height) * STBI_rgb_alpha);
+	stbi_image_free(data);
 
 	return textureData;
 }

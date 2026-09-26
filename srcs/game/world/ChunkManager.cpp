@@ -1,8 +1,7 @@
 #include "ChunkManager.hpp"
-#include "../../ecs/component/Components.hpp"
-#include "../../ecs/system/types/RenderSystem.hpp"
 
-#include "entity/EntityHandle.hpp"
+#include "IRenderer.hpp"
+#include "../../ecs/component/Components.hpp"
 
 using namespace game::world;
 
@@ -25,12 +24,6 @@ ChunkManager::ChunkManager(block::BlockDatas& blockDatas, ecs::World& world, ren
 	}
 }
 
-void ChunkManager::makeAllChunksRenderable(const ecs::World& world, const render::IRenderer& renderer) const {
-	// TODO: implement
-	(void)world;
-	(void)renderer;
-}
-
 void ChunkManager::makeChunkRenderable(ecs::World& world, render::IRenderer& renderer, glm::ivec3 chunkPosition) {
 	auto it = m_chunks.find(chunkPosition);
 	if (it == m_chunks.end())
@@ -40,26 +33,19 @@ void ChunkManager::makeChunkRenderable(ecs::World& world, render::IRenderer& ren
 	if (meshData.vertices.empty() || meshData.indices.empty())
 		return;
 
-	ecs::EntityHandle         chunkEntity = world.createEntity();
-	ecs::component::Mesh      meshComponent;
-	ecs::component::Texture   textureComponent;
-	ecs::component::Transform positionComponent;
+	ecs::EntityHandle chunkEntity = world.createEntity();
 
-	meshComponent.mesh         = renderer.createMesh(meshData);
-	meshComponent.pipelineType = assets::PipelineType::Textured;
-	textureComponent.texture   = m_chunkTexture;
-	positionComponent.position = glm::vec3(chunkPosition * glm::ivec3(chunkXSize, chunkYSize, chunkZSize));
-
-	chunkEntity.addComponent(meshComponent);
-	chunkEntity.addComponent(textureComponent);
-	chunkEntity.addComponent(positionComponent);
-
-	chunkEntity.registerToSystem<ecs::RenderSystem>();
+	chunkEntity.add(ecs::component::Mesh{
+		.mesh = renderer.createMesh(meshData), .pipelineType = assets::PipelineType::Textured
+	});
+	chunkEntity.add(ecs::component::Texture{.texture = m_chunkTexture});
+	chunkEntity.add(ecs::component::Transform{
+		.position = glm::vec3(chunkPosition * glm::ivec3(chunkXSize, chunkYSize, chunkZSize))
+	});
 }
 
 void ChunkManager::unloadChunk(glm::ivec3 chunkPosition) {
-	auto it = m_chunks.find(chunkPosition);
-	if (it != m_chunks.end()) {
+	if (const auto it = m_chunks.find(chunkPosition); it != m_chunks.end()) {
 		m_chunks.erase(it);
 	}
 }

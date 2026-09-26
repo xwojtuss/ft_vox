@@ -44,7 +44,7 @@ void ImGuiGui::init() {
 	ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow*>(m_window.getHandle()), true);
 
 	ImGui_ImplVulkan_InitInfo init_info    = {};
-	init_info.ApiVersion                   = VK_API_VERSION_1_3;
+	init_info.ApiVersion                   = render::vulkan::vulkanApiVersion;
 	init_info.Instance                     = m_context.getInstance();
 	init_info.PhysicalDevice               = m_context.getPhysicalDevice();
 	init_info.Device                       = m_context.getLogicalDevice();

@@ -9,5 +9,5 @@ Block::Block(const BlockId id) : id(id) {
 }
 
 bool Block::hasEntity() const {
-	return entity != -1;
+	return entity != ecs::nullEntity;
 }

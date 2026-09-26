@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "../entity/Entity.hpp"
 #include "../../render/input/InputTypes.hpp"
 
 namespace render {
@@ -56,7 +57,7 @@ namespace ecs {
 
 	struct InputEvent : public DispatchEvent {
 		float                       deltaTime{0};
-		ecs::Entity                 source{-1};
+		ecs::Entity                 source = nullEntity;
 		render::input::InputCommand command;
 
 		InputEvent() : DispatchEvent("InputEvent") {

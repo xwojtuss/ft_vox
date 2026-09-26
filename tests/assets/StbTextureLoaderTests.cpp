@@ -6,37 +6,19 @@
 
 namespace {
 	constexpr const char* twoByTwoPng = "tests/fixtures/2x2.png";
-
-	struct LoadedTexture {
-		assets::TextureData data;
-
-		explicit LoadedTexture(const std::string& path) {
-			assets::StbTextureLoader loader;
-			data = loader.toTextureData(path);
-		}
-
-		~LoadedTexture() {
-			data.freePixels(data.pixels);
-		}
-
-		std::vector<unsigned char> pixels() const {
-			const unsigned char* bytes = static_cast<const unsigned char*>(data.pixels);
-			return std::vector<unsigned char>(bytes, bytes + data.width * data.height * 4);
-		}
-	};
 }
 
 SCENARIO("A PNG image is loaded as RGBA pixels", "[assets][stb]") {
 	GIVEN("a 2 x 2 PNG with red, green, blue and half transparent white pixels") {
-		const LoadedTexture texture(twoByTwoPng);
+		const assets::TextureData texture = assets::StbTextureLoader().toTextureData(twoByTwoPng);
 
 		THEN("its size is read from the file") {
-			REQUIRE(texture.data.width == 2);
-			REQUIRE(texture.data.height == 2);
-			REQUIRE(texture.data.mipLevels == 1);
+			REQUIRE(texture.width == 2);
+			REQUIRE(texture.height == 2);
+			REQUIRE(texture.mipLevels == 1);
 		}
 		AND_THEN("its pixels are read row by row, keeping transparency") {
-			REQUIRE(texture.pixels() == std::vector<unsigned char>{
+			REQUIRE(texture.pixels == std::vector<unsigned char>{
 					255, 0, 0, 255, 0, 255, 0, 255,
 					0, 0, 255, 255, 255, 255, 255, 128
 					});

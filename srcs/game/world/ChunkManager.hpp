@@ -8,7 +8,6 @@
 #include "ChunkMesher.hpp"
 #include "ChunkLoader.hpp"
 #include "../../ecs/World.hpp"
-#include "../../render/IRenderer.hpp"
 #include "../../scene/WorldInfo.hpp"
 
 namespace game::world {
@@ -27,7 +26,6 @@ namespace game::world {
 		ChunkManager(block::BlockDatas&         blockDatas, ecs::World& world, render::IRenderer& renderer,
 					glm::vec<3, unsigned short> renderDistance = scene::worldinfo::renderDistance);
 
-		void makeAllChunksRenderable(const ecs::World& world, const render::IRenderer& renderer) const;
 		void makeChunkRenderable(ecs::World& world, render::IRenderer& renderer, glm::ivec3 chunkPosition);
 		void unloadChunk(glm::ivec3 chunkPosition);
 		void unloadChunk(int x, int y, int z);

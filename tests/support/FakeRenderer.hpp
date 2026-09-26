@@ -13,25 +13,16 @@ namespace test {
 		glm::vec3                      position;
 	};
 
-	struct DrawnText {
-		std::string                    text;
-		size_t                         offset;
-		glm::vec2                      position;
-		const ecs::component::Texture* texture;
-		const ecs::component::Color*   color;
-	};
-
 	class FakeRenderer : public render::IRenderer {
 	public:
-		std::vector<size_t>                createdMeshTriangleCounts;
-		std::vector<assets::MeshHandle>    createdMeshes;
-		std::vector<void*>                 createdTexturePixels;
-		std::vector<assets::TextureHandle> createdTextures;
-		std::vector<DrawnMesh>             drawnMeshes;
-		std::vector<DrawnText>             drawnTexts;
-		std::vector<glm::mat4>             cameraViews;
-		int                                guiRenders = 0;
-		assets::MeshHandle                 textMeshHandle;
+		std::vector<size_t>                     createdMeshTriangleCounts;
+		std::vector<assets::MeshHandle>         createdMeshes;
+		std::vector<std::vector<unsigned char>> createdTexturePixels;
+		std::vector<assets::TextureHandle>      createdTextures;
+		std::vector<DrawnMesh>                  drawnMeshes;
+		std::vector<glm::mat4>                  cameraViews;
+		int                                     guiRenders = 0;
+		assets::MeshHandle                      textMeshHandle;
 
 		assets::MeshHandle createMesh(const assets::MeshData& meshData) override {
 			createdMeshTriangleCounts.push_back(meshData.indices.size() / 3);
