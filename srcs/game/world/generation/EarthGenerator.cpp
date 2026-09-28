@@ -1,6 +1,6 @@
-#include "EarthGenerator.hpp"
+#include "game/world/generation/EarthGenerator.hpp"
 #include <random>
-#include "../../../scene/WorldInfo.hpp"
+#include "scene/WorldInfo.hpp"
 
 #include <algorithm>
 

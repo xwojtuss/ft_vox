@@ -4,9 +4,9 @@
 #include <optional>
 #include <vector>
 
-#include "Chunk.hpp"
-#include "../block/BlockData.hpp"
-#include "../../assets/Resources.hpp"
+#include "game/world/Chunk.hpp"
+#include "game/block/BlockData.hpp"
+#include "assets/Resources.hpp"
 
 namespace game::world {
 	class ChunkMesher {

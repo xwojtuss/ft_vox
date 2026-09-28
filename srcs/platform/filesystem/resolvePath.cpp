@@ -1,8 +1,8 @@
-#include "resolvePath.hpp"
+#include "platform/filesystem/resolvePath.hpp"
 
 #include <filesystem>
 
-#include "../../app/ApplicationInfo.hpp"
+#include "app/ApplicationInfo.hpp"
 
 std::string resolvePath(const std::string& path) {
 	const std::filesystem::path p(path);

@@ -3,7 +3,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include "../../platform/window/IWindow.hpp"
+#include "platform/window/IWindow.hpp"
 
 namespace render::vulkan {
 	class VulkanContext;

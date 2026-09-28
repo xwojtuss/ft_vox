@@ -3,7 +3,7 @@
 #include <array>
 #include <glm/vec3.hpp>
 
-#include "../block/Block.hpp"
+#include "game/block/Block.hpp"
 
 namespace game::world {
 	constexpr unsigned short chunkXSize  = 16;

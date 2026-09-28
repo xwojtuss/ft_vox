@@ -1,6 +1,6 @@
 #pragma once
 
-#include "generation/EarthGenerator.hpp"
+#include "game/world/generation/EarthGenerator.hpp"
 
 #include <memory>
 

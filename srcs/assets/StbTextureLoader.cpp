@@ -1,9 +1,9 @@
-#include "StbTextureLoader.hpp"
+#include "assets/StbTextureLoader.hpp"
 
-#include "stb_image.h"
-#include "../platform/filesystem/resolvePath.hpp"
+#include "assets/stb_image.h"
+#include "platform/filesystem/resolvePath.hpp"
 
-#include "../error/Exception.hpp"
+#include "error/Exception.hpp"
 
 using namespace assets;
 

@@ -1,7 +1,7 @@
-#include "TexturePipeline.hpp"
-#include "../../GpuTypes.hpp"
-#include "../VulkanVertexUtils.hpp"
-#include "../VulkanError.hpp"
+#include "render/vulkan/pipeline/TexturePipeline.hpp"
+#include "render/GpuTypes.hpp"
+#include "render/vulkan/VulkanVertexUtils.hpp"
+#include "render/vulkan/VulkanError.hpp"
 
 using namespace render::vulkan;
 

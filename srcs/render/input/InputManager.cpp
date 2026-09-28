@@ -1,4 +1,4 @@
-#include "InputManager.hpp"
+#include "render/input/InputManager.hpp"
 
 using namespace render::input;
 

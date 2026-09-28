@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../render/input/InputTypes.hpp"
+#include "render/input/InputTypes.hpp"
 
 namespace platform::input::glfw {
 	[[nodiscard]] render::input::InputAction glfwToInputAction(int glfwAction);

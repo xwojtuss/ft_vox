@@ -1,11 +1,11 @@
-#include "VulkanRenderer.hpp"
-#include "VulkanValidationLayers.hpp"
-#include "VulkanVertexUtils.hpp"
-#include "pipeline/TexturePipeline.hpp"
-#include "pipeline/VertexColorPipeline.hpp"
-#include "../../platform/filesystem/readFile.hpp"
-#include "VulkanError.hpp"
-#include "../../ecs/component/Components.hpp"
+#include "render/vulkan/VulkanRenderer.hpp"
+#include "render/vulkan/VulkanValidationLayers.hpp"
+#include "render/vulkan/VulkanVertexUtils.hpp"
+#include "render/vulkan/pipeline/TexturePipeline.hpp"
+#include "render/vulkan/pipeline/VertexColorPipeline.hpp"
+#include "platform/filesystem/readFile.hpp"
+#include "render/vulkan/VulkanError.hpp"
+#include "ecs/component/Components.hpp"
 
 using namespace render::vulkan;
 

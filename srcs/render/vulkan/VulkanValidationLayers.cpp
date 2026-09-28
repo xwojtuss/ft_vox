@@ -1,8 +1,8 @@
-#include "VulkanValidationLayers.hpp"
+#include "render/vulkan/VulkanValidationLayers.hpp"
 
 #include <cstring> // for strcmp
 
-#include "../../log/Log.hpp"
+#include "log/Log.hpp"
 
 using namespace render::vulkan;
 

@@ -1,10 +1,10 @@
-#include "ImGuiGui.hpp"
+#include "render/gui/vulkan/ImGuiGui.hpp"
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
-#include "../../vulkan/VulkanError.hpp"
-#include "../../vulkan/VulkanContext.hpp"
-#include "../../vulkan/VulkanSwapchain.hpp"
-#include "../../../platform/window/IWindow.hpp"
+#include "render/vulkan/VulkanError.hpp"
+#include "render/vulkan/VulkanContext.hpp"
+#include "render/vulkan/VulkanSwapchain.hpp"
+#include "platform/window/IWindow.hpp"
 
 #include <GLFW/glfw3.h>
 

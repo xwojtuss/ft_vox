@@ -3,7 +3,7 @@
 #include <cstdint> // for std::uint32_t
 #include <vector>
 
-#include "../render/GpuTypes.hpp"
+#include "render/GpuTypes.hpp"
 
 namespace assets {
 	struct MeshData {

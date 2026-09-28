@@ -1,10 +1,10 @@
-#include "TinyObjLoader.hpp"
-#include "../render/GpuTypes.hpp"
-#include "../platform/filesystem/resolvePath.hpp"
+#include "assets/TinyObjLoader.hpp"
+#include "render/GpuTypes.hpp"
+#include "platform/filesystem/resolvePath.hpp"
 
 #include <unordered_map>
 
-#include "../error/Exception.hpp"
+#include "error/Exception.hpp"
 
 using namespace assets;
 

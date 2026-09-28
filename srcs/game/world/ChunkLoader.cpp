@@ -1,4 +1,4 @@
-#include "ChunkLoader.hpp"
+#include "game/world/ChunkLoader.hpp"
 
 using namespace game::world;
 

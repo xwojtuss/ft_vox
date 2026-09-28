@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MouseInputProcessor.hpp"
-#include "KeyInputProcessor.hpp"
-#include "InputTypes.hpp"
+#include "render/input/MouseInputProcessor.hpp"
+#include "render/input/KeyInputProcessor.hpp"
+#include "render/input/InputTypes.hpp"
 
 namespace render::input {
 	class InputManager {

@@ -85,14 +85,6 @@ set(SPDLOG_USE_STD_FORMAT ON CACHE BOOL "Use std::format instead of the bundled 
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(nlohmann_json)
 
-file(GLOB SRC_INCLUDE_DIR_CANDIDATES LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*")
-set(SRC_INCLUDE_DIRS)
-foreach(CANDIDATE IN LISTS SRC_INCLUDE_DIR_CANDIDATES)
-  if(IS_DIRECTORY "${CANDIDATE}")
-    list(APPEND SRC_INCLUDE_DIRS "${CANDIDATE}")
-  endif()
-endforeach()
-
 function(ft_vox_add_core target optimization)
   add_library(${target} STATIC ${FT_VOX_SOURCES}
     "${imgui_SOURCE_DIR}/imgui.cpp"
@@ -121,7 +113,6 @@ function(ft_vox_add_core target optimization)
 
   target_include_directories(${target} PUBLIC
     "${PROJECT_SOURCE_DIR}/srcs"
-    ${SRC_INCLUDE_DIRS}
     "${imgui_SOURCE_DIR}"
     "${imgui_SOURCE_DIR}/backends"
     "${magic_enum_SOURCE_DIR}/include"

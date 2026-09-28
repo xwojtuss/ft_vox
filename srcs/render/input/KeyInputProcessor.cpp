@@ -1,8 +1,8 @@
-#include "KeyInputProcessor.hpp"
+#include "render/input/KeyInputProcessor.hpp"
 #include <unordered_map>
-#include "../../platform/input/glfw/GLFWInput.hpp"
+#include "platform/input/glfw/GLFWInput.hpp"
 
-#include "../../error/Exception.hpp"
+#include "error/Exception.hpp"
 
 using namespace render::input;
 

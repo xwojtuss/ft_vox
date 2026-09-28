@@ -29,4 +29,4 @@ namespace ecs {
 	};
 }
 
-#include "Dispatcher.tpp"
+#include "ecs/system/Dispatcher.tpp"

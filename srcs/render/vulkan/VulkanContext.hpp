@@ -4,7 +4,7 @@
 #include <vector>
 #include <optional>
 
-#include "../../platform/window/IWindow.hpp"
+#include "platform/window/IWindow.hpp"
 
 namespace render::vulkan {
 	constexpr uint32_t vulkanApiVersion = VK_API_VERSION_1_0;

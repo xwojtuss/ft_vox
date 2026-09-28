@@ -1,7 +1,7 @@
 #pragma once
 
-#include "APanel.hpp"
-#include "../../ecs/World.hpp"
+#include "render/gui/APanel.hpp"
+#include "ecs/World.hpp"
 
 namespace render::gui {
 	class PlayerComponentsPanel : public APanel {

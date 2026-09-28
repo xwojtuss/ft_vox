@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Dispatcher.hpp"
+#include "ecs/system/Dispatcher.hpp"
 
 namespace ecs {
 	class World;

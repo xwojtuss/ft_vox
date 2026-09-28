@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../ASystem.hpp"
-#include "../DispatcherEvents.hpp"
-#include "../../../render/gui/IGui.hpp"
-#include "../../../render/gui/APanel.hpp"
-#include "../../../render/input/InputTypes.hpp"
+#include "ecs/system/ASystem.hpp"
+#include "ecs/system/DispatcherEvents.hpp"
+#include "render/gui/IGui.hpp"
+#include "render/gui/APanel.hpp"
+#include "render/input/InputTypes.hpp"
 #include <memory>
 #include <unordered_map>
 #include <typeindex>
@@ -33,4 +33,4 @@ namespace ecs {
 	};
 }
 
-#include "GuiSystem.tpp"
+#include "ecs/system/types/GuiSystem.tpp"

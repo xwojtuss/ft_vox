@@ -5,7 +5,7 @@
 namespace ecs {
 	template<typename... Components>
 	Query<Components...> World::query() {
-		return Query < Components...>(m_registry);
+		return Query<Components...>(m_registry);
 	}
 
 	template<typename ComponentType>

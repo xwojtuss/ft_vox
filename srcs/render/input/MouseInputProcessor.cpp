@@ -1,4 +1,4 @@
-#include "MouseInputProcessor.hpp"
+#include "render/input/MouseInputProcessor.hpp"
 
 using namespace render::input;
 

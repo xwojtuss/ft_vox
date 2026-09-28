@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "Resources.hpp"
-#include "ITextureLoader.hpp"
+#include "assets/Resources.hpp"
+#include "assets/ITextureLoader.hpp"
 
 namespace assets {
 	class StbTextureLoader : public ITextureLoader {

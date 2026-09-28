@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../System.hpp"
-#include "../DispatcherEvents.hpp"
-#include "../../component/Components.hpp"
+#include "ecs/system/System.hpp"
+#include "ecs/system/DispatcherEvents.hpp"
+#include "ecs/component/Components.hpp"
 
 namespace ecs {
 	class MovementSystem : public System<component::Transform, component::Velocity, const component::Input> {

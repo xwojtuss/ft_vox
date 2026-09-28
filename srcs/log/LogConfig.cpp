@@ -1,4 +1,4 @@
-#include "LogConfig.hpp"
+#include "log/LogConfig.hpp"
 
 #include <algorithm>
 #include <array>
@@ -8,8 +8,8 @@
 #include <string_view>
 #include <nlohmann/json.hpp>
 
-#include "../error/Exception.hpp"
-#include "../platform/filesystem/resolvePath.hpp"
+#include "error/Exception.hpp"
+#include "platform/filesystem/resolvePath.hpp"
 
 namespace logging {
 	namespace {

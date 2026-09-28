@@ -1,8 +1,8 @@
-#include "World.hpp"
+#include "ecs/World.hpp"
 
 #include <utility>
 
-#include "component/Components.hpp"
+#include "ecs/component/Components.hpp"
 
 using namespace ecs;
 

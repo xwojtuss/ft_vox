@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Perlin2DMap.hpp"
-#include "../Chunk.hpp"
+#include "game/world/generation/Perlin2DMap.hpp"
+#include "game/world/Chunk.hpp"
 
 namespace game::world {
 	class EarthGenerator {

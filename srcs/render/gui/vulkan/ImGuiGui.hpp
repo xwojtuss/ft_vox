@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-#include "../IGui.hpp"
+#include "render/gui/IGui.hpp"
 
 namespace render::vulkan {
 	class VulkanContext;

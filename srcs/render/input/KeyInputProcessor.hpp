@@ -1,7 +1,7 @@
 #pragma once
 
-#include "InputTypes.hpp"
-#include "../../platform/input/glfw/GLFWDefaultKeybinds.hpp"
+#include "render/input/InputTypes.hpp"
+#include "platform/input/glfw/GLFWDefaultKeybinds.hpp"
 
 namespace render::input {
 	class KeyInputProcessor {

@@ -1,4 +1,4 @@
-#include "ChunkMesher.hpp"
+#include "game/world/ChunkMesher.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <glm/geometric.hpp>
 
-#include "../../scene/WorldInfo.hpp"
+#include "scene/WorldInfo.hpp"
 
 using namespace game::world;
 

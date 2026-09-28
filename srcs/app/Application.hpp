@@ -2,12 +2,12 @@
 
 #include <memory>
 
-#include "../platform/window/IWindow.hpp"
-#include "../render/IRenderer.hpp"
-#include "../render/gui/IGui.hpp"
-#include "../assets/IModelLoader.hpp"
-#include "../assets/ITextureLoader.hpp"
-#include "../ecs/World.hpp"
+#include "platform/window/IWindow.hpp"
+#include "render/IRenderer.hpp"
+#include "render/gui/IGui.hpp"
+#include "assets/IModelLoader.hpp"
+#include "assets/ITextureLoader.hpp"
+#include "ecs/World.hpp"
 
 namespace app {
 	class Application {

@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <utility>
 
-#include "Registry.hpp"
+#include "ecs/Registry.hpp"
 
 namespace ecs {
 	/**

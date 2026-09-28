@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ASystem.hpp"
-#include "../Query.hpp"
+#include "ecs/system/ASystem.hpp"
+#include "ecs/Query.hpp"
 
 namespace ecs {
 	/**
@@ -16,4 +16,4 @@ namespace ecs {
 	};
 }
 
-#include "System.tpp"
+#include "ecs/system/System.tpp"
