@@ -61,8 +61,26 @@ SCENARIO("The window blends with the desktop only in ways the system supports", 
 	}
 }
 
-SCENARIO("Presenting frames never depends on an optional mode", "[render][vulkan]") {
-	THEN("FIFO, which every GPU supports, is used when the preferred mode is missing") {
-		REQUIRE(VulkanSwapchain::chooseSwapPresentMode({VK_PRESENT_MODE_FIFO_KHR}) == VK_PRESENT_MODE_FIFO_KHR);
+SCENARIO("Vsync on waits for the display, vsync off shows frames immediately", "[render][vulkan]") {
+	GIVEN("a GPU that supports every present mode") {
+		const std::vector allModes = {
+			VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR
+		};
+
+		THEN("with vsync on, frames are capped to the display's refresh rate") {
+			REQUIRE(VulkanSwapchain::chooseSwapPresentMode(allModes, true) == VK_PRESENT_MODE_FIFO_KHR);
+		}
+		AND_THEN("with vsync off, frames are shown as soon as they are ready") {
+			REQUIRE(VulkanSwapchain::chooseSwapPresentMode(allModes, false) == VK_PRESENT_MODE_IMMEDIATE_KHR);
+		}
+	}
+
+	GIVEN("a GPU that only supports FIFO, the one mode every GPU must have") {
+		const std::vector onlyFifo = {VK_PRESENT_MODE_FIFO_KHR};
+
+		THEN("FIFO is used whether vsync is on or off") {
+			REQUIRE(VulkanSwapchain::chooseSwapPresentMode(onlyFifo, true) == VK_PRESENT_MODE_FIFO_KHR);
+			REQUIRE(VulkanSwapchain::chooseSwapPresentMode(onlyFifo, false) == VK_PRESENT_MODE_FIFO_KHR);
+		}
 	}
 }

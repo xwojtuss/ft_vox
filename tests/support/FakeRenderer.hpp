@@ -22,7 +22,6 @@ namespace test {
 		std::vector<DrawnMesh>                  drawnMeshes;
 		std::vector<glm::mat4>                  cameraViews;
 		int                                     guiRenders = 0;
-		assets::MeshHandle                      textMeshHandle;
 
 		assets::MeshHandle createMesh(const assets::MeshData& meshData) override {
 			createdMeshTriangleCounts.push_back(meshData.indices.size() / 3);
@@ -49,7 +48,6 @@ namespace test {
 			++guiRenders;
 		}
 
-		const assets::MeshHandle& getTextMeshHandle() const override { return textMeshHandle; }
 
 		void render(ecs::SystemManager&) override {
 		}

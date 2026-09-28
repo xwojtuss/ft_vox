@@ -23,8 +23,7 @@ namespace assets {
 
 	enum class PipelineType {
 		Textured,
-		VertexColor,
-		Text
+		VertexColor
 	};
 
 	struct MeshHandle {

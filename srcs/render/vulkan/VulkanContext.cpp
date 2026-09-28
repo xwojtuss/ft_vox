@@ -86,9 +86,16 @@ void VulkanContext::createInstance() {
 		logging::get(error::Domain::Render).warn(
 			"Vulkan validation layers were requested but are not installed, continuing without them");
 
+	const bool logValidation = validationEnabled
+								&& hasExtension(availableExtensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	if (logValidation)
+		addExtensionOnce(extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	const VkDebugUtilsMessengerCreateInfoEXT messengerInfo = VulkanValidationLayers::messengerCreateInfo();
+
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.flags = flags;
+	createInfo.pNext = logValidation ? &messengerInfo : nullptr;
 	createInfo.pApplicationInfo = &appInfo;
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
@@ -97,6 +104,9 @@ void VulkanContext::createInstance() {
 
 	if (const VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance); result != VK_SUCCESS)
 		throw VulkanError("failed to create instance", result);
+
+	if (logValidation)
+		m_debugMessenger = VulkanValidationLayers::createMessenger(m_instance);
 }
 
 void VulkanContext::createSurface() {
@@ -107,19 +117,19 @@ void VulkanContext::createSurface() {
 }
 
 void VulkanContext::updateMaxUsableSampleCount() {
-	VkPhysicalDeviceProperties physicalDeviceProperties;
-	vkGetPhysicalDeviceProperties(m_physicalDevice, &physicalDeviceProperties);
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
+	const VkSampleCountFlags supported = properties.limits.framebufferColorSampleCounts
+										& properties.limits.framebufferDepthSampleCounts;
 
-	const VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts &
-									physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-	if (counts & VK_SAMPLE_COUNT_64_BIT) { m_msaaSamples = VK_SAMPLE_COUNT_64_BIT; } else if (
-		counts & VK_SAMPLE_COUNT_32_BIT) { m_msaaSamples = VK_SAMPLE_COUNT_32_BIT; } else if (
-		counts & VK_SAMPLE_COUNT_16_BIT) { m_msaaSamples = VK_SAMPLE_COUNT_16_BIT; } else if (
-		counts & VK_SAMPLE_COUNT_8_BIT) { m_msaaSamples = VK_SAMPLE_COUNT_8_BIT; } else if (
-		counts & VK_SAMPLE_COUNT_4_BIT) { m_msaaSamples = VK_SAMPLE_COUNT_4_BIT; } else if (
-		counts & VK_SAMPLE_COUNT_2_BIT) { m_msaaSamples = VK_SAMPLE_COUNT_2_BIT; } else {
-		m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+	m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+	for (const VkSampleCountFlagBits samples: {VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_2_BIT}) {
+		if (samples <= maxMsaaSamples && (supported & samples) != 0) {
+			m_msaaSamples = samples;
+			break;
+		}
 	}
+	logging::get(error::Domain::Render).info("Using {}x MSAA", static_cast<int>(m_msaaSamples));
 }
 
 bool VulkanContext::isSuitable(VkPhysicalDevice device) const {
@@ -177,6 +187,7 @@ VulkanContext::VulkanContext(platform::window::IWindow& window) : m_window(windo
 VulkanContext::~VulkanContext() {
 	vkDestroyDevice(m_logicalDevice, nullptr);
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+	VulkanValidationLayers::destroyMessenger(m_instance, m_debugMessenger);
 	vkDestroyInstance(m_instance, nullptr);
 }
 

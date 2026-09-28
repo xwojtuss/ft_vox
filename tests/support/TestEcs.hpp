@@ -30,7 +30,6 @@ namespace test {
 		void bindEvents(ecs::Dispatcher& dispatcher) override {
 			dispatcher.subscribe<ecs::WorldReadyEvent>(this, &HealthSystem::onWorldReady);
 			dispatcher.subscribe<ecs::RenderEvent>(this, &HealthSystem::onRender);
-			dispatcher.subscribe<ecs::TextDrawEvent>(this, &HealthSystem::onTextDraw);
 			dispatcher.subscribe<ecs::RendererDrawEvent>(this, &HealthSystem::onRendererDraw);
 			dispatcher.subscribe<ecs::RendererFrameEvent>(this, &HealthSystem::onRendererFrame);
 			dispatcher.subscribe<ecs::SimulateEvent>(this, &HealthSystem::onSimulate);
@@ -42,11 +41,6 @@ namespace test {
 		void onRender(const ecs::RenderEvent& event) {
 			receivedEvents.push_back(event.getName());
 			lastAspectRatio = event.aspectRatio;
-		}
-
-		void onTextDraw(const ecs::TextDrawEvent& event) {
-			receivedEvents.push_back(event.getName());
-			lastRenderer = event.renderer;
 		}
 
 		void onRendererDraw(const ecs::RendererDrawEvent& event) {

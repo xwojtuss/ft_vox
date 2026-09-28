@@ -172,8 +172,8 @@ if(NOT GLSLANG_VALIDATOR)
   message(FATAL_ERROR "glslangValidator not found. Install it to compile shaders.")
 endif()
 
-file(GLOB FRAG_SHADERS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag")
-file(GLOB VERT_SHADERS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert")
+file(GLOB FRAG_SHADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag")
+file(GLOB VERT_SHADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert")
 set(SHADER_SOURCES ${FRAG_SHADERS} ${VERT_SHADERS})
 set(SHADER_OUTPUTS)
 

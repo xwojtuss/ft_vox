@@ -111,7 +111,6 @@ SCENARIO("The dispatcher measures how long each event took", "[ecs][dispatcher]"
 SCENARIO("Every event type has a readable name", "[ecs][dispatcher]") {
 	THEN("each event is named after its type") {
 		REQUIRE(ecs::RenderEvent(1.0f, 0.0).getName() == "RenderEvent");
-		REQUIRE(ecs::TextDrawEvent(nullptr).getName() == "TextDrawEvent");
 		REQUIRE(ecs::RendererDrawEvent(nullptr).getName() == "RendererDrawEvent");
 		REQUIRE(ecs::RendererFrameEvent(nullptr).getName() == "RendererFrameEvent");
 		REQUIRE(ecs::InputEvent().getName() == "InputEvent");

@@ -1,5 +1,5 @@
 #include "APipeline.hpp"
-#include <stdexcept>
+#include <bit>
 #include "../VulkanVertexUtils.hpp"
 #include "../../../platform/filesystem/readFile.hpp"
 #include "../VulkanError.hpp"
@@ -14,7 +14,7 @@ VkShaderModule APipeline::createShaderModule(const std::vector<char>& code, VkDe
 
 	createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = code.size();
-	createInfo.pCode    = std::__bit_cast<const uint32_t*>(code.data());
+	createInfo.pCode    = std::bit_cast<const uint32_t*>(code.data());
 
 	if (const VkResult result = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
 		result != VK_SUCCESS) {
