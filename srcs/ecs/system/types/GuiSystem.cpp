@@ -1,8 +1,8 @@
-#include "GuiSystem.hpp"
-#include "../../../render/IRenderer.hpp"
-#include "../../World.hpp"
-#include "../../../render/gui/PlayerComponentsPanel.hpp"
-#include "../../../render/gui/EventsRuntimePanel.hpp"
+#include "ecs/system/types/GuiSystem.hpp"
+#include "render/IRenderer.hpp"
+#include "ecs/World.hpp"
+#include "render/gui/PlayerComponentsPanel.hpp"
+#include "render/gui/EventsRuntimePanel.hpp"
 
 using namespace ecs;
 

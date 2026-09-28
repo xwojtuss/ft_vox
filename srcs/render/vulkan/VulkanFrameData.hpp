@@ -3,7 +3,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include "../../assets/Resources.hpp"
+#include "assets/Resources.hpp"
 
 namespace render::vulkan {
 	class VulkanContext;

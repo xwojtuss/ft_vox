@@ -1,4 +1,4 @@
-#include "GLFWInput.hpp"
+#include "platform/input/glfw/GLFWInput.hpp"
 #include <GLFW/glfw3.h>
 
 namespace platform::input::glfw {

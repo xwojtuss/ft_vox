@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../World.hpp"
-#include "../../error/Exception.hpp"
+#include "ecs/World.hpp"
+#include "error/Exception.hpp"
 
 namespace ecs {
 	template<typename... Components>

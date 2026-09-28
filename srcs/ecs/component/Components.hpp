@@ -5,8 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "../../assets/Resources.hpp"
-#include "../../render/input/InputTypes.hpp"
+#include "assets/Resources.hpp"
+#include "render/input/InputTypes.hpp"
 
 namespace ecs::component {
 	struct Transform {

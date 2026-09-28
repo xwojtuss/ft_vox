@@ -3,8 +3,8 @@
 #include <unordered_map>
 #include <vulkan/vulkan.h>
 
-#include "VulkanSwapchain.hpp"
-#include "../../assets/Resources.hpp"
+#include "render/vulkan/VulkanSwapchain.hpp"
+#include "assets/Resources.hpp"
 
 namespace render::vulkan {
 	class VulkanContext;

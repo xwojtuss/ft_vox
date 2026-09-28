@@ -1,5 +1,5 @@
-#include "VulkanVertexUtils.hpp"
-#include "../GpuTypes.hpp"
+#include "render/vulkan/VulkanVertexUtils.hpp"
+#include "render/GpuTypes.hpp"
 
 namespace render::vulkan {
 	VkVertexInputBindingDescription getBindingDescription() {

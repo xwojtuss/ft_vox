@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../System.hpp"
-#include "../Dispatcher.hpp"
-#include "../DispatcherEvents.hpp"
-#include "../../component/Components.hpp"
-#include "../../../render/input/InputManager.hpp"
+#include "ecs/system/System.hpp"
+#include "ecs/system/Dispatcher.hpp"
+#include "ecs/system/DispatcherEvents.hpp"
+#include "ecs/component/Components.hpp"
+#include "render/input/InputManager.hpp"
 
 namespace ecs {
 	class PlayerInputSystem : public System<component::Input> {

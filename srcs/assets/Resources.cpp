@@ -1,4 +1,4 @@
-#include "Resources.hpp"
+#include "assets/Resources.hpp"
 
 using namespace assets;
 

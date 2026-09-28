@@ -1,7 +1,7 @@
 #pragma once
 
-#include "APanel.hpp"
-#include "../../ecs/system/Dispatcher.hpp"
+#include "render/gui/APanel.hpp"
+#include "ecs/system/Dispatcher.hpp"
 
 namespace render::gui {
 	class EventsRuntimePanel : public APanel {

@@ -1,9 +1,9 @@
-#include "Components.hpp"
+#include "ecs/component/Components.hpp"
 
 #include <tuple>
 #include <magic_enum/magic_enum.hpp>
 
-#include "../../scene/WorldInfo.hpp"
+#include "scene/WorldInfo.hpp"
 
 using namespace ecs::component;
 

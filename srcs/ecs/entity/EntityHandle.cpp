@@ -1,4 +1,4 @@
-#include "EntityHandle.hpp"
+#include "ecs/entity/EntityHandle.hpp"
 
 using namespace ecs;
 

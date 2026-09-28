@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../ASystem.hpp"
-#include "../DispatcherEvents.hpp"
-#include "../../../game/world/ChunkManager.hpp"
+#include "ecs/system/ASystem.hpp"
+#include "ecs/system/DispatcherEvents.hpp"
+#include "game/world/ChunkManager.hpp"
 
 namespace ecs {
 	class World;

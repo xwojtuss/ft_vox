@@ -1,9 +1,9 @@
-#include "VulkanFrameData.hpp"
+#include "render/vulkan/VulkanFrameData.hpp"
 #include <chrono>
-#include "../../render/GpuTypes.hpp"
-#include "VulkanError.hpp"
-#include "VulkanContext.hpp"
-#include "VulkanResourceManager.hpp"
+#include "render/GpuTypes.hpp"
+#include "render/vulkan/VulkanError.hpp"
+#include "render/vulkan/VulkanContext.hpp"
+#include "render/vulkan/VulkanResourceManager.hpp"
 
 using namespace render::vulkan;
 

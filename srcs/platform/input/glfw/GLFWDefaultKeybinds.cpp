@@ -1,4 +1,4 @@
-#include "GLFWDefaultKeybinds.hpp"
+#include "platform/input/glfw/GLFWDefaultKeybinds.hpp"
 #include <GLFW/glfw3.h>
 
 using namespace platform::input::glfw;

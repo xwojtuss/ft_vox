@@ -1,4 +1,4 @@
-#include "Dispatcher.hpp"
+#include "ecs/system/Dispatcher.hpp"
 
 using namespace ecs;
 

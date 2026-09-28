@@ -1,8 +1,8 @@
-#include "APipeline.hpp"
+#include "render/vulkan/pipeline/APipeline.hpp"
 #include <bit>
-#include "../VulkanVertexUtils.hpp"
-#include "../../../platform/filesystem/readFile.hpp"
-#include "../VulkanError.hpp"
+#include "render/vulkan/VulkanVertexUtils.hpp"
+#include "platform/filesystem/readFile.hpp"
+#include "render/vulkan/VulkanError.hpp"
 
 using namespace render::vulkan;
 

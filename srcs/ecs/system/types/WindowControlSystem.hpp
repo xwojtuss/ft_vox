@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../System.hpp"
-#include "../DispatcherEvents.hpp"
-#include "../../component/Components.hpp"
-#include "../../../render/gui/IGui.hpp"
-#include "../../../platform/window/IWindow.hpp"
+#include "ecs/system/System.hpp"
+#include "ecs/system/DispatcherEvents.hpp"
+#include "ecs/component/Components.hpp"
+#include "render/gui/IGui.hpp"
+#include "platform/window/IWindow.hpp"
 
 namespace ecs {
 	class WindowControlSystem : public System<const component::Input> {

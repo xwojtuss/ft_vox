@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../render/input/InputTypes.hpp"
+#include "render/input/InputTypes.hpp"
 
 namespace platform::input::glfw {
 	class GLFWDefaultKeybinds {

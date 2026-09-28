@@ -8,8 +8,8 @@
 # include <GLFW/glfw3native.h>
 #endif
 
-#include "../IWindow.hpp"
-#include "../../../render/input/InputManager.hpp"
+#include "platform/window/IWindow.hpp"
+#include "render/input/InputManager.hpp"
 
 namespace platform::window::glfw {
 	class GLFWWindow final : public IWindow {

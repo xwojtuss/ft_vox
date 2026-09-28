@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "APipeline.hpp"
-#include "../VulkanContext.hpp"
+#include "render/vulkan/pipeline/APipeline.hpp"
+#include "render/vulkan/VulkanContext.hpp"
 
 namespace render::vulkan {
 	class VertexColorPipeline : public APipeline {

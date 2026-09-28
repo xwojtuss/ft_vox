@@ -1,14 +1,14 @@
-#include "VulkanContext.hpp"
+#include "render/vulkan/VulkanContext.hpp"
 #include <algorithm>
 #include <functional>
 #include <set>
 #include <string>
 #include <string_view>
 #include <GLFW/glfw3.h> // For glfwCreateWindowSurface
-#include "VulkanValidationLayers.hpp"
-#include "../../app/ApplicationInfo.hpp"
-#include "VulkanError.hpp"
-#include "../../log/Log.hpp"
+#include "render/vulkan/VulkanValidationLayers.hpp"
+#include "app/ApplicationInfo.hpp"
+#include "render/vulkan/VulkanError.hpp"
+#include "log/Log.hpp"
 #include <vulkan/vk_enum_string_helper.h>
 
 using namespace render::vulkan;

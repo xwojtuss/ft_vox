@@ -1,7 +1,7 @@
-#include "GLFWWindow.hpp"
-#include "../app/ApplicationInfo.hpp"
-#include "../../input/glfw/GLFWInput.hpp"
-#include "../../../error/Exception.hpp"
+#include "platform/window/glfw/GLFWWindow.hpp"
+#include "app/ApplicationInfo.hpp"
+#include "platform/input/glfw/GLFWInput.hpp"
+#include "error/Exception.hpp"
 
 using namespace platform::window::glfw;
 

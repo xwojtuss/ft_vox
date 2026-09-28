@@ -1,4 +1,4 @@
-#include "APanel.hpp"
+#include "render/gui/APanel.hpp"
 
 using namespace render::gui;
 

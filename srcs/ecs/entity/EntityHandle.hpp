@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Entity.hpp"
-#include "../Registry.hpp"
+#include "ecs/entity/Entity.hpp"
+#include "ecs/Registry.hpp"
 
 namespace ecs {
 	class EntityHandle {
@@ -39,4 +39,4 @@ namespace ecs {
 	};
 }
 
-#include "EntityHandle.tpp"
+#include "ecs/entity/EntityHandle.tpp"

@@ -3,12 +3,12 @@
 #include <string>
 #include <vector>
 
-#include "Registry.hpp"
-#include "Query.hpp"
-#include "entity/EntityHandle.hpp"
-#include "component/ComponentDescriber.hpp"
-#include "system/SystemManager.hpp"
-#include "../game/block/BlockData.hpp"
+#include "ecs/Registry.hpp"
+#include "ecs/Query.hpp"
+#include "ecs/entity/EntityHandle.hpp"
+#include "ecs/component/ComponentDescriber.hpp"
+#include "ecs/system/SystemManager.hpp"
+#include "game/block/BlockData.hpp"
 
 namespace ecs {
 	class World {
@@ -43,4 +43,4 @@ namespace ecs {
 	};
 }
 
-#include "World.tpp"
+#include "ecs/World.tpp"

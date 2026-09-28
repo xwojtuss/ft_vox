@@ -1,4 +1,4 @@
-#include "Exception.hpp"
+#include "error/Exception.hpp"
 
 namespace error {
 	std::string_view domainName(const Domain domain) noexcept {

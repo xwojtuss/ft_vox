@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "../Registry.hpp"
+#include "ecs/Registry.hpp"
 
 namespace ecs {
 	struct ComponentDescription {
@@ -17,8 +17,8 @@ namespace ecs {
 	class ComponentDescriber {
 	private:
 		struct Describer {
-			std::string                                                         name;
-			std::function<std::optional<std::string>(const Registry &, Entity)> describe;
+			std::string                                                        name;
+			std::function<std::optional<std::string>(const Registry&, Entity)> describe;
 		};
 
 		std::vector<Describer> m_describers;
@@ -31,4 +31,4 @@ namespace ecs {
 	};
 }
 
-#include "ComponentDescriber.tpp"
+#include "ecs/component/ComponentDescriber.tpp"

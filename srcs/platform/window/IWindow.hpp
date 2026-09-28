@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../render/input/InputManager.hpp"
+#include "render/input/InputManager.hpp"
 
 namespace platform::window {
 	constexpr uint32_t winWidth    = 800;

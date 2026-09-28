@@ -1,13 +1,13 @@
-#include "VulkanSwapchain.hpp"
+#include "render/vulkan/VulkanSwapchain.hpp"
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <array>
 #include <limits>
 #include <vulkan/vk_enum_string_helper.h>
-#include "../../app/ApplicationInfo.hpp"
-#include "VulkanError.hpp"
-#include "VulkanContext.hpp"
-#include "../../log/Log.hpp"
+#include "app/ApplicationInfo.hpp"
+#include "render/vulkan/VulkanError.hpp"
+#include "render/vulkan/VulkanContext.hpp"
+#include "log/Log.hpp"
 
 using namespace render::vulkan;
 
@@ -18,7 +18,8 @@ VulkanSwapchain::VulkanSwapchain(const VulkanContext& context) {
 	createColorResources(context);
 	createDepthResources(context);
 	createFramebuffers(context);
-	logging::get(error::Domain::Render).info("Presenting frames with {} (vsync {})", string_VkPresentModeKHR(m_presentMode),
+	logging::get(error::Domain::Render).info("Presenting frames with {} (vsync {})",
+											string_VkPresentModeKHR(m_presentMode),
 											app::VSyncEnabled ? "on" : "off");
 }
 
@@ -26,10 +27,10 @@ VulkanSwapchain::~VulkanSwapchain() = default;
 
 void VulkanSwapchain::createSwapChain(const VulkanContext& context) {
 	const SwapChainSupportDetails swapChainSupport = context.querySwapChainSupport(context.getPhysicalDevice());
-	const VkSurfaceFormatKHR      surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-	const VkPresentModeKHR        presentMode = chooseSwapPresentMode(swapChainSupport.presentModes,
-																		app::VSyncEnabled);
-	const VkExtent2D              extent = chooseSwapExtent(context.getWindow(), swapChainSupport.capabilities);
+	const VkSurfaceFormatKHR      surfaceFormat    = chooseSwapSurfaceFormat(swapChainSupport.formats);
+	const VkPresentModeKHR        presentMode      = chooseSwapPresentMode(swapChainSupport.presentModes,
+																			app::VSyncEnabled);
+	const VkExtent2D extent = chooseSwapExtent(context.getWindow(), swapChainSupport.capabilities);
 
 	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
@@ -102,7 +103,8 @@ VkCompositeAlphaFlagBitsKHR VulkanSwapchain::chooseCompositeAlpha(
 
 VkPresentModeKHR VulkanSwapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes,
 														const bool                           vsync) {
-	if (!vsync && std::ranges::find(availablePresentModes, VK_PRESENT_MODE_IMMEDIATE_KHR) != availablePresentModes.end())
+	if (!vsync && std::ranges::find(availablePresentModes, VK_PRESENT_MODE_IMMEDIATE_KHR) != availablePresentModes.
+		end())
 		return VK_PRESENT_MODE_IMMEDIATE_KHR;
 	return VK_PRESENT_MODE_FIFO_KHR;
 }

@@ -1,4 +1,4 @@
-#include "ComponentDescriber.hpp"
+#include "ecs/component/ComponentDescriber.hpp"
 
 using namespace ecs;
 

@@ -1,4 +1,4 @@
-#include "EventsRuntimePanel.hpp"
+#include "render/gui/EventsRuntimePanel.hpp"
 #include <chrono>
 #include <sstream>
 #include <iomanip>

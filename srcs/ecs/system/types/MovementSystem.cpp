@@ -1,9 +1,9 @@
-#include "MovementSystem.hpp"
+#include "ecs/system/types/MovementSystem.hpp"
 
 #include <algorithm>
 #include <vector>
 
-#include "../../../scene/WorldInfo.hpp"
+#include "scene/WorldInfo.hpp"
 
 using namespace ecs;
 

@@ -3,8 +3,8 @@
 #include <array>
 #include <string>
 
-#include "Block.hpp"
-#include "../../assets/Resources.hpp"
+#include "game/block/Block.hpp"
+#include "assets/Resources.hpp"
 
 namespace game::block {
 	struct BlockData {

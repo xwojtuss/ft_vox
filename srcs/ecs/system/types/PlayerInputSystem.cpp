@@ -1,4 +1,4 @@
-#include "PlayerInputSystem.hpp"
+#include "ecs/system/types/PlayerInputSystem.hpp"
 
 using namespace ecs;
 

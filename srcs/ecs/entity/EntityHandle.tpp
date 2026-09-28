@@ -4,7 +4,7 @@
 #include <utility>
 #include <entt/core/type_info.hpp>
 
-#include "../../error/Exception.hpp"
+#include "error/Exception.hpp"
 
 namespace ecs {
 	template<typename ComponentType>

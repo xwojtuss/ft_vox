@@ -4,7 +4,7 @@
 #include <string>
 #include <vulkan/vulkan.h>
 
-#include "../../error/Exception.hpp"
+#include "error/Exception.hpp"
 
 namespace render::vulkan {
 	class VulkanError : public error::Exception {

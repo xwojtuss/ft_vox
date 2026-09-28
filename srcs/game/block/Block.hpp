@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../ecs/entity/Entity.hpp"
+#include "ecs/entity/Entity.hpp"
 
 namespace game {
 	using BlockId = unsigned int;

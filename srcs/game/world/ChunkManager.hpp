@@ -4,11 +4,11 @@
 #include <glm/vec3.hpp>
 #include <memory>
 
-#include "Chunk.hpp"
-#include "ChunkMesher.hpp"
-#include "ChunkLoader.hpp"
-#include "../../ecs/World.hpp"
-#include "../../scene/WorldInfo.hpp"
+#include "game/world/Chunk.hpp"
+#include "game/world/ChunkMesher.hpp"
+#include "game/world/ChunkLoader.hpp"
+#include "ecs/World.hpp"
+#include "scene/WorldInfo.hpp"
 
 namespace game::world {
 	class ChunkManager {

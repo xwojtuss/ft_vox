@@ -1,5 +1,5 @@
-#include "ChunkSystem.hpp"
-#include "../../World.hpp"
+#include "ecs/system/types/ChunkSystem.hpp"
+#include "ecs/World.hpp"
 
 using namespace ecs;
 

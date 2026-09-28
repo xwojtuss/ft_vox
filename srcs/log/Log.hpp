@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Logger.hpp"
-#include "LogConfig.hpp"
-#include "../error/Exception.hpp"
+#include "log/Logger.hpp"
+#include "log/LogConfig.hpp"
+#include "error/Exception.hpp"
 
 namespace logging {
 	inline constexpr const char* appLoggerName = "App";

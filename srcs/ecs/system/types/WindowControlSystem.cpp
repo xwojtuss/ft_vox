@@ -1,5 +1,5 @@
-#include "WindowControlSystem.hpp"
-#include "../../../render/input/InputTypes.hpp"
+#include "ecs/system/types/WindowControlSystem.hpp"
+#include "render/input/InputTypes.hpp"
 
 using namespace ecs;
 

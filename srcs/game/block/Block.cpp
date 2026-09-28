@@ -1,4 +1,4 @@
-#include "Block.hpp"
+#include "game/block/Block.hpp"
 
 using namespace game;
 

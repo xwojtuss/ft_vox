@@ -4,9 +4,9 @@
 #include <memory>
 #include <typeindex>
 
-#include "ASystem.hpp"
-#include "Dispatcher.hpp"
-#include "DispatcherEvents.hpp"
+#include "ecs/system/ASystem.hpp"
+#include "ecs/system/Dispatcher.hpp"
+#include "ecs/system/DispatcherEvents.hpp"
 
 namespace ecs {
 	class SystemManager {
@@ -30,4 +30,4 @@ namespace ecs {
 	};
 }
 
-#include "SystemManager.tpp"
+#include "ecs/system/SystemManager.tpp"

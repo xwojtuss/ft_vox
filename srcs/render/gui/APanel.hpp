@@ -1,7 +1,7 @@
 #pragma once
 
-#include "IGui.hpp"
-#include "../../ecs/entity/Entity.hpp"
+#include "render/gui/IGui.hpp"
+#include "ecs/entity/Entity.hpp"
 
 namespace render::gui {
 	constexpr size_t maxPanels = 32;

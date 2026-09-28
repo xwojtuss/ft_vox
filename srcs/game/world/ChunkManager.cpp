@@ -1,7 +1,7 @@
-#include "ChunkManager.hpp"
+#include "game/world/ChunkManager.hpp"
 
-#include "IRenderer.hpp"
-#include "../../ecs/component/Components.hpp"
+#include "render/IRenderer.hpp"
+#include "ecs/component/Components.hpp"
 
 using namespace game::world;
 

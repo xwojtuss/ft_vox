@@ -1,6 +1,6 @@
-#include "PlayerComponentsPanel.hpp"
+#include "render/gui/PlayerComponentsPanel.hpp"
 
-#include "../../ecs/component/Components.hpp"
+#include "ecs/component/Components.hpp"
 
 using namespace render::gui;
 

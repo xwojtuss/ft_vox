@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "Resources.hpp"
+#include "assets/Resources.hpp"
 
 namespace assets {
 	class IModelLoader {

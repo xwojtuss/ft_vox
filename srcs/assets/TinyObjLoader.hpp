@@ -1,10 +1,10 @@
 #pragma once
 
 #include <string>
-#include <tiny_obj_loader.h>
+#include "assets/tiny_obj_loader.h"
 
-#include "IModelLoader.hpp"
-#include "Resources.hpp"
+#include "assets/IModelLoader.hpp"
+#include "assets/Resources.hpp"
 
 namespace assets {
 	class TinyObjLoader : public IModelLoader {

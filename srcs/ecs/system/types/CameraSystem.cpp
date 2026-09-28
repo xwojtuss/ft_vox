@@ -1,6 +1,6 @@
-#include "CameraSystem.hpp"
-#include "../../../scene/WorldInfo.hpp"
-#include "../../../render/IRenderer.hpp"
+#include "ecs/system/types/CameraSystem.hpp"
+#include "scene/WorldInfo.hpp"
+#include "render/IRenderer.hpp"
 
 using namespace ecs;
 

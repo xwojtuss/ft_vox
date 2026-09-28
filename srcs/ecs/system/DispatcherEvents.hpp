@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "../entity/Entity.hpp"
-#include "../../render/input/InputTypes.hpp"
+#include "ecs/entity/Entity.hpp"
+#include "render/input/InputTypes.hpp"
 
 namespace render {
 	class IRenderer;

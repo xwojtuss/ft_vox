@@ -1,4 +1,4 @@
-#include "Log.hpp"
+#include "log/Log.hpp"
 
 #include <array>
 #include <chrono>
@@ -9,7 +9,7 @@
 #include <spdlog/sinks/null_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
-#include "../platform/filesystem/resolvePath.hpp"
+#include "platform/filesystem/resolvePath.hpp"
 
 namespace logging {
 	namespace {

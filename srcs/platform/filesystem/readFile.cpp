@@ -1,9 +1,9 @@
-#include "readFile.hpp"
+#include "platform/filesystem/readFile.hpp"
 
 #include <fstream>
 
-#include "resolvePath.hpp"
-#include "../../error/Exception.hpp"
+#include "platform/filesystem/resolvePath.hpp"
+#include "error/Exception.hpp"
 
 std::vector<char> readFile(const std::string& filename) {
 	std::ifstream file(resolvePath(filename), std::ios::ate | std::ios::binary);

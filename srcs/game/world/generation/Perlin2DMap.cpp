@@ -1,8 +1,8 @@
-#include "Perlin2DMap.hpp"
+#include "game/world/generation/Perlin2DMap.hpp"
 #include <algorithm>
 
-#include "glm/vec2.hpp"
-#include "glm/gtc/noise.hpp"
+#include <glm/vec2.hpp>
+#include <glm/gtc/noise.hpp>
 
 using namespace game::world;
 
