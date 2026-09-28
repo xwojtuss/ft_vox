@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "assets/tiny_obj_loader.h"
+#include "assets/third_party/tiny_obj_loader.h"
 
 #include "assets/IModelLoader.hpp"
 #include "assets/Resources.hpp"

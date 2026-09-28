@@ -21,7 +21,9 @@ namespace {
 	struct MoveRecorder {
 		std::vector<ecs::PlayerMoveEvent> moves;
 
-		void onPlayerMove(const ecs::PlayerMoveEvent& event) { moves.push_back(event); }
+		void onPlayerMove(const ecs::PlayerMoveEvent& event) {
+			moves.push_back(event);
+		}
 	};
 
 	render::input::InputCommand moving(float forward, float right, float up) {
@@ -44,7 +46,7 @@ SCENARIO("Movement input sets where the player wants to go, relative to where th
 	GIVEN("a player turned 90 degrees to the left") {
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle player = test::createPlayer(testWorld);
+		ecs::EntityHandle player         = test::createPlayer(testWorld);
 		player.get<Transform>().rotation = glm::angleAxis(glm::radians(90.0f), worldinfo::up);
 
 		WHEN("forward is pressed") {
@@ -59,8 +61,7 @@ SCENARIO("Movement input sets where the player wants to go, relative to where th
 			testWorld.dispatcher().emit(test::inputFrom(player, moving(0.0f, 1.0f, 1.0f)));
 
 			THEN("the player wants to go to their own right, and straight up in the world") {
-				REQUIRE(
-					nearlyEqual(player.get<Velocity>().desiredVelocity, worldinfo::forward + worldinfo::up));
+				REQUIRE(nearlyEqual(player.get<Velocity>().desiredVelocity, worldinfo::forward + worldinfo::up));
 			}
 		}
 
@@ -85,9 +86,8 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 			testWorld.dispatcher().emit(test::inputFrom(player, looking(glm::radians(30.0f), 0.0f)));
 
 			THEN("they face 30 degrees above the horizon") {
-				REQUIRE(
-					nearlyEqual(player.get<Transform>().forward(), {0.0f, std::sin(glm::radians(30.0f)), -std
-						::cos(glm::radians(30.0f))}));
+				REQUIRE(nearlyEqual(player.get<Transform>().forward(),
+									{0.0f, std::sin(glm::radians(30.0f)), -std ::cos(glm::radians(30.0f))}));
 			}
 		}
 
@@ -95,9 +95,7 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 			testWorld.dispatcher().emit(test::inputFrom(player, looking(glm::radians(170.0f), 0.0f)));
 
 			THEN("they stop at the maximum pitch of 89 degrees instead of flipping over") {
-				REQUIRE(
-					player.get<Transform>().forward().y == Approx(std::sin(glm::radians(89.0f))).epsilon(1e-4
-					));
+				REQUIRE(player.get<Transform>().forward().y == Approx(std::sin(glm::radians(89.0f))).epsilon(1e-4));
 				REQUIRE(player.get<Transform>().forward().z < 0.0f);
 			}
 		}
@@ -106,9 +104,7 @@ SCENARIO("Looking around turns the player, but never past straight up or down", 
 			testWorld.dispatcher().emit(test::inputFrom(player, looking(glm::radians(-170.0f), 0.0f)));
 
 			THEN("they stop at the minimum pitch of -89 degrees") {
-				REQUIRE(
-					player.get<Transform>().forward().y == Approx(-std::sin(glm::radians(89.0f))).epsilon(1e-4
-					));
+				REQUIRE(player.get<Transform>().forward().y == Approx(-std::sin(glm::radians(89.0f))).epsilon(1e-4));
 			}
 		}
 
@@ -127,9 +123,9 @@ SCENARIO("The player speeds up towards where they want to go, up to their top sp
 	GIVEN("a standing player who wants to go forward, accelerating at 5 units/s² up to 10 units/s") {
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle player = test::createPlayer(testWorld);
-		Velocity& velocity       = player.get<Velocity>();
-		velocity.desiredVelocity = worldinfo::forward;
+		ecs::EntityHandle player   = test::createPlayer(testWorld);
+		Velocity&         velocity = player.get<Velocity>();
+		velocity.desiredVelocity   = worldinfo::forward;
 
 		WHEN("0.1 s passes") {
 			testWorld.simulate(0.1f, 1.0f);
@@ -166,9 +162,9 @@ SCENARIO("The player slows down to a stop when no direction is held", "[ecs][mov
 	GIVEN("a player moving forward at 1 unit/s, slowing down at 5 units/s²") {
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle player = test::createPlayer(testWorld);
-		Velocity& velocity = player.get<Velocity>();
-		velocity.velocity  = worldinfo::forward;
+		ecs::EntityHandle player   = test::createPlayer(testWorld);
+		Velocity&         velocity = player.get<Velocity>();
+		velocity.velocity          = worldinfo::forward;
 
 		WHEN("0.1 s passes") {
 			testWorld.simulate(0.1f, 1.0f);

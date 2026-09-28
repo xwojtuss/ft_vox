@@ -23,13 +23,13 @@ namespace app {
 		void init() const;
 
 		/**
-		* Runs once per render frame
-		*/
+		 * Runs once per render frame
+		 */
 		void update() const;
 
 		/**
-		* Runs once per app::simulationFPS
-		*/
+		 * Runs once per app::simulationFPS
+		 */
 		void simulate();
 		void render() const;
 

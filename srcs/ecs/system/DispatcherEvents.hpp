@@ -20,31 +20,33 @@ namespace ecs {
 	public:
 		virtual ~DispatchEvent() = default;
 
-		[[nodiscard]] const std::string& getName() const { return m_name; }
+		[[nodiscard]] const std::string& getName() const {
+			return m_name;
+		}
 	};
 
 	struct RenderEvent : public DispatchEvent {
 		float  aspectRatio;
 		double time;
 
-		RenderEvent(const float aspectRatio, const double time) : DispatchEvent("RenderEvent"),
-																aspectRatio(aspectRatio), time(time) {
+		RenderEvent(const float aspectRatio, const double time) :
+			DispatchEvent("RenderEvent"), aspectRatio(aspectRatio), time(time) {
 		}
 	};
 
 	struct RendererDrawEvent : public DispatchEvent {
 		render::IRenderer* renderer;
 
-		explicit RendererDrawEvent(render::IRenderer* renderer) : DispatchEvent("RendererDrawEvent"),
-																renderer(renderer) {
+		explicit RendererDrawEvent(render::IRenderer* renderer) :
+			DispatchEvent("RendererDrawEvent"), renderer(renderer) {
 		}
 	};
 
 	struct RendererFrameEvent : public DispatchEvent {
 		render::IRenderer* renderer;
 
-		explicit RendererFrameEvent(render::IRenderer* renderer) : DispatchEvent("RendererFrameEvent"),
-																	renderer(renderer) {
+		explicit RendererFrameEvent(render::IRenderer* renderer) :
+			DispatchEvent("RendererFrameEvent"), renderer(renderer) {
 		}
 	};
 
@@ -66,8 +68,8 @@ namespace ecs {
 		float deltaTime;
 		float time;
 
-		SimulateEvent(const float deltaTime, const float time) : DispatchEvent("SimulateEvent"), deltaTime(deltaTime),
-																time(time) {
+		SimulateEvent(const float deltaTime, const float time) :
+			DispatchEvent("SimulateEvent"), deltaTime(deltaTime), time(time) {
 		}
 	};
 
@@ -75,8 +77,8 @@ namespace ecs {
 		glm::vec3 previousPosition;
 		glm::vec3 currentPosition;
 
-		PlayerMoveEvent(const glm::vec3 previousPosition, const glm::vec3 currentPosition) : DispatchEvent(
-				"PlayerMoveEvent"), previousPosition(previousPosition), currentPosition(currentPosition) {
+		PlayerMoveEvent(const glm::vec3 previousPosition, const glm::vec3 currentPosition) :
+			DispatchEvent("PlayerMoveEvent"), previousPosition(previousPosition), currentPosition(currentPosition) {
 		}
 	};
 }

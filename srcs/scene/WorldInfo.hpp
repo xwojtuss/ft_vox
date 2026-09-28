@@ -14,8 +14,7 @@ namespace scene::worldinfo {
 
 	constexpr unsigned short              maxHorizontalRenderDistance = 20;
 	constexpr unsigned short              maxVerticalRenderDistance   = 4;
-	constexpr glm::vec<3, unsigned short> renderDistance              = {
-		maxHorizontalRenderDistance, maxVerticalRenderDistance, maxHorizontalRenderDistance
-	};
-	constexpr unsigned short terrainMaxHeightBlocks = 64;
+	constexpr glm::vec<3, unsigned short> renderDistance = {maxHorizontalRenderDistance, maxVerticalRenderDistance,
+															maxHorizontalRenderDistance};
+	constexpr unsigned short              terrainMaxHeightBlocks = 64;
 }

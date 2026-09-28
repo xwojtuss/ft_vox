@@ -25,14 +25,13 @@ void MovementSystem::onSimulate(const SimulateEvent& event) const {
 				velocity.velocity = glm::normalize(velocity.velocity) * velocity.maxSpeed;
 		} else if (speed > 0.0f) {
 			const float slowedSpeed = std::max(0.0f, speed - velocity.deceleration * event.deltaTime);
-			velocity.velocity       = (slowedSpeed > 0.0f)
-									? glm::normalize(velocity.velocity) * slowedSpeed
-									: glm::vec3(0.0f);
+			velocity.velocity =
+				(slowedSpeed > 0.0f) ? glm::normalize(velocity.velocity) * slowedSpeed : glm::vec3(0.0f);
 		} else {
 			continue;
 		}
 		const glm::vec3 previousPosition = transform.position;
-		transform.position               += velocity.velocity * event.deltaTime;
+		transform.position += velocity.velocity * event.deltaTime;
 		moves.emplace_back(previousPosition, transform.position);
 	}
 
@@ -50,8 +49,8 @@ void MovementSystem::onInput(const InputEvent& event) const {
 	const component::Input&            input     = player.get<component::Input>();
 	const render::input::InputCommand& command   = event.command;
 
-	velocity.desiredVelocity = transform.forward() * command.moveForward + transform.right() * command.moveRight
-								+ scene::worldinfo::up * command.moveUp;
+	velocity.desiredVelocity = transform.forward() * command.moveForward + transform.right() * command.moveRight +
+							   scene::worldinfo::up * command.moveUp;
 	if (!transform.canRotate)
 		return;
 

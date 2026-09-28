@@ -3,8 +3,8 @@
 
 using namespace ecs;
 
-WindowControlSystem::WindowControlSystem(platform::window::IWindow& window, render::gui::IGui& gui) : m_window(window),
-	m_gui(gui) {
+WindowControlSystem::WindowControlSystem(platform::window::IWindow& window, render::gui::IGui& gui) :
+	m_window(window), m_gui(gui) {
 }
 
 void WindowControlSystem::onInput([[maybe_unused]] const InputEvent& event) const {
@@ -13,8 +13,8 @@ void WindowControlSystem::onInput([[maybe_unused]] const InputEvent& event) cons
 
 		if (!m_window.isMouseCursorVisible() && hasEvent(started, render::input::InputEvent::ToggleCursor))
 			releaseCursor(m_world->getEntity(entity));
-		else if (m_window.isMouseCursorVisible() && !m_gui.wantsMouseCapture()
-				&& hasAnyEvent(started, render::input::InputEvent::AnyMouseButton))
+		else if (m_window.isMouseCursorVisible() && !m_gui.wantsMouseCapture() &&
+				 hasAnyEvent(started, render::input::InputEvent::AnyMouseButton))
 			captureCursor(m_world->getEntity(entity));
 	}
 }

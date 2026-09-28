@@ -50,20 +50,11 @@ namespace render::input {
 		float maxPitch = glm::radians(89.0f);
 	};
 
-	enum InputAction {
-		Press,
-		Release,
-		Repeat
-	};
+	enum InputAction { Press, Release, Repeat };
 
 	using InputMods = uint32_t;
 
-	enum InputMod : uint32_t {
-		Shift   = 1U << 0U,
-		Control = 1U << 1U,
-		Alt     = 1U << 2U,
-		Super   = 1U << 3U
-	};
+	enum InputMod : uint32_t { Shift = 1U << 0U, Control = 1U << 1U, Alt = 1U << 2U, Super = 1U << 3U };
 
 	[[nodiscard]] constexpr bool hasModifier(const InputMods mods, const InputMod mod) {
 		return (mods & mod) != 0;

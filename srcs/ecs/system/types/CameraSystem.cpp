@@ -6,8 +6,8 @@ using namespace ecs;
 
 void CameraSystem::onRender(const RenderEvent& event) const {
 	for (auto&& [entity, transform, camera]: entities()) {
-		camera.projection = glm::perspective(glm::radians(camera.fov), event.aspectRatio, camera.nearPlane,
-											camera.farPlane);
+		camera.projection =
+			glm::perspective(glm::radians(camera.fov), event.aspectRatio, camera.nearPlane, camera.farPlane);
 		camera.view = glm::lookAt(transform.position, transform.position + transform.forward(), scene::worldinfo::up);
 	}
 }

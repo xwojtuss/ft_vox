@@ -7,14 +7,7 @@ using input::InputAction;
 using input::InputEvent;
 
 namespace {
-	enum Key {
-		W       = 17,
-		S       = 31,
-		A       = 30,
-		D       = 32,
-		Space   = 57,
-		Control = 29
-	};
+	enum Key { W = 17, S = 31, A = 30, D = 32, Space = 57, Control = 29 };
 
 	struct Controls {
 		input::InputManager manager;
@@ -27,7 +20,7 @@ namespace {
 			bind(Space, InputEvent::Jump);
 			bind(Control, InputEvent::Crouch);
 			manager.getKeyInputProcessor().bindEvent(input::createMouseInput(input::MouseButton::LeftButton, 0),
-													InputEvent::ActionButton);
+													 InputEvent::ActionButton);
 		}
 
 		void bind(Key key, InputEvent event) {

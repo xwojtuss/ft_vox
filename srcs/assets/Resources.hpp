@@ -21,10 +21,7 @@ namespace assets {
 		bool                       pixelPerfect = false;
 	};
 
-	enum class PipelineType {
-		Textured,
-		VertexColor
-	};
+	enum class PipelineType { Textured, VertexColor };
 
 	struct MeshHandle {
 		static uint64_t nextId;

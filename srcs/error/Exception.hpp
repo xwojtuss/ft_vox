@@ -5,14 +5,7 @@
 #include <string_view>
 
 namespace error {
-	enum class Domain {
-		Filesystem,
-		Asset,
-		Ecs,
-		Input,
-		Window,
-		Render
-	};
+	enum class Domain { Filesystem, Asset, Ecs, Input, Window, Render };
 
 	[[nodiscard]] std::string_view domainName(Domain domain) noexcept;
 

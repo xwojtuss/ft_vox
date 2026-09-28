@@ -40,9 +40,8 @@ namespace {
 	}
 
 	bool hasExtension(const std::vector<VkExtensionProperties>& extensions, const std::string_view name) {
-		return std::any_of(extensions.begin(), extensions.end(), [name](const VkExtensionProperties& extension) {
-			return name == extension.extensionName;
-		});
+		return std::any_of(extensions.begin(), extensions.end(),
+						   [name](const VkExtensionProperties& extension) { return name == extension.extensionName; });
 	}
 
 	void addExtensionOnce(std::vector<const char*>& extensions, const char* name) {
@@ -83,21 +82,21 @@ void VulkanContext::createInstance() {
 
 	const bool validationEnabled = VulkanValidationLayers::isEnabled && VulkanValidationLayers::checkSupport();
 	if (VulkanValidationLayers::isEnabled && !validationEnabled)
-		logging::get(error::Domain::Render).warn(
-			"Vulkan validation layers were requested but are not installed, continuing without them");
+		logging::get(error::Domain::Render)
+			.warn("Vulkan validation layers were requested but are not installed, continuing without them");
 
-	const bool logValidation = validationEnabled
-								&& hasExtension(availableExtensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	const bool logValidation =
+		validationEnabled && hasExtension(availableExtensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	if (logValidation)
 		addExtensionOnce(extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	const VkDebugUtilsMessengerCreateInfoEXT messengerInfo = VulkanValidationLayers::messengerCreateInfo();
 
 	VkInstanceCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	createInfo.flags = flags;
-	createInfo.pNext = logValidation ? &messengerInfo : nullptr;
-	createInfo.pApplicationInfo = &appInfo;
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+	createInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	createInfo.flags                   = flags;
+	createInfo.pNext                   = logValidation ? &messengerInfo : nullptr;
+	createInfo.pApplicationInfo        = &appInfo;
+	createInfo.enabledExtensionCount   = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 	createInfo.enabledLayerCount = validationEnabled ? static_cast<uint32_t>(VulkanValidationLayers::layers.size()) : 0;
 	createInfo.ppEnabledLayerNames = validationEnabled ? VulkanValidationLayers::layers.data() : nullptr;
@@ -110,8 +109,9 @@ void VulkanContext::createInstance() {
 }
 
 void VulkanContext::createSurface() {
-	if (const VkResult result = glfwCreateWindowSurface(m_instance, static_cast<GLFWwindow*>(m_window.getHandle()),
-														nullptr, &m_surface); result != VK_SUCCESS) {
+	if (const VkResult result =
+			glfwCreateWindowSurface(m_instance, static_cast<GLFWwindow*>(m_window.getHandle()), nullptr, &m_surface);
+		result != VK_SUCCESS) {
 		throw VulkanError("failed to create the window surface", result);
 	}
 }
@@ -119,8 +119,8 @@ void VulkanContext::createSurface() {
 void VulkanContext::updateMaxUsableSampleCount() {
 	VkPhysicalDeviceProperties properties;
 	vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
-	const VkSampleCountFlags supported = properties.limits.framebufferColorSampleCounts
-										& properties.limits.framebufferDepthSampleCounts;
+	const VkSampleCountFlags supported =
+		properties.limits.framebufferColorSampleCounts & properties.limits.framebufferDepthSampleCounts;
 
 	m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 	for (const VkSampleCountFlagBits samples: {VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_2_BIT}) {
@@ -172,9 +172,7 @@ bool VulkanContext::checkExtensionSupport(VkPhysicalDevice device) {
 	return requiredExtensions.empty();
 }
 
-const DeviceExtensions VulkanContext::deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
+const DeviceExtensions VulkanContext::deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 VulkanContext::VulkanContext(platform::window::IWindow& window) : m_window(window) {
 	createInstance();
@@ -223,8 +221,8 @@ void VulkanContext::choosePhysicalDevice() {
 
 	VkPhysicalDeviceProperties properties;
 	vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
-	logging::get(error::Domain::Render).info("Using GPU {} ({})", properties.deviceName,
-											string_VkPhysicalDeviceType(properties.deviceType));
+	logging::get(error::Domain::Render)
+		.info("Using GPU {} ({})", properties.deviceName, string_VkPhysicalDeviceType(properties.deviceType));
 }
 
 void VulkanContext::createLogicalDevice() {
@@ -246,8 +244,8 @@ void VulkanContext::createLogicalDevice() {
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
 	m_samplerAnisotropyEnabled = supportedFeatures.samplerAnisotropy == VK_TRUE;
 	if (!m_samplerAnisotropyEnabled)
-		logging::get(error::Domain::Render).warn(
-			"Anisotropic filtering is not supported, textures will look blurrier at an angle");
+		logging::get(error::Domain::Render)
+			.warn("Anisotropic filtering is not supported, textures will look blurrier at an angle");
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
@@ -290,13 +288,11 @@ uint32_t VulkanContext::findMemoryType(const uint32_t typeFilter, const VkMemory
 VkFormat VulkanContext::findDepthFormat() const {
 	return findSupportedFormat(
 		{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM},
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-	);
+		VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
 VkFormat VulkanContext::findSupportedFormat(const std::vector<VkFormat>& candidates, const VkImageTiling tiling,
-											const VkFormatFeatureFlags   features) const {
+											const VkFormatFeatureFlags features) const {
 	for (const VkFormat format: candidates) {
 		VkFormatProperties props;
 		vkGetPhysicalDeviceFormatProperties(m_physicalDevice, format, &props);

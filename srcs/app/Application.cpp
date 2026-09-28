@@ -24,10 +24,10 @@ Application::Application() {
 	m_window            = std::make_unique<platform::window::glfw::GLFWWindow>();
 	auto vulkanRenderer = std::make_unique<render::vulkan::VulkanRenderer>(*m_window);
 	m_gui               = std::make_unique<render::gui::vulkan::ImGuiGui>(vulkanRenderer->getContext(),
-															vulkanRenderer->getSwapchain(), *m_window);
-	m_renderer      = std::move(vulkanRenderer);
-	m_modelLoader   = std::make_unique<assets::TinyObjLoader>();
-	m_textureLoader = std::make_unique<assets::StbTextureLoader>();
+																		  vulkanRenderer->getSwapchain(), *m_window);
+	m_renderer          = std::move(vulkanRenderer);
+	m_modelLoader       = std::make_unique<assets::TinyObjLoader>();
+	m_textureLoader     = std::make_unique<assets::StbTextureLoader>();
 
 	auto defaultTextureData         = m_textureLoader->toTextureData("textures/default.png");
 	defaultTextureData.pixelPerfect = true;

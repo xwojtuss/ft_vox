@@ -7,8 +7,8 @@
 using namespace game::world;
 
 Perlin2DMap::Perlin2DMap(const unsigned int width, const unsigned int height, const unsigned int octaves,
-						const float         scale) : m_data(static_cast<size_t>(width) * height), m_width(width),
-											m_height(height), m_octaves(octaves), m_scale(scale) {
+						 const float scale) :
+	m_data(static_cast<size_t>(width) * height), m_width(width), m_height(height), m_octaves(octaves), m_scale(scale) {
 	generate();
 }
 
@@ -19,7 +19,7 @@ float Perlin2DMap::sampleValue(const int x, const int y) const {
 
 	for (unsigned int octave = 0; octave < m_octaves; ++octave) {
 		noiseValue += amplitude * perlinNoise(static_cast<float>(x) * frequency * m_scale,
-											static_cast<float>(y) * frequency * m_scale);
+											  static_cast<float>(y) * frequency * m_scale);
 		amplitude *= 0.5f;
 		frequency *= 2.0f;
 	}

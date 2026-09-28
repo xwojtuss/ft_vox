@@ -13,9 +13,8 @@
 
 namespace logging {
 	namespace {
-		constexpr std::array<std::string_view, 8> knownLevels = {
-			"trace", "debug", "info", "warn", "warning", "error", "critical", "off"
-		};
+		constexpr std::array<std::string_view, 8> knownLevels = {"trace",   "debug", "info",     "warn",
+																 "warning", "error", "critical", "off"};
 
 		std::string readLevel(const nlohmann::json& value, const std::string& setting, const std::string& source) {
 			const auto level = value.get<std::string>();

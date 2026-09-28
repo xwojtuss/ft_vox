@@ -15,23 +15,23 @@ namespace render::vulkan {
 
 		static VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device);
 		static void           createShaderStages(VkDevice device, const char* vertPath, const char* fragPath,
-										VkPipelineShaderStageCreateInfo& vertShaderStageInfo,
-										VkPipelineShaderStageCreateInfo& fragShaderStageInfo);
-		void createScissor(const VkExtent2D& extent);
-		void createViewport(const VkExtent2D& extent);
-		void createViewportState(VkPipelineViewportStateCreateInfo& viewportState,
-								VkPipelineDynamicStateCreateInfo&   dynamicState,
-								const std::vector<VkDynamicState>&  dynamicStates) const;
+												 VkPipelineShaderStageCreateInfo& vertShaderStageInfo,
+												 VkPipelineShaderStageCreateInfo& fragShaderStageInfo);
+		void                  createScissor(const VkExtent2D& extent);
+		void                  createViewport(const VkExtent2D& extent);
+		void                  createViewportState(VkPipelineViewportStateCreateInfo& viewportState,
+												  VkPipelineDynamicStateCreateInfo&  dynamicState,
+												  const std::vector<VkDynamicState>& dynamicStates) const;
 		static VkPipelineInputAssemblyStateCreateInfo createInputAssemblyState();
 		static VkPipelineRasterizationStateCreateInfo createRasterizationState();
 		static VkPipelineMultisampleStateCreateInfo   createMultisampleState(VkSampleCountFlagBits msaaSamples);
 		static VkPipelineColorBlendAttachmentState    createColorBlendAttachmentState();
 		static VkPipelineColorBlendStateCreateInfo    createColorBlendState(
-			const VkPipelineColorBlendAttachmentState& colorBlendAttachment);
+			   const VkPipelineColorBlendAttachmentState& colorBlendAttachment);
 		static VkPipelineDepthStencilStateCreateInfo createDepthStencilState();
 		static VkPipelineLayoutCreateInfo            createPipelineLayoutInfo(
-			const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
-			const VkPushConstantRange&                pushConstantRange);
+					   const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+					   const VkPushConstantRange&                pushConstantRange);
 		template<int N>
 		static void destroyShaderStages(VkDevice device, std::array<VkPipelineShaderStageCreateInfo, N>& shaderStages);
 		template<typename UBO>

@@ -36,7 +36,9 @@ namespace test {
 		}
 
 	private:
-		void onWorldReady(const ecs::WorldReadyEvent& event) { receivedEvents.push_back(event.getName()); }
+		void onWorldReady(const ecs::WorldReadyEvent& event) {
+			receivedEvents.push_back(event.getName());
+		}
 
 		void onRender(const ecs::RenderEvent& event) {
 			receivedEvents.push_back(event.getName());

@@ -38,9 +38,8 @@ SCENARIO("The window uses an sRGB format whenever the display offers one", "[ren
 		REQUIRE(chosen.format == VK_FORMAT_B8G8R8A8_UNORM);
 	}
 	AND_THEN("sRGB is chosen when an old driver says any format is fine") {
-		const VkSurfaceFormatKHR chosen = VulkanSwapchain::chooseSwapSurfaceFormat({
-			{VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}
-		});
+		const VkSurfaceFormatKHR chosen =
+			VulkanSwapchain::chooseSwapSurfaceFormat({{VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
 		REQUIRE(chosen.format == VK_FORMAT_B8G8R8A8_SRGB);
 		REQUIRE(chosen.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 	}
@@ -48,8 +47,9 @@ SCENARIO("The window uses an sRGB format whenever the display offers one", "[ren
 
 SCENARIO("The window blends with the desktop only in ways the system supports", "[render][vulkan]") {
 	THEN("an opaque window is used whenever it is supported") {
-		REQUIRE(VulkanSwapchain::chooseCompositeAlpha(
-			VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR | VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) == VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+		REQUIRE(VulkanSwapchain::chooseCompositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR |
+													  VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) ==
+				VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
 	}
 	AND_THEN("a system that only supports inheriting the mode gets that instead") {
 		REQUIRE(VulkanSwapchain::chooseCompositeAlpha(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) ==
@@ -63,9 +63,8 @@ SCENARIO("The window blends with the desktop only in ways the system supports", 
 
 SCENARIO("Vsync on waits for the display, vsync off shows frames immediately", "[render][vulkan]") {
 	GIVEN("a GPU that supports every present mode") {
-		const std::vector allModes = {
-			VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR
-		};
+		const std::vector allModes = {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR,
+									  VK_PRESENT_MODE_IMMEDIATE_KHR};
 
 		THEN("with vsync on, frames are capped to the display's refresh rate") {
 			REQUIRE(VulkanSwapchain::chooseSwapPresentMode(allModes, true) == VK_PRESENT_MODE_FIFO_KHR);

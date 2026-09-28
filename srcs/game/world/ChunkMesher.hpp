@@ -11,15 +11,7 @@
 namespace game::world {
 	class ChunkMesher {
 	public:
-		enum Face : unsigned char {
-			PositiveX,
-			NegativeX,
-			PositiveY,
-			NegativeY,
-			PositiveZ,
-			NegativeZ,
-			FaceCount
-		};
+		enum Face : unsigned char { PositiveX, NegativeX, PositiveY, NegativeY, PositiveZ, NegativeZ, FaceCount };
 
 	private:
 		struct ModelTriangle {
@@ -36,12 +28,12 @@ namespace game::world {
 
 		block::BlockDatas& m_blockDatas;
 
-		[[nodiscard]] static PreparedModel prepareModel(const assets::MeshData& model);
+		[[nodiscard]] static PreparedModel       prepareModel(const assets::MeshData& model);
 		[[nodiscard]] static std::optional<Face> boundaryFaceOf(const std::array<render::Vertex, 3>& triangle);
-		[[nodiscard]] static FaceOcclusion occludedFaces(const Chunk& chunk, int x, int y, int z);
-		[[nodiscard]] static BlockId getVoxelCheckBounds(const Chunk& chunk, int x, int y, int z);
+		[[nodiscard]] static FaceOcclusion       occludedFaces(const Chunk& chunk, int x, int y, int z);
+		[[nodiscard]] static BlockId             getVoxelCheckBounds(const Chunk& chunk, int x, int y, int z);
 		static void appendTriangle(assets::MeshData& meshData, const ModelTriangle& triangle,
-									const glm::vec3& blockPosition);
+								   const glm::vec3& blockPosition);
 
 	public:
 		explicit ChunkMesher(block::BlockDatas& blockDatas);

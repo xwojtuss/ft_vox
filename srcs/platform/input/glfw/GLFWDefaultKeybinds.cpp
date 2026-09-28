@@ -28,7 +28,7 @@ void GLFWDefaultKeybinds::addBinding(int key, render::input::InputMods mods, ren
 }
 
 void GLFWDefaultKeybinds::addMouseBinding(render::input::MouseButton button, render::input::InputMods mods,
-										render::input::InputEvent    event) {
+										  render::input::InputEvent event) {
 	m_bindings[render::input::createMouseInput(button, mods)].push_back(event);
 }
 

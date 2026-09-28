@@ -16,12 +16,8 @@ namespace {
 	namespace worldinfo = scene::worldinfo;
 
 	constexpr std::array<glm::ivec3, ChunkMesher::FaceCount> faceOffsets = {
-		glm::ivec3(worldinfo::right),
-		glm::ivec3(worldinfo::left),
-		glm::ivec3(worldinfo::up),
-		glm::ivec3(worldinfo::down),
-		glm::ivec3(worldinfo::backward),
-		glm::ivec3(worldinfo::forward),
+		glm::ivec3(worldinfo::right), glm::ivec3(worldinfo::left),     glm::ivec3(worldinfo::up),
+		glm::ivec3(worldinfo::down),  glm::ivec3(worldinfo::backward), glm::ivec3(worldinfo::forward),
 	};
 
 	ChunkMesher::Face dominantFace(const glm::vec3& normal) {
@@ -67,8 +63,8 @@ assets::MeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
 					continue;
 
 				const FaceOcclusion occluded = occludedFaces(chunk, x, y, z);
-				const bool          enclosed = std::all_of(occluded.begin(), occluded.end(),
-												[](const bool face) { return face; });
+				const bool          enclosed =
+					std::all_of(occluded.begin(), occluded.end(), [](const bool face) { return face; });
 				if (enclosed && everyTriangleCullable)
 					continue;
 
@@ -87,15 +83,14 @@ assets::MeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
 
 ChunkMesher::PreparedModel ChunkMesher::prepareModel(const assets::MeshData& model) {
 	PreparedModel prepared;
-	const auto&   [vertices, indices] = model;
+	const auto& [vertices, indices] = model;
 
 	for (size_t i = 0; i + 2 < indices.size(); i += 3) {
 		if (indices[i] >= vertices.size() || indices[i + 1] >= vertices.size() || indices[i + 2] >= vertices.size())
 			continue;
 
-		const std::array<render::Vertex, 3> triangle = {
-			vertices[indices[i]], vertices[indices[i + 1]], vertices[indices[i + 2]]
-		};
+		const std::array<render::Vertex, 3> triangle = {vertices[indices[i]], vertices[indices[i + 1]],
+														vertices[indices[i + 2]]};
 		const glm::vec3 normal = glm::cross(triangle[1].pos - triangle[0].pos, triangle[2].pos - triangle[0].pos);
 
 		if (glm::length(normal) <= std::numeric_limits<float>::epsilon())
@@ -135,18 +130,15 @@ ChunkMesher::FaceOcclusion ChunkMesher::occludedFaces(const Chunk& chunk, const 
 game::BlockId ChunkMesher::getVoxelCheckBounds(const Chunk& chunk, const int x, const int y, const int z) {
 	if (x < 0 || x >= chunkXSize || y < 0 || y >= chunkYSize || z < 0 || z >= chunkZSize)
 		return 0;
-	return chunk.getBlock(static_cast<unsigned short>(x), static_cast<unsigned short>(y),
-						static_cast<unsigned short>(z)).id;
+	return chunk
+		.getBlock(static_cast<unsigned short>(x), static_cast<unsigned short>(y), static_cast<unsigned short>(z))
+		.id;
 }
 
 void ChunkMesher::appendTriangle(assets::MeshData& meshData, const ModelTriangle& triangle,
-								const glm::vec3&   blockPosition) {
+								 const glm::vec3& blockPosition) {
 	for (const auto& [pos, color, texCoord]: triangle.vertices) {
-		meshData.vertices.push_back({
-			.pos      = pos + blockPosition,
-			.color    = color,
-			.texCoord = texCoord
-		});
+		meshData.vertices.push_back({.pos = pos + blockPosition, .color = color, .texCoord = texCoord});
 		meshData.indices.push_back(static_cast<uint32_t>(meshData.vertices.size()) - 1);
 	}
 }

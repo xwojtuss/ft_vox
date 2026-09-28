@@ -35,8 +35,8 @@ namespace test {
 			return createdTextures.back();
 		}
 
-		void drawMesh(const ecs::component::Mesh&    mesh, const ecs::component::Texture* texture,
-					const ecs::component::Transform& transform) override {
+		void drawMesh(const ecs::component::Mesh& mesh, const ecs::component::Texture* texture,
+					  const ecs::component::Transform& transform) override {
 			drawnMeshes.push_back({mesh.mesh.id, texture, transform.position});
 		}
 
@@ -47,7 +47,6 @@ namespace test {
 		void render(render::gui::IGui&) override {
 			++guiRenders;
 		}
-
 
 		void render(ecs::SystemManager&) override {
 		}

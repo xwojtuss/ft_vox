@@ -47,8 +47,8 @@ void VulkanResourceManager::createCommandPool(const VulkanContext& context) {
 }
 
 void VulkanResourceManager::createBuffer(const VulkanContext& context, VkDeviceSize size, VkBufferUsageFlags usage,
-										VkMemoryPropertyFlags properties, VkBuffer& buffer,
-										VkDeviceMemory&       bufferMemory) {
+										 VkMemoryPropertyFlags properties, VkBuffer& buffer,
+										 VkDeviceMemory& bufferMemory) {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size        = size;
@@ -76,9 +76,9 @@ void VulkanResourceManager::createBuffer(const VulkanContext& context, VkDeviceS
 	vkBindBufferMemory(context.getLogicalDevice(), buffer, bufferMemory, 0);
 }
 
-void VulkanResourceManager::transitionImageLayout(const VulkanContext&    context, VkImage      image,
-												[[maybe_unused]] VkFormat format, VkImageLayout oldLayout,
-												VkImageLayout             newLayout, uint32_t   mipLevels) const {
+void VulkanResourceManager::transitionImageLayout(const VulkanContext& context, VkImage image,
+												  [[maybe_unused]] VkFormat format, VkImageLayout oldLayout,
+												  VkImageLayout newLayout, uint32_t mipLevels) const {
 	VkCommandBuffer commandBuffer = VulkanFrameData::beginSingleTimeCommands(m_commandPool, context.getLogicalDevice());
 
 	VkImageMemoryBarrier barrier{};
@@ -103,8 +103,8 @@ void VulkanResourceManager::transitionImageLayout(const VulkanContext&    contex
 
 		sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	} else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout ==
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+	} else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+			   newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
@@ -114,22 +114,14 @@ void VulkanResourceManager::transitionImageLayout(const VulkanContext&    contex
 		throw VulkanError("unsupported layout transition");
 	}
 
-	vkCmdPipelineBarrier(
-		commandBuffer,
-		sourceStage, destinationStage,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1, &barrier
-	);
+	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 	VulkanFrameData::endSingleTimeCommands(commandBuffer, m_commandPool, context.getGraphicsQueue(),
-											context.getLogicalDevice());
+										   context.getLogicalDevice());
 }
 
 void VulkanResourceManager::copyBufferToImage(const VulkanContext& context, VkBuffer buffer, VkImage image,
-											uint32_t               width,
-											uint32_t               height) const {
+											  uint32_t width, uint32_t height) const {
 	VkCommandBuffer commandBuffer = VulkanFrameData::beginSingleTimeCommands(m_commandPool, context.getLogicalDevice());
 
 	VkBufferImageCopy region{};
@@ -143,20 +135,16 @@ void VulkanResourceManager::copyBufferToImage(const VulkanContext& context, VkBu
 	region.imageSubresource.layerCount     = 1;
 
 	region.imageOffset = {0, 0, 0};
-	region.imageExtent = {
-		width,
-		height,
-		1
-	};
+	region.imageExtent = {width, height, 1};
 	vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 	VulkanFrameData::endSingleTimeCommands(commandBuffer, m_commandPool, context.getGraphicsQueue(),
-											context.getLogicalDevice());
+										   context.getLogicalDevice());
 }
 
 void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImage image,
-											[[maybe_unused]] VkFormat imageFormat,
-											int32_t texWidth, int32_t texHeight, uint32_t mipLevels) const {
+											[[maybe_unused]] VkFormat imageFormat, int32_t texWidth, int32_t texHeight,
+											uint32_t mipLevels) const {
 	VkCommandBuffer commandBuffer = VulkanFrameData::beginSingleTimeCommands(m_commandPool, context.getLogicalDevice());
 
 	VkImageMemoryBarrier barrier{};
@@ -179,11 +167,8 @@ void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImag
 		barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
 
-		vkCmdPipelineBarrier(commandBuffer,
-							VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-							0, nullptr,
-							0, nullptr,
-							1, &barrier);
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0,
+							 nullptr, 0, nullptr, 1, &barrier);
 
 		VkImageBlit blit{};
 		blit.srcOffsets[0]                 = {0, 0, 0};
@@ -199,11 +184,8 @@ void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImag
 		blit.dstSubresource.baseArrayLayer = 0;
 		blit.dstSubresource.layerCount     = 1;
 
-		vkCmdBlitImage(commandBuffer,
-						image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-						image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-						1, &blit,
-						VK_FILTER_LINEAR);
+		vkCmdBlitImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image,
+					   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
 		barrier.subresourceRange.baseMipLevel = i - 1;
 		barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -211,11 +193,8 @@ void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImag
 		barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
 		barrier.dstAccessMask                 = VK_ACCESS_SHADER_READ_BIT;
 
-		vkCmdPipelineBarrier(commandBuffer,
-							VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-							0, nullptr,
-							0, nullptr,
-							1, &barrier);
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,
+							 nullptr, 0, nullptr, 1, &barrier);
 
 		if (mipWidth > 1)
 			mipWidth /= 2;
@@ -229,18 +208,15 @@ void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImag
 	barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.dstAccessMask                 = VK_ACCESS_SHADER_READ_BIT;
 
-	vkCmdPipelineBarrier(commandBuffer,
-						VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-						0, nullptr,
-						0, nullptr,
-						1, &barrier);
+	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,
+						 nullptr, 0, nullptr, 1, &barrier);
 
 	VulkanFrameData::endSingleTimeCommands(commandBuffer, m_commandPool, context.getGraphicsQueue(),
-											context.getLogicalDevice());
+										   context.getLogicalDevice());
 }
 
-SwapChainImage
-VulkanResourceManager::createTextureImage(const assets::TextureData& textureData, const VulkanContext& context) const {
+SwapChainImage VulkanResourceManager::createTextureImage(const assets::TextureData& textureData,
+														 const VulkanContext&       context) const {
 	const VkDeviceSize imageSize = static_cast<VkDeviceSize>(textureData.width) * textureData.height * 4;
 	if (textureData.pixels.size() < imageSize)
 		throw VulkanError("texture has fewer pixels than its size needs");
@@ -248,8 +224,8 @@ VulkanResourceManager::createTextureImage(const assets::TextureData& textureData
 	VkBuffer       stagingBuffer       = nullptr;
 	VkDeviceMemory stagingBufferMemory = nullptr;
 	createBuffer(context, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-				stagingBufferMemory);
+				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+				 stagingBufferMemory);
 
 	void* data = nullptr;
 	vkMapMemory(context.getLogicalDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
@@ -258,17 +234,16 @@ VulkanResourceManager::createTextureImage(const assets::TextureData& textureData
 
 	SwapChainImage swapChainImage{};
 	VulkanSwapchain::createImage(
-		context, VkExtent2D{.width = textureData.width, .height = textureData.height},
-		textureData.mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+		context, VkExtent2D{.width = textureData.width, .height = textureData.height}, textureData.mipLevels,
+		VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, swapChainImage);
 
 	transitionImageLayout(context, swapChainImage.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-						VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, textureData.mipLevels);
-	copyBufferToImage(context, stagingBuffer, swapChainImage.image, textureData.width,
-					textureData.height);
+						  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, textureData.mipLevels);
+	copyBufferToImage(context, stagingBuffer, swapChainImage.image, textureData.width, textureData.height);
 
-	//transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
+	// transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
 	vkDestroyBuffer(context.getLogicalDevice(), stagingBuffer, nullptr);
 	vkFreeMemory(context.getLogicalDevice(), stagingBufferMemory, nullptr);
@@ -279,7 +254,7 @@ VulkanResourceManager::createTextureImage(const assets::TextureData& textureData
 }
 
 VkImageView VulkanResourceManager::createTextureImageView(const assets::TextureData& textureData,
-														const VulkanContext&         context, VkImage textureImage) {
+														  const VulkanContext& context, VkImage textureImage) {
 	return VulkanSwapchain::createImageView(context.getLogicalDevice(), textureImage, VK_FORMAT_R8G8B8A8_SRGB,
 											VK_IMAGE_ASPECT_COLOR_BIT, textureData.mipLevels);
 }
@@ -299,14 +274,14 @@ VkSampler VulkanResourceManager::createTextureSampler(const VulkanContext& conte
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(context.getPhysicalDevice(), &properties);
 	samplerInfo.maxAnisotropy = context.isSamplerAnisotropyEnabled() ? properties.limits.maxSamplerAnisotropy : 1.0f;
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.borderColor   = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	samplerInfo.mipLodBias = 0.0f;
-	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
+	samplerInfo.compareEnable           = VK_FALSE;
+	samplerInfo.compareOp               = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	samplerInfo.mipLodBias              = 0.0f;
+	samplerInfo.minLod                  = 0.0f;
+	samplerInfo.maxLod                  = VK_LOD_CLAMP_NONE;
 
 	if (const VkResult result = vkCreateSampler(context.getLogicalDevice(), &samplerInfo, nullptr, &textureSampler);
 		result != VK_SUCCESS) {
@@ -347,15 +322,14 @@ VkSampler VulkanResourceManager::createPixelPerfectTextureSampler(const VulkanCo
 }
 
 assets::TextureHandle VulkanResourceManager::createTexture(const assets::TextureData& textureData,
-															VulkanContext& context, const VulkanFrameData& frameData) {
+														   VulkanContext& context, const VulkanFrameData& frameData) {
 	assets::TextureData supportedTexture = textureData;
 	supportedTexture.mipLevels           = supportedMipLevels(context, textureData.mipLevels);
 
 	const SwapChainImage textureImage     = createTextureImage(supportedTexture, context);
 	VkImageView          textureImageView = createTextureImageView(supportedTexture, context, textureImage.image);
-	VkSampler            textureSampler   = textureData.pixelPerfect
-									? createPixelPerfectTextureSampler(context)
-									: createTextureSampler(context);
+	VkSampler            textureSampler =
+        textureData.pixelPerfect ? createPixelPerfectTextureSampler(context) : createTextureSampler(context);
 
 	VkDescriptorSet descriptorSet = frameData.createTextureDescriptorSet(context);
 
@@ -376,20 +350,18 @@ assets::TextureHandle VulkanResourceManager::createTexture(const assets::Texture
 
 	assets::TextureHandle handle;
 
-	m_textures[handle.id] = GpuTexture{
-		.image = SwapChainImage{
-			.image = textureImage.image, .imageView = textureImageView, .imageMemory = textureImage.imageMemory
-		},
-		.sampler       = textureSampler,
-		.descriptorSet = descriptorSet,
-		.mipLevels     = textureData.mipLevels
-	};
+	m_textures[handle.id] = GpuTexture{.image         = SwapChainImage{.image       = textureImage.image,
+																	   .imageView   = textureImageView,
+																	   .imageMemory = textureImage.imageMemory},
+									   .sampler       = textureSampler,
+									   .descriptorSet = descriptorSet,
+									   .mipLevels     = textureData.mipLevels};
 
 	return handle;
 }
 
 void VulkanResourceManager::copyBuffer(const VulkanContext& context, VkBuffer srcBuffer, VkBuffer dstBuffer,
-										VkDeviceSize        size) const {
+									   VkDeviceSize size) const {
 	VkCommandBuffer commandBuffer = VulkanFrameData::beginSingleTimeCommands(m_commandPool, context.getLogicalDevice());
 
 	VkBufferCopy copyRegion{};
@@ -397,7 +369,7 @@ void VulkanResourceManager::copyBuffer(const VulkanContext& context, VkBuffer sr
 	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
 	VulkanFrameData::endSingleTimeCommands(commandBuffer, m_commandPool, context.getGraphicsQueue(),
-											context.getLogicalDevice());
+										   context.getLogicalDevice());
 }
 
 assets::MeshHandle VulkanResourceManager::addMesh(const GpuMesh& meshData) {

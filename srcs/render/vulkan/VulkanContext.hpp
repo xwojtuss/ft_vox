@@ -56,14 +56,14 @@ namespace render::vulkan {
 		explicit VulkanContext(platform::window::IWindow&);
 		~VulkanContext();
 
-		void                   choosePhysicalDevice();
-		void                   createLogicalDevice();
-		[[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
-		[[nodiscard]] VkFormat findDepthFormat() const;
-		[[nodiscard]] VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
-													VkFormatFeatureFlags        features) const;
-		QueueFamilyIndices                         findQueueFamilies(VkPhysicalDevice device) const;
-		SwapChainSupportDetails                    querySwapChainSupport(VkPhysicalDevice device) const;
+		void                    choosePhysicalDevice();
+		void                    createLogicalDevice();
+		[[nodiscard]] uint32_t  findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+		[[nodiscard]] VkFormat  findDepthFormat() const;
+		[[nodiscard]] VkFormat  findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
+													VkFormatFeatureFlags features) const;
+		QueueFamilyIndices      findQueueFamilies(VkPhysicalDevice device) const;
+		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) const;
 		[[nodiscard]] const QueueFamilyIndices&    getQueueFamilyIndices() const;
 		[[nodiscard]] const VkInstance&            getInstance() const;
 		[[nodiscard]] const VkSurfaceKHR&          getSurface() const;

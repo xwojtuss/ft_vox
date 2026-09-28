@@ -5,17 +5,14 @@ namespace ecs {
 	void Dispatcher::subscribe(SystemType* instance, void (SystemType::*method)(const Event&)) {
 		auto& listeners = m_listeners[typeid(Event)];
 
-		listeners.emplace_back([instance, method](const void* event) {
-				(instance->*method)(*static_cast<const Event*>(event));
-			}
-		);
+		listeners.emplace_back(
+			[instance, method](const void* event) { (instance->*method)(*static_cast<const Event*>(event)); });
 	}
 
 	template<typename Event, typename SystemType>
 	void Dispatcher::subscribe(const SystemType* instance, void (SystemType::*method)(const Event&) const) {
-		m_listeners[typeid(Event)].emplace_back([instance, method](const void* event) {
-			(instance->*method)(*static_cast<const Event*>(event));
-		});
+		m_listeners[typeid(Event)].emplace_back(
+			[instance, method](const void* event) { (instance->*method)(*static_cast<const Event*>(event)); });
 	}
 
 	template<typename Event>

@@ -6,9 +6,8 @@
 using namespace game::world;
 
 ChunkManager::ChunkManager(block::BlockDatas& blockDatas, ecs::World& world, render::IRenderer& renderer,
-							const glm::vec<3, unsigned short> renderDistance) : m_chunkMesher(blockDatas),
-	m_blockDatas(blockDatas),
-	m_world(world), m_renderer(renderer),
+						   const glm::vec<3, unsigned short> renderDistance) :
+	m_chunkMesher(blockDatas), m_blockDatas(blockDatas), m_world(world), m_renderer(renderer),
 	m_renderDistance(renderDistance) {
 	m_chunkTexture = renderer.createTexture(m_blockDatas.getBlockData(1).textureData);
 
@@ -35,13 +34,11 @@ void ChunkManager::makeChunkRenderable(ecs::World& world, render::IRenderer& ren
 
 	ecs::EntityHandle chunkEntity = world.createEntity();
 
-	chunkEntity.add(ecs::component::Mesh{
-		.mesh = renderer.createMesh(meshData), .pipelineType = assets::PipelineType::Textured
-	});
+	chunkEntity.add(
+		ecs::component::Mesh{.mesh = renderer.createMesh(meshData), .pipelineType = assets::PipelineType::Textured});
 	chunkEntity.add(ecs::component::Texture{.texture = m_chunkTexture});
 	chunkEntity.add(ecs::component::Transform{
-		.position = glm::vec3(chunkPosition * glm::ivec3(chunkXSize, chunkYSize, chunkZSize))
-	});
+		.position = glm::vec3(chunkPosition * glm::ivec3(chunkXSize, chunkYSize, chunkZSize))});
 }
 
 void ChunkManager::unloadChunk(glm::ivec3 chunkPosition) {

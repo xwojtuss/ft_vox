@@ -23,8 +23,8 @@ namespace game::world {
 		glm::vec<3, unsigned short>                            m_renderDistance;
 
 	public:
-		ChunkManager(block::BlockDatas&         blockDatas, ecs::World& world, render::IRenderer& renderer,
-					glm::vec<3, unsigned short> renderDistance = scene::worldinfo::renderDistance);
+		ChunkManager(block::BlockDatas& blockDatas, ecs::World& world, render::IRenderer& renderer,
+					 glm::vec<3, unsigned short> renderDistance = scene::worldinfo::renderDistance);
 
 		void makeChunkRenderable(ecs::World& world, render::IRenderer& renderer, glm::ivec3 chunkPosition);
 		void unloadChunk(glm::ivec3 chunkPosition);

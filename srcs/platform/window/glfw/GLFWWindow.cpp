@@ -44,20 +44,20 @@ void GLFWWindow::mouseButtonCallback(GLFWwindow* rawWindow, const int button, co
 	auto* window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
 
 	window->getInputManager().processMouseButton(input::glfw::glfwToMouseButton(button),
-												input::glfw::glfwToInputAction(action),
-												input::glfw::glfwToInputMods(mods));
+												 input::glfw::glfwToInputAction(action),
+												 input::glfw::glfwToInputMods(mods));
 }
 
 void GLFWWindow::keyCallback(GLFWwindow* rawWindow, [[maybe_unused]] int key, const int scancode, const int action,
-							const int    mods) {
+							 const int mods) {
 	auto* window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
 
 	window->getInputManager().processKey(scancode, input::glfw::glfwToInputAction(action),
-										input::glfw::glfwToInputMods(mods));
+										 input::glfw::glfwToInputMods(mods));
 }
 
-void GLFWWindow::framebufferResizeCallback(GLFWwindow*           rawWindow, [[maybe_unused]] int width,
-											[[maybe_unused]] int height) {
+void GLFWWindow::framebufferResizeCallback(GLFWwindow* rawWindow, [[maybe_unused]] int width,
+										   [[maybe_unused]] int height) {
 	auto* window         = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(rawWindow));
 	window->m_wasResized = true;
 }

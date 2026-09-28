@@ -36,7 +36,7 @@ namespace render::vulkan {
 		void cleanupSwapChain(const VulkanContext& context) const;
 
 		static VkExtent2D chooseSwapExtent(const platform::window::IWindow& window,
-											const VkSurfaceCapabilitiesKHR& capabilities);
+										   const VkSurfaceCapabilitiesKHR&  capabilities);
 
 	public:
 		[[nodiscard]] static VkSurfaceFormatKHR chooseSwapSurfaceFormat(
@@ -57,11 +57,11 @@ namespace render::vulkan {
 		void                         recreateSwapChain(const VulkanContext& context);
 		void                         cleanup(const VulkanContext& context) const;
 
-		static void createImage(const VulkanContext&  context, VkExtent2D          extent, uint32_t      mipLevels,
-								VkSampleCountFlagBits numSamples, VkFormat         format, VkImageTiling tiling,
-								VkImageUsageFlags     usage, VkMemoryPropertyFlags properties,
-								SwapChainImage&       swapChainImage);
-		static VkImageView createImageView(VkDevice            device, VkImage       image, VkFormat format,
-											VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+		static void        createImage(const VulkanContext& context, VkExtent2D extent, uint32_t mipLevels,
+									   VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
+									   VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+									   SwapChainImage& swapChainImage);
+		static VkImageView createImageView(VkDevice device, VkImage image, VkFormat format,
+										   VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 	};
 }

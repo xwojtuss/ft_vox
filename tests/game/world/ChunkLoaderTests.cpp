@@ -5,10 +5,10 @@
 
 using game::world::Chunk;
 using game::world::ChunkLoader;
-using game::world::EarthGenerator;
 using game::world::chunkXSize;
 using game::world::chunkYSize;
 using game::world::chunkZSize;
+using game::world::EarthGenerator;
 
 SCENARIO("Loading a chunk generates its terrain", "[chunk-loader]") {
 	GIVEN("a chunk loader") {

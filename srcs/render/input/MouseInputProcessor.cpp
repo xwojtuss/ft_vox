@@ -15,8 +15,8 @@ void MouseInputProcessor::processMouseMove(const double xPos, const double yPos)
 
 	m_accumulatedMouseX += deltaX;
 	m_accumulatedMouseY += deltaY;
-	m_lastMouseX        = xPos;
-	m_lastMouseY        = yPos;
+	m_lastMouseX = xPos;
+	m_lastMouseY = yPos;
 }
 
 void MouseInputProcessor::getMouseDelta(double& deltaX, double& deltaY) {

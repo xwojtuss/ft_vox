@@ -21,8 +21,8 @@ void KeyInputProcessor::processKey(const int scancode, const InputAction action,
 	}
 }
 
-void KeyInputProcessor::getKeyEvents(InputEvents& pressedEvents, InputEvents&  repeatedEvents,
-									InputEvents&  releasedEvents, InputEvents& activeEvents) {
+void KeyInputProcessor::getKeyEvents(InputEvents& pressedEvents, InputEvents& repeatedEvents,
+									 InputEvents& releasedEvents, InputEvents& activeEvents) {
 	pressedEvents    = m_pressedEvents;
 	repeatedEvents   = m_repeatedEvents;
 	releasedEvents   = m_releasedEvents;
@@ -33,7 +33,7 @@ void KeyInputProcessor::getKeyEvents(InputEvents& pressedEvents, InputEvents&  r
 }
 
 void KeyInputProcessor::processMouseButton(const MouseButton button, const InputAction action,
-											const InputMods  modifiers) {
+										   const InputMods modifiers) {
 	const Input input       = createMouseInput(button, modifiers);
 	const Input singleInput = createMouseInput(button, 0);
 

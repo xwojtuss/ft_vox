@@ -11,9 +11,9 @@ namespace render {
 	};
 
 	/** One per draw/object
-	* For now a push constant
-	* using 64 bytes of the 128 available
-	*/
+	 * For now a push constant
+	 * using 64 bytes of the 128 available
+	 */
 	struct alignas(16) ObjectUBO {
 		glm::mat4 model;
 	};
@@ -32,8 +32,7 @@ namespace render {
 template<>
 struct std::hash<render::Vertex> {
 	size_t operator()(const render::Vertex& vertex) const noexcept {
-		return ((hash<glm::vec3>()(vertex.pos) ^
-				(hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-				(hash<glm::vec2>()(vertex.texCoord) << 1);
+		return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+			   (hash<glm::vec2>()(vertex.texCoord) << 1);
 	}
 };
