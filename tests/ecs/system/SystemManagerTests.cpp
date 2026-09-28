@@ -56,14 +56,12 @@ SCENARIO("The system manager turns engine phases into events", "[ecs][systems]")
 			}
 		}
 
-		WHEN("the renderer draws the scene, the text and finishes the frame") {
+		WHEN("the renderer draws the scene and finishes the frame") {
 			manager.onRendererDraw(renderer);
-			manager.onTextDraw(renderer);
 			manager.onRendererFrame(renderer);
 
 			THEN("one event per step is sent, each carrying the renderer") {
-				REQUIRE(system.receivedEvents == std::vector<std::string>{"RendererDrawEvent", "TextDrawEvent",
-						"RendererFrameEvent"});
+				REQUIRE(system.receivedEvents == std::vector<std::string>{"RendererDrawEvent", "RendererFrameEvent"});
 				REQUIRE(system.lastRenderer == &renderer);
 			}
 		}

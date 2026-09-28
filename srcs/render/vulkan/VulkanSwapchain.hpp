@@ -25,6 +25,7 @@ namespace render::vulkan {
 		std::vector<VkFramebuffer> m_swapChainFramebuffers;
 		SwapChainImage             m_colorImage{};
 		SwapChainImage             m_depthImage{};
+		VkPresentModeKHR           m_presentMode = VK_PRESENT_MODE_FIFO_KHR;
 
 		void createSwapChain(const VulkanContext&);
 		void createImageViews(const VulkanContext&);
@@ -41,7 +42,7 @@ namespace render::vulkan {
 		[[nodiscard]] static VkSurfaceFormatKHR chooseSwapSurfaceFormat(
 			const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		[[nodiscard]] static VkPresentModeKHR chooseSwapPresentMode(
-			const std::vector<VkPresentModeKHR>& availablePresentModes);
+			const std::vector<VkPresentModeKHR>& availablePresentModes, bool vsync);
 		[[nodiscard]] static VkCompositeAlphaFlagBitsKHR chooseCompositeAlpha(
 			VkCompositeAlphaFlagsKHR supportedCompositeAlpha);
 

@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <array>
 #include <limits>
+#include <vulkan/vk_enum_string_helper.h>
 #include "../../app/ApplicationInfo.hpp"
 #include "VulkanError.hpp"
 #include "VulkanContext.hpp"
+#include "../../log/Log.hpp"
 
 using namespace render::vulkan;
 
@@ -16,6 +18,8 @@ VulkanSwapchain::VulkanSwapchain(const VulkanContext& context) {
 	createColorResources(context);
 	createDepthResources(context);
 	createFramebuffers(context);
+	logging::get(error::Domain::Render).info("Presenting frames with {} (vsync {})", string_VkPresentModeKHR(m_presentMode),
+											app::VSyncEnabled ? "on" : "off");
 }
 
 VulkanSwapchain::~VulkanSwapchain() = default;
@@ -23,7 +27,8 @@ VulkanSwapchain::~VulkanSwapchain() = default;
 void VulkanSwapchain::createSwapChain(const VulkanContext& context) {
 	const SwapChainSupportDetails swapChainSupport = context.querySwapChainSupport(context.getPhysicalDevice());
 	const VkSurfaceFormatKHR      surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-	const VkPresentModeKHR        presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+	const VkPresentModeKHR        presentMode = chooseSwapPresentMode(swapChainSupport.presentModes,
+																		app::VSyncEnabled);
 	const VkExtent2D              extent = chooseSwapExtent(context.getWindow(), swapChainSupport.capabilities);
 
 	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -65,6 +70,7 @@ void VulkanSwapchain::createSwapChain(const VulkanContext& context) {
 	vkGetSwapchainImagesKHR(context.getLogicalDevice(), m_swapChain, &imageCount, m_swapChainImages.data());
 	m_swapChainImageFormat = surfaceFormat.format;
 	m_swapChainExtent      = extent;
+	m_presentMode          = presentMode;
 }
 
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
@@ -94,12 +100,10 @@ VkCompositeAlphaFlagBitsKHR VulkanSwapchain::chooseCompositeAlpha(
 	return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 }
 
-VkPresentModeKHR VulkanSwapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
-	for (auto availablePresentMode: availablePresentModes) {
-		if (availablePresentMode == (app::VSyncEnabled ? VK_PRESENT_MODE_MAILBOX_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR)) {
-			return availablePresentMode;
-		}
-	}
+VkPresentModeKHR VulkanSwapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes,
+														const bool                           vsync) {
+	if (!vsync && std::ranges::find(availablePresentModes, VK_PRESENT_MODE_IMMEDIATE_KHR) != availablePresentModes.end())
+		return VK_PRESENT_MODE_IMMEDIATE_KHR;
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
@@ -188,7 +192,7 @@ void VulkanSwapchain::createRenderPass(const VulkanContext& context) {
 	colorAttachment.format         = m_swapChainImageFormat;
 	colorAttachment.samples        = context.getMsaaSamples();
 	colorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;

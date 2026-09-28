@@ -16,29 +16,6 @@ VulkanRenderer::VulkanRenderer(platform::window::IWindow& window) {
 	m_frameData       = std::make_unique<VulkanFrameData>(*m_context, *m_resourceManager);
 	createPipelines();
 	createRenderFinishedSemaphores();
-
-	createTextMesh();
-	VulkanResourceManager::createBuffer(
-		*m_context,
-		maxTextChars * sizeof(render::InstanceData),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		m_instanceBuffer,
-		m_instanceBufferMemory
-	);
-}
-
-VkShaderModule VulkanRenderer::createShaderModule(const std::vector<char>& code, VkDevice device) {
-	VkShaderModuleCreateInfo createInfo{};
-	createInfo.sType            = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize         = code.size();
-	createInfo.pCode            = reinterpret_cast<const uint32_t*>(code.data());
-	VkShaderModule shaderModule = nullptr;
-	if (const VkResult result = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
-		result != VK_SUCCESS) {
-		throw VulkanError("failed to create shader module", result);
-	}
-	return shaderModule;
 }
 
 assets::MeshHandle VulkanRenderer::createMesh(const assets::MeshData& meshData) {
@@ -52,54 +29,8 @@ assets::MeshHandle VulkanRenderer::createMesh(const assets::MeshData& meshData) 
 	return handle;
 }
 
-void VulkanRenderer::createTextMesh() {
-	assets::MeshData textMeshData{};
-
-	const std::vector<render::Vertex> quadVertices = {
-		{{0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-		{{1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f / fontBitMapWidth, 0.0f}},
-		{{1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f / fontBitMapWidth, 1.0f / fontBitMapHeight}},
-		{{0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f / fontBitMapHeight}},
-	};
-
-	const std::vector<uint32_t> quadIndices = {
-		0, 1, 2,
-		2, 3, 0
-	};
-
-	textMeshData.vertices = quadVertices;
-	textMeshData.indices  = quadIndices;
-
-	m_textMeshHandle = createMesh(textMeshData);
-}
-
 assets::TextureHandle VulkanRenderer::createTexture(const assets::TextureData& textureData) {
 	return m_resourceManager->createTexture(textureData, *m_context, *m_frameData);
-}
-
-void VulkanRenderer::copyTextToInstanceBuffer(const std::string& text, size_t offset) const {
-	void* mappedData = nullptr;
-
-	const size_t bufferOffset = offset * sizeof(render::InstanceData);
-	const size_t bufferSize   = text.length() * sizeof(render::InstanceData);
-
-	vkMapMemory(m_context->getLogicalDevice(), m_instanceBufferMemory, bufferOffset, bufferSize, 0, &mappedData);
-
-	for (size_t i = 0; i < text.length(); ++i) {
-		const int index = text[i] - ' ';
-
-		render::InstanceData instanceData{};
-		instanceData.texCoord = {
-			static_cast<float>(index % fontBitMapWidth) / static_cast<float>(fontBitMapWidth),
-			static_cast<float>(index / fontBitMapWidth) / static_cast<float>(fontBitMapHeight),
-		};
-		instanceData.charIndex = static_cast<int>(i);
-
-		memcpy(static_cast<char*>(mappedData) + i * sizeof(render::InstanceData), &instanceData,
-				sizeof(render::InstanceData));
-	}
-
-	vkUnmapMemory(m_context->getLogicalDevice(), m_instanceBufferMemory);
 }
 
 void VulkanRenderer::createPipelines() {
@@ -203,7 +134,6 @@ void VulkanRenderer::recordCurrentCommandBuffer(ecs::SystemManager& systemManage
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	systemManager.onRendererDraw(*this);
-	systemManager.onTextDraw(*this);
 	systemManager.onRendererFrame(*this);
 
 	vkCmdEndRenderPass(commandBuffer);
@@ -215,7 +145,9 @@ void VulkanRenderer::recordCurrentCommandBuffer(ecs::SystemManager& systemManage
 void VulkanRenderer::beginFrame() {
 	m_frameIndex = 0;
 
-	(void)m_frameData->waitForFences(*m_context, m_frameData->getCurrentFrame());
+	if (const VkResult result = m_frameData->waitForFences(*m_context, m_frameData->getCurrentFrame());
+		result != VK_SUCCESS)
+		throw VulkanError("failed to wait for the previous frame", result);
 
 	const VkResult result = vkAcquireNextImageKHR(m_context->getLogicalDevice(), m_swapchain->getSwapChain(),
 												UINT64_MAX, m_frameData->getCurrentImageAvailableSemaphore(),
@@ -304,10 +236,6 @@ void VulkanRenderer::setClearColor(int hexColor) {
 	setClearColor(r, g, b, 1.0f);
 }
 
-const assets::MeshHandle& VulkanRenderer::getTextMeshHandle() const {
-	return m_textMeshHandle;
-}
-
 void VulkanRenderer::cleanupPipelines() {
 	for (auto const& [_, pipeline]: m_pipelineHandles) {
 		pipeline->cleanup(m_context->getLogicalDevice());
@@ -320,9 +248,6 @@ void VulkanRenderer::cleanup() {
 
 	cleanupPipelines();
 	cleanupRenderFinishedSemaphores();
-
-	vkDestroyBuffer(m_context->getLogicalDevice(), m_instanceBuffer, nullptr);
-	vkFreeMemory(m_context->getLogicalDevice(), m_instanceBufferMemory, nullptr);
 
 	m_resourceManager->cleanup(*m_context);
 	m_frameData->cleanup(*m_context);

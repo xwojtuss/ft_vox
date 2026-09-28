@@ -32,13 +32,6 @@ namespace ecs {
 		}
 	};
 
-	struct TextDrawEvent : public DispatchEvent {
-		render::IRenderer* renderer;
-
-		explicit TextDrawEvent(render::IRenderer* renderer) : DispatchEvent("TextDrawEvent"), renderer(renderer) {
-		}
-	};
-
 	struct RendererDrawEvent : public DispatchEvent {
 		render::IRenderer* renderer;
 

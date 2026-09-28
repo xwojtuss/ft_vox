@@ -18,12 +18,6 @@ namespace render {
 		glm::mat4 model;
 	};
 
-	struct alignas(16) TextUBO {
-		glm::vec2 position;
-		glm::vec2 size;
-		glm::vec4 color;
-	};
-
 	struct Vertex {
 		glm::vec3 pos;
 		glm::vec3 color;
@@ -32,21 +26,6 @@ namespace render {
 		bool operator==(const Vertex& other) const {
 			return pos == other.pos && color == other.color && texCoord == other.texCoord;
 		}
-	};
-
-	struct Vertex2D {
-		glm::vec2 pos;
-		glm::vec3 color;
-		glm::vec2 texCoord;
-
-		bool operator==(const Vertex2D& other) const {
-			return pos == other.pos && color == other.color && texCoord == other.texCoord;
-		}
-	};
-
-	struct InstanceData {
-		glm::vec2 texCoord;
-		int       charIndex{};
 	};
 }
 

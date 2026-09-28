@@ -9,6 +9,8 @@
 namespace render::vulkan {
 	constexpr uint32_t vulkanApiVersion = VK_API_VERSION_1_0;
 
+	constexpr VkSampleCountFlagBits maxMsaaSamples = VK_SAMPLE_COUNT_4_BIT;
+
 	using DeviceExtensions = std::vector<const char*>;
 
 	struct QueueFamilyIndices {
@@ -33,6 +35,7 @@ namespace render::vulkan {
 		VkQueue                    m_graphicsQueue{};
 		VkQueue                    m_presentQueue{};
 		VkSurfaceKHR               m_surface{};
+		VkDebugUtilsMessengerEXT   m_debugMessenger{};
 		SwapChainSupportDetails    m_swapChainSupport;
 		QueueFamilyIndices         m_queueFamilyIndices;
 		VkSampleCountFlagBits      m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
