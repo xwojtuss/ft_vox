@@ -14,6 +14,8 @@ namespace ecs {
 
 		virtual void bindEvents(Dispatcher& dispatcher) = 0;
 
-		void registerWorld(World* world) { m_world = world; }
+		void registerWorld(World* world) {
+			m_world = world;
+		}
 	};
 }

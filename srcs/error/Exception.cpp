@@ -19,8 +19,8 @@ namespace error {
 		return "Unknown";
 	}
 
-	Exception::Exception(const Domain domain, const std::string& message) : std::runtime_error(message),
-																			m_domain(domain) {
+	Exception::Exception(const Domain domain, const std::string& message) :
+		std::runtime_error(message), m_domain(domain) {
 	}
 
 	Domain Exception::domain() const noexcept {
@@ -31,17 +31,16 @@ namespace error {
 		return error::domainName(m_domain);
 	}
 
-	FileError::FileError(const std::string& path, const std::string& reason) : Exception(Domain::Filesystem,
-																					path + ": " + reason),
-																				m_path(path) {
+	FileError::FileError(const std::string& path, const std::string& reason) :
+		Exception(Domain::Filesystem, path + ": " + reason), m_path(path) {
 	}
 
 	const std::string& FileError::path() const noexcept {
 		return m_path;
 	}
 
-	AssetError::AssetError(const std::string& path, const std::string& reason) : Exception(Domain::Asset,
-			path + ": " + reason), m_path(path) {
+	AssetError::AssetError(const std::string& path, const std::string& reason) :
+		Exception(Domain::Asset, path + ": " + reason), m_path(path) {
 	}
 
 	const std::string& AssetError::path() const noexcept {

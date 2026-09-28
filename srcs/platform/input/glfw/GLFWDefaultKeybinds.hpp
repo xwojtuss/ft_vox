@@ -10,7 +10,7 @@ namespace platform::input::glfw {
 
 		void addBinding(int key, render::input::InputMods mods, render::input::InputEvent event);
 		void addMouseBinding(render::input::MouseButton button, render::input::InputMods mods,
-							render::input::InputEvent   event);
+							 render::input::InputEvent event);
 
 	public:
 		GLFWDefaultKeybinds();

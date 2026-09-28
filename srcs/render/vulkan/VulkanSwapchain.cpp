@@ -18,9 +18,9 @@ VulkanSwapchain::VulkanSwapchain(const VulkanContext& context) {
 	createColorResources(context);
 	createDepthResources(context);
 	createFramebuffers(context);
-	logging::get(error::Domain::Render).info("Presenting frames with {} (vsync {})",
-											string_VkPresentModeKHR(m_presentMode),
-											app::VSyncEnabled ? "on" : "off");
+	logging::get(error::Domain::Render)
+		.info("Presenting frames with {} (vsync {})", string_VkPresentModeKHR(m_presentMode),
+			  app::VSyncEnabled ? "on" : "off");
 }
 
 VulkanSwapchain::~VulkanSwapchain() = default;
@@ -28,9 +28,8 @@ VulkanSwapchain::~VulkanSwapchain() = default;
 void VulkanSwapchain::createSwapChain(const VulkanContext& context) {
 	const SwapChainSupportDetails swapChainSupport = context.querySwapChainSupport(context.getPhysicalDevice());
 	const VkSurfaceFormatKHR      surfaceFormat    = chooseSwapSurfaceFormat(swapChainSupport.formats);
-	const VkPresentModeKHR        presentMode      = chooseSwapPresentMode(swapChainSupport.presentModes,
-																			app::VSyncEnabled);
-	const VkExtent2D extent = chooseSwapExtent(context.getWindow(), swapChainSupport.capabilities);
+	const VkPresentModeKHR        presentMode = chooseSwapPresentMode(swapChainSupport.presentModes, app::VSyncEnabled);
+	const VkExtent2D              extent      = chooseSwapExtent(context.getWindow(), swapChainSupport.capabilities);
 
 	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
@@ -91,10 +90,9 @@ VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<Vk
 
 VkCompositeAlphaFlagBitsKHR VulkanSwapchain::chooseCompositeAlpha(
 	const VkCompositeAlphaFlagsKHR supportedCompositeAlpha) {
-	for (const VkCompositeAlphaFlagBitsKHR mode: {
-			VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
-			VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR
-		}) {
+	for (const VkCompositeAlphaFlagBitsKHR mode:
+		 {VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+		  VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR}) {
 		if ((supportedCompositeAlpha & mode) != 0)
 			return mode;
 	}
@@ -103,14 +101,14 @@ VkCompositeAlphaFlagBitsKHR VulkanSwapchain::chooseCompositeAlpha(
 
 VkPresentModeKHR VulkanSwapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes,
 														const bool                           vsync) {
-	if (!vsync && std::ranges::find(availablePresentModes, VK_PRESENT_MODE_IMMEDIATE_KHR) != availablePresentModes.
-		end())
+	if (!vsync &&
+		std::ranges::find(availablePresentModes, VK_PRESENT_MODE_IMMEDIATE_KHR) != availablePresentModes.end())
 		return VK_PRESENT_MODE_IMMEDIATE_KHR;
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
 VkExtent2D VulkanSwapchain::chooseSwapExtent(const platform::window::IWindow& window,
-											const VkSurfaceCapabilitiesKHR&   capabilities) {
+											 const VkSurfaceCapabilitiesKHR&  capabilities) {
 	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
 		return capabilities.currentExtent;
 	}
@@ -118,15 +116,12 @@ VkExtent2D VulkanSwapchain::chooseSwapExtent(const platform::window::IWindow& wi
 	int height = 0;
 	glfwGetFramebufferSize(static_cast<GLFWwindow*>(window.getHandle()), &width, &height);
 
-	VkExtent2D actualExtent = {
-		static_cast<uint32_t>(width),
-		static_cast<uint32_t>(height)
-	};
+	VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 
-	actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
-									capabilities.maxImageExtent.width);
-	actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height,
-									capabilities.maxImageExtent.height);
+	actualExtent.width =
+		std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+	actualExtent.height =
+		std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
 	return actualExtent;
 }
@@ -136,12 +131,12 @@ void VulkanSwapchain::createImageViews(const VulkanContext& context) {
 
 	for (uint32_t i = 0; i < m_swapChainImages.size(); i++) {
 		m_swapChainImageViews[i] = createImageView(context.getLogicalDevice(), m_swapChainImages[i],
-													m_swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+												   m_swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 	}
 }
 
-VkImageView VulkanSwapchain::createImageView(VkDevice          device, VkImage       image, VkFormat format,
-											VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
+VkImageView VulkanSwapchain::createImageView(VkDevice device, VkImage image, VkFormat format,
+											 VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image                           = image;
@@ -222,9 +217,9 @@ void VulkanSwapchain::createRenderPass(const VulkanContext& context) {
 	VkSubpassDependency dependency{};
 	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-							VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
+	dependency.dstStageMask =
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependency.dstSubpass    = 0;
 
@@ -237,10 +232,10 @@ void VulkanSwapchain::createRenderPass(const VulkanContext& context) {
 	}
 }
 
-void VulkanSwapchain::createImage(const VulkanContext& context, VkExtent2D          extent, uint32_t      mipLevels,
-								VkSampleCountFlagBits  numSamples, VkFormat         format, VkImageTiling tiling,
-								VkImageUsageFlags      usage, VkMemoryPropertyFlags properties,
-								SwapChainImage&        swapChainImage) {
+void VulkanSwapchain::createImage(const VulkanContext& context, VkExtent2D extent, uint32_t mipLevels,
+								  VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
+								  VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+								  SwapChainImage& swapChainImage) {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType     = VK_IMAGE_TYPE_2D;
@@ -269,8 +264,9 @@ void VulkanSwapchain::createImage(const VulkanContext& context, VkExtent2D      
 	allocInfo.allocationSize  = memRequirements.size;
 	allocInfo.memoryTypeIndex = context.findMemoryType(memRequirements.memoryTypeBits, properties);
 
-	if (const VkResult result = vkAllocateMemory(context.getLogicalDevice(), &allocInfo, nullptr,
-												&swapChainImage.imageMemory); result != VK_SUCCESS) {
+	if (const VkResult result =
+			vkAllocateMemory(context.getLogicalDevice(), &allocInfo, nullptr, &swapChainImage.imageMemory);
+		result != VK_SUCCESS) {
 		throw VulkanError("failed to allocate image memory", result);
 	}
 
@@ -282,8 +278,8 @@ void VulkanSwapchain::createDepthResources(const VulkanContext& context) {
 
 	createImage(context, m_swapChainExtent, 1, context.getMsaaSamples(), depthFormat, VK_IMAGE_TILING_OPTIMAL,
 				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_depthImage);
-	m_depthImage.imageView = createImageView(context.getLogicalDevice(), m_depthImage.image, depthFormat,
-											VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+	m_depthImage.imageView =
+		createImageView(context.getLogicalDevice(), m_depthImage.image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 }
 
 void VulkanSwapchain::createColorResources(const VulkanContext& context) {
@@ -292,19 +288,16 @@ void VulkanSwapchain::createColorResources(const VulkanContext& context) {
 	createImage(context, m_swapChainExtent, 1, context.getMsaaSamples(), colorFormat, VK_IMAGE_TILING_OPTIMAL,
 				VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_colorImage);
-	m_colorImage.imageView = createImageView(context.getLogicalDevice(), m_colorImage.image, colorFormat,
-											VK_IMAGE_ASPECT_COLOR_BIT, 1);
+	m_colorImage.imageView =
+		createImageView(context.getLogicalDevice(), m_colorImage.image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
 
 void VulkanSwapchain::createFramebuffers(const VulkanContext& context) {
 	m_swapChainFramebuffers.resize(m_swapChainImageViews.size());
 
 	for (size_t i = 0; i < m_swapChainImageViews.size(); i++) {
-		std::array<VkImageView, 3> attachments = {
-			m_colorImage.imageView,
-			m_depthImage.imageView,
-			m_swapChainImageViews[i]
-		};
+		std::array<VkImageView, 3> attachments = {m_colorImage.imageView, m_depthImage.imageView,
+												  m_swapChainImageViews[i]};
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -315,8 +308,9 @@ void VulkanSwapchain::createFramebuffers(const VulkanContext& context) {
 		framebufferInfo.height          = m_swapChainExtent.height;
 		framebufferInfo.layers          = 1;
 
-		if (const VkResult result = vkCreateFramebuffer(context.getLogicalDevice(), &framebufferInfo, nullptr,
-														&m_swapChainFramebuffers[i]); result != VK_SUCCESS) {
+		if (const VkResult result =
+				vkCreateFramebuffer(context.getLogicalDevice(), &framebufferInfo, nullptr, &m_swapChainFramebuffers[i]);
+			result != VK_SUCCESS) {
 			throw VulkanError("failed to create framebuffer", result);
 		}
 	}

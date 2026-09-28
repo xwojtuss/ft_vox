@@ -39,25 +39,25 @@ namespace render::vulkan {
 
 		[[nodiscard]] VkDescriptorSetLayout getFrameDescriptorSetLayout() const;
 		[[nodiscard]] VkDescriptorSetLayout getTextureDescriptorSetLayout() const;
-		VkDescriptorSet createTextureDescriptorSet(const VulkanContext& context) const;
-		static void createVertexBuffer(VulkanContext&, VulkanResourceManager& resourceManager,
-										const assets::MeshData& meshData, GpuMesh& mesh);
-		static void createIndexBuffer(VulkanContext&, VulkanResourceManager& resourceManager,
-									const assets::MeshData& meshData, GpuMesh& mesh);
-		[[nodiscard]] VkResult waitForFences(const VulkanContext& context, uint32_t currentFrame) const;
-		void resetFences(const VulkanContext& context, uint32_t currentFrame) const;
-		[[nodiscard]] VkCommandBuffer getCommandBuffer(uint32_t index) const;
-		[[nodiscard]] VkCommandBuffer getCurrentCommandBuffer() const;
-		void incrementCurrentFrame();
+		VkDescriptorSet                     createTextureDescriptorSet(const VulkanContext& context) const;
+		static void                         createVertexBuffer(VulkanContext&, VulkanResourceManager& resourceManager,
+															   const assets::MeshData& meshData, GpuMesh& mesh);
+		static void                         createIndexBuffer(VulkanContext&, VulkanResourceManager& resourceManager,
+															  const assets::MeshData& meshData, GpuMesh& mesh);
+		[[nodiscard]] VkResult              waitForFences(const VulkanContext& context, uint32_t currentFrame) const;
+		void                                resetFences(const VulkanContext& context, uint32_t currentFrame) const;
+		[[nodiscard]] VkCommandBuffer       getCommandBuffer(uint32_t index) const;
+		[[nodiscard]] VkCommandBuffer       getCurrentCommandBuffer() const;
+		void                                incrementCurrentFrame();
 		void submitCommandBuffer(const VulkanContext& context, VkSemaphore renderFinishedSemaphore) const;
-		[[nodiscard]] uint32_t getCurrentFrame() const;
-		VkDescriptorSet* getDescriptorSet(uint32_t frameIndex);
-		[[nodiscard]] void* getCurrentMappedFrameUBO() const;
+		[[nodiscard]] uint32_t    getCurrentFrame() const;
+		VkDescriptorSet*          getDescriptorSet(uint32_t frameIndex);
+		[[nodiscard]] void*       getCurrentMappedFrameUBO() const;
 		[[nodiscard]] VkSemaphore getCurrentImageAvailableSemaphore() const;
-		void cleanup(const VulkanContext& context) const;
+		void                      cleanup(const VulkanContext& context) const;
 
 		static VkCommandBuffer beginSingleTimeCommands(VkCommandPool commandPool, VkDevice device);
 		static void            endSingleTimeCommands(VkCommandBuffer commandBuffer, VkCommandPool commandPool,
-										VkQueue                      graphicsQueue, VkDevice      device);
+													 VkQueue graphicsQueue, VkDevice device);
 	};
 }

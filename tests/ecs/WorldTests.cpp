@@ -192,9 +192,8 @@ SCENARIO("The world keeps the block definitions it was created with", "[ecs][wor
 
 		THEN("it knows the same blocks") {
 			REQUIRE(world.getBlockDatas().getBlockData(test::dirt).prettyName == "Dirt");
-			REQUIRE(
-				world.getBlockDatas().getBlockData(test::dirt).meshData.indices == blockDatas.getBlockData(test::dirt).
-				meshData.indices);
+			REQUIRE(world.getBlockDatas().getBlockData(test::dirt).meshData.indices ==
+					blockDatas.getBlockData(test::dirt).meshData.indices);
 		}
 	}
 }

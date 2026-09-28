@@ -40,8 +40,8 @@ SCENARIO("The camera sees the world from its entity's position and direction", "
 			const Camera& updated = cameraEntity.get<Camera>();
 
 			THEN("the projection uses its field of view and the window's aspect ratio") {
-				REQUIRE(updated.projection == glm::perspective(glm::radians(70.0f), 16.0f / 9.0f, updated.nearPlane,
-					updated.farPlane));
+				REQUIRE(updated.projection ==
+						glm::perspective(glm::radians(70.0f), 16.0f / 9.0f, updated.nearPlane, updated.farPlane));
 			}
 			AND_THEN("the camera's position is the center of the view") {
 				REQUIRE(nearlyEqual(seenFromCamera(updated, transform.position), glm::vec3(0.0f)));

@@ -68,7 +68,7 @@ SCENARIO("Mistakes in the configuration file are reported instead of ignored", "
 	}
 	AND_THEN("a misspelled level for one part of the game is rejected") {
 		REQUIRE_THROWS_AS(logging::parseLogConfig(R"({ "loggers": { "Render": "verbose" } })", "logging.json"),
-						error::FileError);
+						  error::FileError);
 	}
 	AND_THEN("a setting with the wrong type is rejected") {
 		REQUIRE_THROWS_AS(logging::parseLogConfig(R"({ "maxFiles": "three" })", "logging.json"), error::FileError);

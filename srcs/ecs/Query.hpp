@@ -21,10 +21,16 @@ namespace ecs {
 		explicit Query(Registry& registry) : m_view(registry.view<Components...>()) {
 		}
 
-		[[nodiscard]] auto begin() const { return m_view.each().begin(); }
-		[[nodiscard]] auto end() const { return m_view.each().end(); }
+		[[nodiscard]] auto begin() const {
+			return m_view.each().begin();
+		}
+		[[nodiscard]] auto end() const {
+			return m_view.each().end();
+		}
 
-		[[nodiscard]] bool contains(const Entity entity) const { return m_view.contains(entity); }
+		[[nodiscard]] bool contains(const Entity entity) const {
+			return m_view.contains(entity);
+		}
 
 		[[nodiscard]] std::size_t count() const {
 			std::size_t count = 0;
@@ -33,6 +39,8 @@ namespace ecs {
 			return count;
 		}
 
-		[[nodiscard]] bool empty() const { return begin() == end(); }
+		[[nodiscard]] bool empty() const {
+			return begin() == end();
+		}
 	};
 }

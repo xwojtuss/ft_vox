@@ -13,11 +13,11 @@ EarthGenerator::EarthGenerator() : m_heightMap(16, 16, 4, 0.01f) {
 void EarthGenerator::generateChunk(Chunk* chunk, const glm::ivec3 chunkPosition) const {
 	const int     worldChunkBaseY  = static_cast<int>(chunkPosition.y) * chunkYSize;
 	constexpr int maxTerrainHeight = std::min<int>(scene::worldinfo::terrainMaxHeightBlocks,
-													chunkYSize * scene::worldinfo::maxVerticalRenderDistance);
-	int worldX        = 0;
-	int worldY        = 0;
-	int worldZ        = 0;
-	int terrainHeight = 0;
+												   chunkYSize * scene::worldinfo::maxVerticalRenderDistance);
+	int           worldX           = 0;
+	int           worldY           = 0;
+	int           worldZ           = 0;
+	int           terrainHeight    = 0;
 
 	for (unsigned short blockX = 0; blockX < chunkXSize; ++blockX) {
 		for (unsigned short blockZ = 0; blockZ < chunkZSize; ++blockZ) {

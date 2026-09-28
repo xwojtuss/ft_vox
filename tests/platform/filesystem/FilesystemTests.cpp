@@ -31,14 +31,12 @@ SCENARIO("Relative paths point into the project, absolute paths are kept", "[fil
 		REQUIRE(resolvePath("/tmp/some/file.txt") == "/tmp/some/file.txt");
 	}
 	AND_THEN("a relative path is placed under the project root") {
-		REQUIRE(
-			resolvePath("shaders/shader.vert.spv") == (fs::path(app::projectRoot) / "shaders/shader.vert.spv").string(
-			));
+		REQUIRE(resolvePath("shaders/shader.vert.spv") ==
+				(fs::path(app::projectRoot) / "shaders/shader.vert.spv").string());
 	}
 	AND_THEN("a relative path is cleaned up") {
-		REQUIRE(
-			resolvePath("shaders/../textures/./default.png") == (fs::path(app::projectRoot) / "textures/default.png").
-			string());
+		REQUIRE(resolvePath("shaders/../textures/./default.png") ==
+				(fs::path(app::projectRoot) / "textures/default.png").string());
 	}
 	AND_THEN("the result does not depend on the directory the game was started from") {
 		const std::string      fromProject = resolvePath("textures/default.png");
@@ -69,9 +67,8 @@ SCENARIO("Reading a file returns its exact bytes", "[filesystem]") {
 		const WorkingDirectory startedElsewhere(fs::temp_directory_path());
 
 		THEN("the file is still found") {
-			REQUIRE(
-				readFile("tests/fixtures/2x2.png").size() == fs::file_size(fs::path(app::projectRoot) /
-					"tests/fixtures/2x2.png"));
+			REQUIRE(readFile("tests/fixtures/2x2.png").size() ==
+					fs::file_size(fs::path(app::projectRoot) / "tests/fixtures/2x2.png"));
 		}
 	}
 

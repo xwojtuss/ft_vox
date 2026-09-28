@@ -11,7 +11,7 @@ namespace ecs {
 	decltype(auto) EntityHandle::add(ComponentType component) {
 		if (!isAlive())
 			throw error::EcsError(std::format("cannot add {} to entity {}, it does not exist",
-											entt::type_name<ComponentType>::value(), std::to_underlying(m_entity)));
+											  entt::type_name<ComponentType>::value(), std::to_underlying(m_entity)));
 		return m_registry->emplace_or_replace<ComponentType>(m_entity, std::move(component));
 	}
 
@@ -35,7 +35,7 @@ namespace ecs {
 		const ComponentType* component = tryGet<ComponentType>();
 		if (component == nullptr)
 			throw error::EcsError(std::format("entity {} has no {}", std::to_underlying(m_entity),
-											entt::type_name<ComponentType>::value()));
+											  entt::type_name<ComponentType>::value()));
 		return *component;
 	}
 

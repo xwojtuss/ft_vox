@@ -9,7 +9,7 @@ namespace assets {
 	public:
 		virtual ~IModelLoader() = default;
 
-		[[nodiscard]] virtual MeshData toMeshData(const char* path) = 0;
+		[[nodiscard]] virtual MeshData toMeshData(const char* path)        = 0;
 		[[nodiscard]] virtual MeshData toMeshData(const std::string& path) = 0;
 	};
 }

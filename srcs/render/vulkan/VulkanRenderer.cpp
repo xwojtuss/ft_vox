@@ -34,10 +34,8 @@ assets::TextureHandle VulkanRenderer::createTexture(const assets::TextureData& t
 }
 
 void VulkanRenderer::createPipelines() {
-	const std::vector descriptorSetLayouts = {
-		m_frameData->getFrameDescriptorSetLayout(),
-		m_frameData->getTextureDescriptorSetLayout()
-	};
+	const std::vector descriptorSetLayouts            = {m_frameData->getFrameDescriptorSetLayout(),
+														 m_frameData->getTextureDescriptorSetLayout()};
 	m_pipelineHandles[assets::PipelineType::Textured] = std::make_unique<TexturePipeline>(
 		*m_context, m_swapchain->getExtent(), m_swapchain->getRenderPass(), descriptorSetLayouts);
 	m_pipelineHandles[assets::PipelineType::VertexColor] = std::make_unique<VertexColorPipeline>(
@@ -52,8 +50,9 @@ void VulkanRenderer::createRenderFinishedSemaphores() {
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 	for (VkSemaphore& semaphore: m_renderFinishedSemaphores) {
-		if (const VkResult result = vkCreateSemaphore(m_context->getLogicalDevice(), &semaphoreInfo, nullptr,
-													&semaphore); result != VK_SUCCESS) {
+		if (const VkResult result =
+				vkCreateSemaphore(m_context->getLogicalDevice(), &semaphoreInfo, nullptr, &semaphore);
+			result != VK_SUCCESS) {
 			throw VulkanError("failed to create render finished semaphore", result);
 		}
 	}
@@ -66,8 +65,8 @@ void VulkanRenderer::cleanupRenderFinishedSemaphores() {
 	m_renderFinishedSemaphores.clear();
 }
 
-void VulkanRenderer::drawMesh(const ecs::component::Mesh&    mesh, const ecs::component::Texture* texture,
-							const ecs::component::Transform& transform) {
+void VulkanRenderer::drawMesh(const ecs::component::Mesh& mesh, const ecs::component::Texture* texture,
+							  const ecs::component::Transform& transform) {
 	const APipeline& pipeline = *m_pipelineHandles.at(mesh.pipelineType);
 	const GpuMesh&   gpuMesh  = m_resourceManager->getMesh(mesh.mesh);
 	vkCmdSetViewport(m_frameData->getCurrentCommandBuffer(), 0, 1, &pipeline.getViewport());
@@ -92,7 +91,7 @@ void VulkanRenderer::drawMesh(const ecs::component::Mesh&    mesh, const ecs::co
 	ObjectUBO objectUbo{};
 	objectUbo.model = transform.toModelMatrix();
 	vkCmdPushConstants(m_frameData->getCurrentCommandBuffer(), pipeline.getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT,
-						0, sizeof(ObjectUBO), &objectUbo);
+					   0, sizeof(ObjectUBO), &objectUbo);
 
 	vkCmdDrawIndexed(m_frameData->getCurrentCommandBuffer(), gpuMesh.indexCount, 1, 0, 0, 0);
 }
@@ -100,8 +99,8 @@ void VulkanRenderer::drawMesh(const ecs::component::Mesh&    mesh, const ecs::co
 void VulkanRenderer::updateCamera(const ecs::component::Camera& camera) {
 	FrameUBO frameUbo{};
 
-	frameUbo.view       = camera.view;
-	frameUbo.proj       = camera.projection;
+	frameUbo.view = camera.view;
+	frameUbo.proj = camera.projection;
 	frameUbo.proj[1][1] *= -1;
 
 	memcpy(m_frameData->getCurrentMappedFrameUBO(), &frameUbo, sizeof(frameUbo));
@@ -149,9 +148,9 @@ void VulkanRenderer::beginFrame() {
 		result != VK_SUCCESS)
 		throw VulkanError("failed to wait for the previous frame", result);
 
-	const VkResult result = vkAcquireNextImageKHR(m_context->getLogicalDevice(), m_swapchain->getSwapChain(),
-												UINT64_MAX, m_frameData->getCurrentImageAvailableSemaphore(),
-												VK_NULL_HANDLE, &m_frameIndex.value());
+	const VkResult result =
+		vkAcquireNextImageKHR(m_context->getLogicalDevice(), m_swapchain->getSwapChain(), UINT64_MAX,
+							  m_frameData->getCurrentImageAvailableSemaphore(), VK_NULL_HANDLE, &m_frameIndex.value());
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		vkDeviceWaitIdle(m_context->getLogicalDevice());

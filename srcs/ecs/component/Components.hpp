@@ -58,7 +58,7 @@ namespace ecs::component {
 template<>
 struct std::formatter<ecs::component::Transform> : std::formatter<std::string_view> {
 	std::format_context::iterator format(const ecs::component::Transform& transform,
-										std::format_context&              context) const;
+										 std::format_context&             context) const;
 };
 
 template<>

@@ -9,10 +9,10 @@
 #include "support/Blocks.hpp"
 
 using game::world::Chunk;
-using game::world::EarthGenerator;
 using game::world::chunkXSize;
 using game::world::chunkYSize;
 using game::world::chunkZSize;
+using game::world::EarthGenerator;
 
 namespace {
 	Chunk generate(glm::ivec3 chunkPosition) {
@@ -67,8 +67,8 @@ SCENARIO("Generated terrain is made of dirt and air only", "[generation]") {
 		const Chunk chunk = generate({0, 0, 0});
 
 		THEN("every block is either dirt or air") {
-			REQUIRE(countBlocks(chunk, test::dirt) + countBlocks(chunk, test::air)
-				== static_cast<size_t>(chunkXSize * chunkYSize * chunkZSize));
+			REQUIRE(countBlocks(chunk, test::dirt) + countBlocks(chunk, test::air) ==
+					static_cast<size_t>(chunkXSize * chunkYSize * chunkZSize));
 		}
 	}
 }

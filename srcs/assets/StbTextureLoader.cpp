@@ -1,6 +1,6 @@
 #include "assets/StbTextureLoader.hpp"
 
-#include "assets/stb_image.h"
+#include "assets/third_party/stb_image.h"
 #include "platform/filesystem/resolvePath.hpp"
 
 #include "error/Exception.hpp"

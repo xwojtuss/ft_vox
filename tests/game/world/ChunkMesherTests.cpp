@@ -21,10 +21,8 @@ namespace {
 		for (int x = from.x; x <= to.x; ++x)
 			for (int y = from.y; y <= to.y; ++y)
 				for (int z = from.z; z <= to.z; ++z)
-					chunk.setBlock(static_cast<unsigned short>(x),
-									static_cast<unsigned short>(y),
-									static_cast<unsigned short>(z),
-									Block(id));
+					chunk.setBlock(static_cast<unsigned short>(x), static_cast<unsigned short>(y),
+								   static_cast<unsigned short>(z), Block(id));
 	}
 }
 
@@ -102,9 +100,9 @@ SCENARIO("Faces between two touching blocks are hidden", "[mesher]") {
 			}
 			AND_THEN("no triangle lies on the shared face at x = 9") {
 				for (size_t i = 0; i < mesh.indices.size(); i += 3) {
-					const bool onSharedFace = mesh.vertices[mesh.indices[i]].pos.x == 9.0f
-											&& mesh.vertices[mesh.indices[i + 1]].pos.x == 9.0f
-											&& mesh.vertices[mesh.indices[i + 2]].pos.x == 9.0f;
+					const bool onSharedFace = mesh.vertices[mesh.indices[i]].pos.x == 9.0f &&
+											  mesh.vertices[mesh.indices[i + 1]].pos.x == 9.0f &&
+											  mesh.vertices[mesh.indices[i + 2]].pos.x == 9.0f;
 					REQUIRE_FALSE(onSharedFace);
 				}
 			}

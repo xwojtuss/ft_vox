@@ -18,7 +18,7 @@ namespace render::vulkan {
 		[[nodiscard]] static bool checkSupport();
 
 		[[nodiscard]] static VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo();
-		[[nodiscard]] static VkDebugUtilsMessengerEXT createMessenger(VkInstance instance);
+		[[nodiscard]] static VkDebugUtilsMessengerEXT           createMessenger(VkInstance instance);
 		static void destroyMessenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger);
 	};
 }

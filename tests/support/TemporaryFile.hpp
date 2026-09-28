@@ -11,8 +11,8 @@ namespace test {
 		std::filesystem::path m_path;
 
 	public:
-		TemporaryFile(const std::string& name, const std::string& content)
-			: m_path(std::filesystem::temp_directory_path() / ("ft_vox_tests_" + std::to_string(getpid()) + "_" + name)) {
+		TemporaryFile(const std::string& name, const std::string& content) :
+			m_path(std::filesystem::temp_directory_path() / ("ft_vox_tests_" + std::to_string(getpid()) + "_" + name)) {
 			std::ofstream(m_path, std::ios::binary) << content;
 		}
 

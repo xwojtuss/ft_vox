@@ -40,16 +40,16 @@ namespace render::vulkan {
 
 		void cleanup() override;
 
-		assets::MeshHandle    createMesh(const assets::MeshData&) override;
-		assets::TextureHandle createTexture(const assets::TextureData&) override;
-		void                  render(ecs::SystemManager& systemManager) override;
-		void                  render(render::gui::IGui& gui) override;
-		void                  setClearColor(float r, float g, float b, float a) override;
-		void                  setClearColor(int hexColor) override;
-		void                  drawMesh(const ecs::component::Mesh& mesh, const ecs::component::Texture* texture,
-					const ecs::component::Transform&               transform) override;
-		void                                     updateCamera(const ecs::component::Camera& camera) override;
-		[[nodiscard]] VulkanContext&             getContext() const;
+		assets::MeshHandle           createMesh(const assets::MeshData&) override;
+		assets::TextureHandle        createTexture(const assets::TextureData&) override;
+		void                         render(ecs::SystemManager& systemManager) override;
+		void                         render(render::gui::IGui& gui) override;
+		void                         setClearColor(float r, float g, float b, float a) override;
+		void                         setClearColor(int hexColor) override;
+		void                         drawMesh(const ecs::component::Mesh& mesh, const ecs::component::Texture* texture,
+											  const ecs::component::Transform& transform) override;
+		void                         updateCamera(const ecs::component::Camera& camera) override;
+		[[nodiscard]] VulkanContext& getContext() const;
 		[[nodiscard]] VulkanSwapchain&           getSwapchain() const;
 		[[nodiscard]] platform::window::IWindow& getWindow() const;
 	};

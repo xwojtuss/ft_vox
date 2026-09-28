@@ -17,10 +17,8 @@ namespace logging {
 		constexpr std::size_t backgroundThreads = 1;
 		constexpr std::size_t bytesPerMegabyte  = 1024 * 1024;
 
-		constexpr std::array domains = {
-			error::Domain::Filesystem, error::Domain::Asset, error::Domain::Ecs,
-			error::Domain::Input, error::Domain::Window, error::Domain::Render
-		};
+		constexpr std::array domains = {error::Domain::Filesystem, error::Domain::Asset,  error::Domain::Ecs,
+										error::Domain::Input,      error::Domain::Window, error::Domain::Render};
 
 		std::shared_ptr<spdlog::logger> loggerNamed(const std::string& name) {
 			if (auto logger = spdlog::get(name))
@@ -45,9 +43,9 @@ namespace logging {
 			names.emplace_back(error::domainName(domain));
 
 		for (const std::string& name: names) {
-			auto logger = std::make_shared<spdlog::async_logger>(name, file, spdlog::thread_pool(),
-																spdlog::async_overflow_policy::block);
-			const auto level = config.loggerLevels.find(name);
+			auto       logger = std::make_shared<spdlog::async_logger>(name, file, spdlog::thread_pool(),
+																	   spdlog::async_overflow_policy::block);
+			const auto level  = config.loggerLevels.find(name);
 			logger->set_level(
 				spdlog::level::from_str(level != config.loggerLevels.end() ? level->second : config.level));
 			logger->flush_on(spdlog::level::from_str(config.flushLevel));

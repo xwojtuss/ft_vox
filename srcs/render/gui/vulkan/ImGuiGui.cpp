@@ -24,8 +24,7 @@ void ImGuiGui::createDescriptorPool() {
 		{.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = poolSize},
 		{.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, .descriptorCount = poolSize},
 		{.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = poolSize}
-	};
+		{.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = poolSize}};
 
 	VkDescriptorPoolCreateInfo pool_info = {};
 	pool_info.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -34,8 +33,9 @@ void ImGuiGui::createDescriptorPool() {
 	pool_info.poolSizeCount              = std::size(pool_sizes);
 	pool_info.pPoolSizes                 = pool_sizes;
 
-	if (const VkResult result = vkCreateDescriptorPool(m_context.getLogicalDevice(), &pool_info, nullptr,
-														&m_descriptorPool); result != VK_SUCCESS) {
+	if (const VkResult result =
+			vkCreateDescriptorPool(m_context.getLogicalDevice(), &pool_info, nullptr, &m_descriptorPool);
+		result != VK_SUCCESS) {
 		throw render::vulkan::VulkanError("failed to create ImGui descriptor pool", result);
 	}
 }
@@ -65,8 +65,8 @@ void ImGuiGui::init() {
 }
 
 ImGuiGui::ImGuiGui(render::vulkan::VulkanContext& context, render::vulkan::VulkanSwapchain& swapchain,
-					platform::window::IWindow&    window)
-	: m_context(context), m_swapchain(swapchain), m_window(window), m_imguiContext(ImGui::CreateContext()) {
+				   platform::window::IWindow& window) :
+	m_context(context), m_swapchain(swapchain), m_window(window), m_imguiContext(ImGui::CreateContext()) {
 	ImGui::SetCurrentContext(m_imguiContext);
 	createDescriptorPool();
 	init();

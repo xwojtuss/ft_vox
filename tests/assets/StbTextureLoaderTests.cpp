@@ -18,10 +18,8 @@ SCENARIO("A PNG image is loaded as RGBA pixels", "[assets][stb]") {
 			REQUIRE(texture.mipLevels == 1);
 		}
 		AND_THEN("its pixels are read row by row, keeping transparency") {
-			REQUIRE(texture.pixels == std::vector<unsigned char>{
-					255, 0, 0, 255, 0, 255, 0, 255,
-					0, 0, 255, 255, 255, 255, 255, 128
-					});
+			REQUIRE(texture.pixels ==
+					std::vector<unsigned char>{255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 128});
 		}
 	}
 }

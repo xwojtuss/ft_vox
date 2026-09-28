@@ -21,7 +21,7 @@ namespace render::input {
 	public:
 		void processKey(int scancode, InputAction action, InputMods modifiers);
 		void getKeyEvents(InputEvents& pressedEvents, InputEvents& repeatedEvents, InputEvents& releasedEvents,
-						InputEvents&   activeEvents);
+						  InputEvents& activeEvents);
 		void processMouseButton(MouseButton button, InputAction action, InputMods modifiers);
 		void bindEvent(Input input, InputEvent event);
 		void resetBindings();

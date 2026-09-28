@@ -31,8 +31,9 @@ void VulkanFrameData::createCommandBuffers(const VulkanContext& context, const V
 	allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = static_cast<uint32_t>(m_commandBuffers.size());
 
-	if (const VkResult result = vkAllocateCommandBuffers(context.getLogicalDevice(), &allocInfo,
-														m_commandBuffers.data()); result != VK_SUCCESS) {
+	if (const VkResult result =
+			vkAllocateCommandBuffers(context.getLogicalDevice(), &allocInfo, m_commandBuffers.data());
+		result != VK_SUCCESS) {
 		throw VulkanError("failed to allocate command buffers", result);
 	}
 }
@@ -50,7 +51,7 @@ void VulkanFrameData::createSyncObjects(const VulkanContext& context) {
 
 	for (std::size_t i = 0; i < maxFramesInFlight; i++) {
 		if (vkCreateSemaphore(context.getLogicalDevice(), &semaphoreInfo, nullptr, &m_imageAvailableSemaphores[i]) !=
-			VK_SUCCESS ||
+				VK_SUCCESS ||
 			vkCreateFence(context.getLogicalDevice(), &fenceInfo, nullptr, &m_inFlightFences[i]) != VK_SUCCESS) {
 			throw VulkanError("failed to create synchronization objects for a frame");
 		}
@@ -58,24 +59,17 @@ void VulkanFrameData::createSyncObjects(const VulkanContext& context) {
 }
 
 void VulkanFrameData::createFrameDescriptorSets(const VulkanContext& context) {
-	std::vector layouts(
-		maxFramesInFlight,
-		m_frameSetLayout
-	);
+	std::vector layouts(maxFramesInFlight, m_frameSetLayout);
 
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool     = m_descriptorPool;
-	allocInfo.descriptorSetCount =
-			static_cast<uint32_t>(layouts.size());
-	allocInfo.pSetLayouts = layouts.data();
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
+	allocInfo.pSetLayouts        = layouts.data();
 
 	m_frameDescriptorSets.resize(layouts.size());
 
-	if (vkAllocateDescriptorSets(
-			context.getLogicalDevice(),
-			&allocInfo,
-			m_frameDescriptorSets.data()) != VK_SUCCESS) {
+	if (vkAllocateDescriptorSets(context.getLogicalDevice(), &allocInfo, m_frameDescriptorSets.data()) != VK_SUCCESS) {
 		throw VulkanError("failed to allocate frame descriptor sets");
 	}
 
@@ -93,12 +87,7 @@ void VulkanFrameData::createFrameDescriptorSets(const VulkanContext& context) {
 		write.descriptorCount = 1;
 		write.pBufferInfo     = &bufferInfo;
 
-		vkUpdateDescriptorSets(
-			context.getLogicalDevice(),
-			1,
-			&write,
-			0,
-			nullptr);
+		vkUpdateDescriptorSets(context.getLogicalDevice(), 1, &write, 0, nullptr);
 	}
 }
 
@@ -115,8 +104,9 @@ void VulkanFrameData::createFrameDescriptorSetLayout(const VulkanContext& contex
 	layoutInfo.bindingCount = 1;
 	layoutInfo.pBindings    = &uboBinding;
 
-	if (const VkResult result = vkCreateDescriptorSetLayout(context.getLogicalDevice(), &layoutInfo, nullptr,
-															&m_frameSetLayout); result != VK_SUCCESS) {
+	if (const VkResult result =
+			vkCreateDescriptorSetLayout(context.getLogicalDevice(), &layoutInfo, nullptr, &m_frameSetLayout);
+		result != VK_SUCCESS) {
 		throw VulkanError("failed to create frame descriptor set layout", result);
 	}
 }
@@ -134,8 +124,9 @@ void VulkanFrameData::createTextureDescriptorSetLayout(const VulkanContext& cont
 	layoutInfo.bindingCount = 1;
 	layoutInfo.pBindings    = &samplerBinding;
 
-	if (const VkResult result = vkCreateDescriptorSetLayout(context.getLogicalDevice(), &layoutInfo, nullptr,
-															&m_textureSetLayout); result != VK_SUCCESS) {
+	if (const VkResult result =
+			vkCreateDescriptorSetLayout(context.getLogicalDevice(), &layoutInfo, nullptr, &m_textureSetLayout);
+		result != VK_SUCCESS) {
 		throw VulkanError("failed to create texture descriptor set layout", result);
 	}
 }
@@ -153,8 +144,9 @@ void VulkanFrameData::createDescriptorPool(const VulkanContext& context) {
 	poolInfo.pPoolSizes    = poolSizes.data();
 	poolInfo.maxSets       = static_cast<uint32_t>(maxFramesInFlight + textureLimit);
 
-	if (const VkResult result = vkCreateDescriptorPool(context.getLogicalDevice(), &poolInfo, nullptr,
-														&m_descriptorPool); result != VK_SUCCESS) {
+	if (const VkResult result =
+			vkCreateDescriptorPool(context.getLogicalDevice(), &poolInfo, nullptr, &m_descriptorPool);
+		result != VK_SUCCESS) {
 		throw VulkanError("failed to create descriptor pool", result);
 	}
 }
@@ -193,8 +185,8 @@ VkDescriptorSet VulkanFrameData::createTextureDescriptorSet(const VulkanContext&
 	return descriptorSet;
 }
 
-void VulkanFrameData::createVertexBuffer(VulkanContext&         context, VulkanResourceManager& resourceManager,
-										const assets::MeshData& meshData, GpuMesh&              mesh) {
+void VulkanFrameData::createVertexBuffer(VulkanContext& context, VulkanResourceManager& resourceManager,
+										 const assets::MeshData& meshData, GpuMesh& mesh) {
 	const VkDeviceSize bufferSize = sizeof(meshData.vertices[0]) * meshData.vertices.size();
 
 	VkBuffer       stagingBuffer       = nullptr;
@@ -218,8 +210,8 @@ void VulkanFrameData::createVertexBuffer(VulkanContext&         context, VulkanR
 	vkFreeMemory(context.getLogicalDevice(), stagingBufferMemory, nullptr);
 }
 
-void VulkanFrameData::createIndexBuffer(VulkanContext&          context, VulkanResourceManager& resourceManager,
-										const assets::MeshData& meshData, GpuMesh&              mesh) {
+void VulkanFrameData::createIndexBuffer(VulkanContext& context, VulkanResourceManager& resourceManager,
+										const assets::MeshData& meshData, GpuMesh& mesh) {
 	const VkDeviceSize bufferSize = sizeof(meshData.indices[0]) * meshData.indices.size();
 
 	VkBuffer       stagingBuffer       = nullptr;
@@ -281,8 +273,9 @@ void VulkanFrameData::submitCommandBuffer(const VulkanContext& context, VkSemaph
 	submitInfo.signalSemaphoreCount      = 1;
 	submitInfo.pSignalSemaphores         = signalSemaphores;
 
-	if (const VkResult result = vkQueueSubmit(context.getGraphicsQueue(), 1, &submitInfo,
-											m_inFlightFences[m_currentFrame]); result != VK_SUCCESS) {
+	if (const VkResult result =
+			vkQueueSubmit(context.getGraphicsQueue(), 1, &submitInfo, m_inFlightFences[m_currentFrame]);
+		result != VK_SUCCESS) {
 		throw VulkanError("failed to submit draw command buffer", result);
 	}
 }
@@ -336,7 +329,7 @@ VkCommandBuffer VulkanFrameData::beginSingleTimeCommands(VkCommandPool commandPo
 }
 
 void VulkanFrameData::endSingleTimeCommands(VkCommandBuffer commandBuffer, VkCommandPool commandPool,
-											VkQueue         graphicsQueue, VkDevice      device) {
+											VkQueue graphicsQueue, VkDevice device) {
 	vkEndCommandBuffer(commandBuffer);
 
 	VkSubmitInfo submitInfo{};

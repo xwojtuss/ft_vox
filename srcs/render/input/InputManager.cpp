@@ -16,7 +16,7 @@ InputCommand InputManager::buildCommand() {
 	m_mouseProcessor.getMouseDelta(deltaX, deltaY);
 
 	command.lookRight += static_cast<float>(deltaX);
-	command.lookUp    += static_cast<float>(deltaY);
+	command.lookUp += static_cast<float>(deltaY);
 
 	InputEvents pressedEvents  = 0;
 	InputEvents repeatedEvents = 0;

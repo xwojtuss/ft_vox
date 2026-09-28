@@ -21,10 +21,18 @@ namespace {
 		input::InputEvents released;
 		input::InputEvents active;
 
-		bool isPressed(InputEvent event) const { return input::hasEvent(pressed, event); }
-		bool isRepeated(InputEvent event) const { return input::hasEvent(repeated, event); }
-		bool isReleased(InputEvent event) const { return input::hasEvent(released, event); }
-		bool isActive(InputEvent event) const { return input::hasEvent(active, event); }
+		bool isPressed(InputEvent event) const {
+			return input::hasEvent(pressed, event);
+		}
+		bool isRepeated(InputEvent event) const {
+			return input::hasEvent(repeated, event);
+		}
+		bool isReleased(InputEvent event) const {
+			return input::hasEvent(released, event);
+		}
+		bool isActive(InputEvent event) const {
+			return input::hasEvent(active, event);
+		}
 	};
 
 	struct Keyboard {
@@ -38,9 +46,15 @@ namespace {
 			processor.bindEvent(input::createMouseInput(button, 0), event);
 		}
 
-		void press(int key, input::InputMods mods = 0) { processor.processKey(key, InputAction::Press, mods); }
-		void hold(int key, input::InputMods mods = 0) { processor.processKey(key, InputAction::Repeat, mods); }
-		void release(int key, input::InputMods mods = 0) { processor.processKey(key, InputAction::Release, mods); }
+		void press(int key, input::InputMods mods = 0) {
+			processor.processKey(key, InputAction::Press, mods);
+		}
+		void hold(int key, input::InputMods mods = 0) {
+			processor.processKey(key, InputAction::Repeat, mods);
+		}
+		void release(int key, input::InputMods mods = 0) {
+			processor.processKey(key, InputAction::Release, mods);
+		}
 
 		Frame nextFrame() {
 			Frame frame{};
@@ -72,9 +86,8 @@ SCENARIO("Several actions can be held at the same time", "[client][input][keys]"
 				REQUIRE(frame.isPressed(InputEvent::MoveForward));
 				REQUIRE(frame.isPressed(InputEvent::MoveRight));
 				REQUIRE(frame.isPressed(InputEvent::Jump));
-				REQUIRE(
-					input::hasAllEvents(frame.active, InputEvent::MoveForward | InputEvent::MoveRight | InputEvent::Jump
-					));
+				REQUIRE(input::hasAllEvents(frame.active,
+											InputEvent::MoveForward | InputEvent::MoveRight | InputEvent::Jump));
 			}
 
 			AND_WHEN("only the jump key is released") {
@@ -93,7 +106,7 @@ SCENARIO("Several actions can be held at the same time", "[client][input][keys]"
 }
 
 SCENARIO("Starting and stopping an action are reported for one frame, holding it for as long as it lasts",
-		"[client][input][keys]") {
+		 "[client][input][keys]") {
 	GIVEN("a key bound to moving forward") {
 		Keyboard keyboard = wasdKeyboard();
 

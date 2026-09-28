@@ -15,8 +15,8 @@ using Catch::Matchers::ContainsSubstring;
 
 namespace {
 	struct LogFile {
-		std::filesystem::path path = std::filesystem::temp_directory_path() /
-									("ft_vox_tests_" + std::to_string(getpid()) + "_log.txt");
+		std::filesystem::path path =
+			std::filesystem::temp_directory_path() / ("ft_vox_tests_" + std::to_string(getpid()) + "_log.txt");
 
 		LogFile() {
 			std::filesystem::remove(path);
@@ -97,7 +97,7 @@ SCENARIO("Every log level can be written", "[log]") {
 SCENARIO("Each part of the game logs at its own level", "[log]") {
 	GIVEN("logging at info, but with the renderer set to errors only") {
 		const LogFile      logFile;
-		logging::LogConfig config         = logFile.config();
+		logging::LogConfig config     = logFile.config();
 		config.loggerLevels["Render"] = "error";
 		logging::init(config);
 
@@ -123,7 +123,8 @@ SCENARIO("Errors are logged under the part of the game they come from", "[log]")
 			logging::logException(error::AssetError("models/cube.obj", "could not be loaded"));
 
 			THEN("it is written as an error of the asset loader") {
-				REQUIRE_THAT(logFile.contents(), ContainsSubstring("[Asset] [error] models/cube.obj: could not be loaded"));
+				REQUIRE_THAT(logFile.contents(),
+							 ContainsSubstring("[Asset] [error] models/cube.obj: could not be loaded"));
 			}
 		}
 	}
