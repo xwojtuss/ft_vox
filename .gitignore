@@ -49,6 +49,7 @@ valgrind.log
 # Per-user files
 *.md
 !README.md
+!docs/**/*.md
 !LICENCE.md
 
 # CMake build directory
