@@ -73,7 +73,7 @@ assets::MeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
 
 				const glm::vec3 blockPosition(x, y, z);
 				for (const ModelTriangle& triangle: triangles) {
-					if (triangle.cullFace && occluded[std::to_underlying(*triangle.cullFace)])
+					if (triangle.cullable && occluded[std::to_underlying(triangle.face)])
 						continue;
 					appendTriangle(meshData, triangle, blockPosition);
 				}
@@ -99,13 +99,12 @@ ChunkMesher::PreparedModel ChunkMesher::prepareModel(const assets::MeshData& mod
 		if (glm::length(normal) <= std::numeric_limits<float>::epsilon())
 			continue;
 
-		std::optional<Face> cullFace = boundaryFaceOf(triangle);
-		if (cullFace != dominantFace(normal)) {
-			cullFace.reset();
+		const Face face     = dominantFace(normal);
+		const bool cullable = boundaryFaceOf(triangle) == face;
+		if (!cullable)
 			prepared.everyTriangleCullable = false;
-		}
 
-		prepared.triangles.push_back({.vertices = triangle, .cullFace = cullFace});
+		prepared.triangles.push_back({.vertices = triangle, .face = face, .cullable = cullable});
 	}
 	return prepared;
 }
