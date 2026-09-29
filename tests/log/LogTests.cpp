@@ -29,6 +29,8 @@ namespace {
 
 		LogFile(const LogFile&)            = delete;
 		LogFile& operator=(const LogFile&) = delete;
+		LogFile(LogFile&&)                 = delete;
+		LogFile& operator=(LogFile&&)      = delete;
 
 		[[nodiscard]] logging::LogConfig config() const {
 			logging::LogConfig config;
@@ -39,8 +41,8 @@ namespace {
 
 		[[nodiscard]] std::string contents() const {
 			logging::shutdown();
-			std::ifstream     file(path);
-			std::stringstream text;
+			std::ifstream const file(path);
+			std::stringstream   text;
 			text << file.rdbuf();
 			return text.str();
 		}
@@ -148,6 +150,7 @@ SCENARIO("Logging can be used from many threads at once", "[log]") {
 
 		WHEN("four threads each log 100 messages") {
 			std::vector<std::thread> threads;
+			threads.reserve(4);
 			for (int thread = 0; thread < 4; ++thread) {
 				threads.emplace_back([thread] {
 					for (int message = 0; message < 100; ++message)

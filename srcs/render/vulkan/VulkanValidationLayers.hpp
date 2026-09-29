@@ -1,14 +1,12 @@
 #pragma once
 
-#include <vector>
-#include <vulkan/vulkan.h>
+#include <array>
+#include <volk.h>
 
 namespace render::vulkan {
-	using ValidationLayers = std::vector<const char*>;
-
 	class VulkanValidationLayers {
 	public:
-		static const ValidationLayers layers;
+		static constexpr std::array layers = {"VK_LAYER_KHRONOS_validation"};
 #ifdef NDEBUG
 		static constexpr bool isEnabled = false;
 #else

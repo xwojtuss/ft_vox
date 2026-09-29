@@ -23,5 +23,7 @@ namespace logging {
 
 		ShutdownGuard(const ShutdownGuard&)            = delete;
 		ShutdownGuard& operator=(const ShutdownGuard&) = delete;
+		ShutdownGuard(ShutdownGuard&&)                 = delete;
+		ShutdownGuard& operator=(ShutdownGuard&&)      = delete;
 	};
 }

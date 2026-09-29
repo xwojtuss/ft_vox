@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <vulkan/vulkan.h>
+#include <volk.h>
 
 namespace render::vulkan {
 	[[nodiscard]] VkVertexInputBindingDescription                  getBindingDescription();

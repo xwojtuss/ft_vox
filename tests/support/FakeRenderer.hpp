@@ -37,7 +37,7 @@ namespace test {
 
 		void drawMesh(const ecs::component::Mesh& mesh, const ecs::component::Texture* texture,
 					  const ecs::component::Transform& transform) override {
-			drawnMeshes.push_back({mesh.mesh.id, texture, transform.position});
+			drawnMeshes.push_back({.meshId = mesh.mesh.id, .texture = texture, .position = transform.position});
 		}
 
 		void updateCamera(const ecs::component::Camera& camera) override {

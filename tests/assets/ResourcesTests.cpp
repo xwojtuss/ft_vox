@@ -6,8 +6,8 @@ SCENARIO("Scaling texture coordinates repeats the texture more often", "[assets]
 	GIVEN("a mesh with texture coordinates (0.5, 1) and (1, 0.25)") {
 		assets::MeshData mesh;
 		mesh.vertices = {
-			{{1, 2, 3}, {1, 1, 1}, {0.5f, 1.0f}},
-			{{4, 5, 6}, {1, 1, 1}, {1.0f, 0.25f}},
+			{.pos = {1, 2, 3}, .color = {1, 1, 1}, .texCoord = {0.5f, 1.0f}},
+			{.pos = {4, 5, 6}, .color = {1, 1, 1}, .texCoord = {1.0f, 0.25f}},
 		};
 
 		WHEN("its texture coordinates are scaled by 4") {

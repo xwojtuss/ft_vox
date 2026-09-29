@@ -18,8 +18,12 @@ A simple voxel engine built with modern C++ and Vulkan. The project is designed 
 - EnTT (auto-fetched)
 - spdlog (auto-fetched)
 - nlohmann/json (auto-fetched)
+- volk (auto-fetched)
+- libassert (auto-fetched)
 - Catch2 v3 (auto-fetched, tests only)
 - gcovr (coverage only): `python3 -m pip install --user gcovr`
+- pre-commit (formats commits): `pipx install pre-commit`
+- clang-tidy 21 (static analysis, optional locally): `pipx install clang-tidy==21.1.6`
 
 ## Getting Started
 After cloning the repository you can build the project using cmake:
@@ -54,6 +58,17 @@ cmake --workflow --preset coverage
 ```
 
 The HTML report is written to `build/coverage/coverage/index.html`. What counts towards coverage (and the 80% threshold) is configured in `gcovr.cfg`. On 42 workstations use the `test42` and `coverage42` presets instead.
+
+## Code style
+
+Formatting is defined in `.clang-format`. The formatter version is pinned in `.pre-commit-config.yaml`; [pre-commit](https://pre-commit.com) downloads it by itself, so you don't install clang-format manually. Configuring the project with CMake installs the git hook when `pre-commit` is found. On commit, the hook formats your staged C++ files; if it changed anything, the commit stops so you can review and stage the result.
+
+Static analysis rules are in `.clang-tidy`. To check the whole project the same way CI does (any finding fails the build):
+```bash
+cmake --workflow --preset lint
+```
+
+CI runs both checks and fails on formatting differences or any clang-tidy finding.
 
 ## Documentation
 

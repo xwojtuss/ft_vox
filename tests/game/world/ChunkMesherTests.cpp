@@ -29,7 +29,7 @@ namespace {
 SCENARIO("An empty chunk produces no geometry", "[mesher]") {
 	GIVEN("a chunk full of air") {
 		game::block::BlockDatas blockDatas = test::makeBlockDatas();
-		ChunkMesher             mesher(blockDatas);
+		const ChunkMesher       mesher(blockDatas);
 		const Chunk             chunk;
 
 		WHEN("it is meshed") {
@@ -46,7 +46,7 @@ SCENARIO("An empty chunk produces no geometry", "[mesher]") {
 SCENARIO("A lone block shows all six faces at its own position", "[mesher]") {
 	GIVEN("a chunk with a single dirt block at (8, 8, 8)") {
 		game::block::BlockDatas blockDatas = test::makeBlockDatas();
-		ChunkMesher             mesher(blockDatas);
+		const ChunkMesher       mesher(blockDatas);
 		Chunk                   chunk;
 		chunk.setBlock(8, 8, 8, Block(test::dirt));
 
@@ -77,7 +77,7 @@ SCENARIO("A lone block shows all six faces at its own position", "[mesher]") {
 				}
 			}
 			AND_THEN("every index points at a vertex of this mesh") {
-				for (uint32_t index: mesh.indices)
+				for (uint32_t const index: mesh.indices)
 					REQUIRE(index < mesh.vertices.size());
 			}
 		}
@@ -87,7 +87,7 @@ SCENARIO("A lone block shows all six faces at its own position", "[mesher]") {
 SCENARIO("Faces between two touching blocks are hidden", "[mesher]") {
 	GIVEN("two dirt blocks side by side at (8, 8, 8) and (9, 8, 8)") {
 		game::block::BlockDatas blockDatas = test::makeBlockDatas();
-		ChunkMesher             mesher(blockDatas);
+		const ChunkMesher       mesher(blockDatas);
 		Chunk                   chunk;
 		chunk.setBlock(8, 8, 8, Block(test::dirt));
 		chunk.setBlock(9, 8, 8, Block(test::dirt));
@@ -96,7 +96,7 @@ SCENARIO("Faces between two touching blocks are hidden", "[mesher]") {
 			const assets::MeshData mesh = mesher.toMeshData(chunk);
 
 			THEN("only the 10 outer faces are drawn") {
-				REQUIRE(triangleCount(mesh) == 10 * 2);
+				REQUIRE(triangleCount(mesh) == 10uz * 2);
 			}
 			AND_THEN("no triangle lies on the shared face at x = 9") {
 				for (size_t i = 0; i < mesh.indices.size(); i += 3) {
@@ -112,14 +112,14 @@ SCENARIO("Faces between two touching blocks are hidden", "[mesher]") {
 
 SCENARIO("Only the surface of a solid shape is drawn", "[mesher]") {
 	game::block::BlockDatas blockDatas = test::makeBlockDatas();
-	ChunkMesher             mesher(blockDatas);
+	const ChunkMesher       mesher(blockDatas);
 
 	GIVEN("a solid 3 x 3 x 3 cube of dirt in the middle of a chunk") {
 		Chunk chunk;
 		fill(chunk, {4, 4, 4}, {6, 6, 6}, test::dirt);
 
 		THEN("only its outside is drawn: 6 sides of 3 x 3 faces") {
-			REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 6 * 9 * 2);
+			REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 6uz * 9 * 2);
 		}
 	}
 
@@ -128,14 +128,14 @@ SCENARIO("Only the surface of a solid shape is drawn", "[mesher]") {
 		fill(chunk, {0, 0, 0}, {chunkXSize - 1, chunkYSize - 1, chunkZSize - 1}, test::dirt);
 
 		THEN("the chunk's borders count as air, so its whole outer shell is drawn") {
-			REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 6 * chunkXSize * chunkZSize * 2);
+			REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 6uz * chunkXSize * chunkZSize * 2);
 		}
 	}
 }
 
 SCENARIO("Blocks without a usable model are invisible", "[mesher]") {
 	game::block::BlockDatas blockDatas = test::makeBlockDatas();
-	ChunkMesher             mesher(blockDatas);
+	const ChunkMesher       mesher(blockDatas);
 	Chunk                   chunk;
 
 	GIVEN("a block type that has no model") {
@@ -167,7 +167,7 @@ SCENARIO("Blocks without a usable model are invisible", "[mesher]") {
 
 SCENARIO("Broken triangles in a block model are skipped", "[mesher]") {
 	game::block::BlockDatas blockDatas = test::makeBlockDatas();
-	ChunkMesher             mesher(blockDatas);
+	const ChunkMesher       mesher(blockDatas);
 	Chunk                   chunk;
 	assets::MeshData&       dirtModel = blockDatas.getBlockData(test::dirt).meshData;
 	chunk.setBlock(8, 8, 8, Block(test::dirt));
@@ -194,7 +194,7 @@ SCENARIO("The game's block model fills exactly its own cell", "[mesher][assets]"
 		assets::TinyObjLoader   loader;
 		const assets::MeshData  cube = loader.toMeshData("models/cube.obj");
 		game::block::BlockDatas blockDatas(cube, assets::TextureData{});
-		ChunkMesher             mesher(blockDatas);
+		const ChunkMesher       mesher(blockDatas);
 
 		THEN("every corner lies between 0 and 1 on every axis") {
 			for (const render::Vertex& vertex: cube.vertices) {
@@ -212,7 +212,7 @@ SCENARIO("The game's block model fills exactly its own cell", "[mesher][assets]"
 			chunk.setBlock(8 + direction.x, 8 + direction.y, 8 + direction.z, Block(test::dirt));
 
 			THEN("the faces between them are hidden and only the 10 outer faces are drawn") {
-				REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 10 * 2);
+				REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 10uz * 2);
 			}
 		}
 	}

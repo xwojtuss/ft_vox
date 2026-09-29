@@ -14,7 +14,7 @@ SCENARIO("Systems are stored by type", "[ecs][systems]") {
 		}
 
 		WHEN("a health system is added") {
-			HealthSystem& added = manager.addSystem<HealthSystem>();
+			auto& added = manager.addSystem<HealthSystem>();
 
 			THEN("asking for it returns that same system") {
 				REQUIRE(manager.getSystem<HealthSystem>() == &added);
@@ -27,7 +27,7 @@ SCENARIO("The system manager turns engine phases into events", "[ecs][systems]")
 	GIVEN("a system manager with a health system listening to every event") {
 		ecs::SystemManager manager;
 		test::FakeRenderer renderer;
-		HealthSystem&      system = manager.addSystem<HealthSystem>();
+		auto&              system = manager.addSystem<HealthSystem>();
 		system.bindEvents(manager.getDispatcher());
 
 		WHEN("the world becomes ready") {

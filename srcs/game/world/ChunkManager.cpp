@@ -13,10 +13,11 @@ ChunkManager::ChunkManager(block::BlockDatas& blockDatas, ecs::World& world, ren
 
 	const int halfWidth = m_renderDistance.x / 2;
 	const int halfDepth = m_renderDistance.z / 2;
+	const int height    = m_renderDistance.y;
 
 	for (int x = -halfWidth; x <= halfWidth; ++x) {
 		for (int z = -halfDepth; z <= halfDepth; ++z) {
-			for (int y = 0; y < m_renderDistance.y; ++y) {
+			for (int y = 0; y < height; ++y) {
 				loadChunk({x, y, z});
 			}
 		}

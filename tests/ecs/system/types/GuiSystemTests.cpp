@@ -18,8 +18,10 @@ namespace {
 	constexpr const char* eventsPanel = "EventsRuntime";
 
 	struct SlowSystem {
-		void onSimulate(const ecs::SimulateEvent&) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		std::chrono::milliseconds delay{20};
+
+		void onSimulate(const ecs::SimulateEvent&) const {
+			std::this_thread::sleep_for(delay);
 		}
 	};
 
@@ -47,13 +49,13 @@ namespace {
 			testWorld.world.getSystemManager().onRendererFrame(renderer);
 		}
 
-		bool isShown(const std::string& window) const {
-			return std::find(gui.openedWindows.begin(), gui.openedWindows.end(), window) != gui.openedWindows.end();
+		[[nodiscard]] bool isShown(const std::string& window) const {
+			return std::ranges::find(gui.openedWindows, window) != gui.openedWindows.end();
 		}
 
-		std::string textContaining(const std::string& part) const {
+		[[nodiscard]] std::string textContaining(const std::string& part) const {
 			for (const std::string& text: gui.texts)
-				if (text.find(part) != std::string::npos)
+				if (text.contains(part))
 					return text;
 			return "";
 		}
@@ -131,8 +133,8 @@ SCENARIO("The player components panel is toggled from the keyboard", "[ecs][gui]
 
 SCENARIO("The events panel lists how long each event took", "[ecs][gui]") {
 	GIVEN("a ready world where a simulation step takes about 20 ms") {
-		GuiWorld   env;
-		SlowSystem slowSystem;
+		GuiWorld         env;
+		const SlowSystem slowSystem;
 		env.testWorld.dispatcher().subscribe(&slowSystem, &SlowSystem::onSimulate);
 		env.worldReady();
 
@@ -151,8 +153,8 @@ SCENARIO("The events panel lists how long each event took", "[ecs][gui]") {
 
 SCENARIO("Event runtimes are shown in milliseconds", "[ecs][gui]") {
 	GIVEN("a ready world where a simulation step takes about 20 ms") {
-		GuiWorld   env;
-		SlowSystem slowSystem;
+		GuiWorld         env;
+		const SlowSystem slowSystem;
 		env.testWorld.dispatcher().subscribe(&slowSystem, &SlowSystem::onSimulate);
 		env.worldReady();
 

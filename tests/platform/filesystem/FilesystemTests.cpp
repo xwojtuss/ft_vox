@@ -1,6 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <array>
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
+#include <string>
 
 #include "error/Exception.hpp"
 #include "app/ApplicationInfo.hpp"
@@ -23,6 +27,11 @@ namespace {
 		~WorkingDirectory() {
 			fs::current_path(m_previous);
 		}
+
+		WorkingDirectory(const WorkingDirectory&)            = delete;
+		WorkingDirectory& operator=(const WorkingDirectory&) = delete;
+		WorkingDirectory(WorkingDirectory&&)                 = delete;
+		WorkingDirectory& operator=(WorkingDirectory&&)      = delete;
 	};
 }
 
@@ -74,5 +83,26 @@ SCENARIO("Reading a file returns its exact bytes", "[filesystem]") {
 
 	THEN("a file that does not exist is rejected") {
 		REQUIRE_THROWS_AS(readFile("does/not/exist.bin"), error::FileError);
+	}
+}
+
+SCENARIO("A SPIR-V file is read as 32-bit words", "[filesystem]") {
+	GIVEN("a file of two 32-bit words") {
+		const std::array<uint32_t, 2> words = {0x07230203U, 0x00010000U};
+		std::string                   content(sizeof(words), '\0');
+		std::memcpy(content.data(), words.data(), sizeof(words));
+		const test::TemporaryFile file("shader.spv", content);
+
+		THEN("it is read back as those two words") {
+			REQUIRE(readSpirv(file.path()) == std::vector<uint32_t>(words.begin(), words.end()));
+		}
+	}
+
+	GIVEN("a file whose size is not a whole number of words") {
+		const test::TemporaryFile file("broken.spv", "abcde");
+
+		THEN("it is rejected") {
+			REQUIRE_THROWS_AS(readSpirv(file.path()), error::FileError);
+		}
 	}
 }

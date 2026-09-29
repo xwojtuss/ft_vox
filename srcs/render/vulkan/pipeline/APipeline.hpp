@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include <volk.h>
 #include <vector>
 
 namespace render::vulkan {
@@ -13,7 +13,7 @@ namespace render::vulkan {
 
 		APipeline();
 
-		static VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device);
+		static VkShaderModule createShaderModule(const std::vector<uint32_t>& code, VkDevice device);
 		static void           createShaderStages(VkDevice device, const char* vertPath, const char* fragPath,
 												 VkPipelineShaderStageCreateInfo& vertShaderStageInfo,
 												 VkPipelineShaderStageCreateInfo& fragShaderStageInfo);

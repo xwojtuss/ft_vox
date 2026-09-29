@@ -15,7 +15,7 @@ TextureData StbTextureLoader::toTextureData(const char* path) {
 	TextureData textureData;
 
 	stbi_uc* data = stbi_load(resolvePath(path).c_str(), &width, &height, &channels, STBI_rgb_alpha);
-	if (!data) {
+	if (data == nullptr) {
 		throw error::AssetError(path, stbi_failure_reason());
 	}
 	if (width <= 0 || height <= 0) {
@@ -26,7 +26,7 @@ TextureData StbTextureLoader::toTextureData(const char* path) {
 	textureData.width     = static_cast<unsigned int>(width);
 	textureData.height    = static_cast<unsigned int>(height);
 	textureData.mipLevels = 1;
-	textureData.pixels.assign(data, data + static_cast<size_t>(width) * static_cast<size_t>(height) * STBI_rgb_alpha);
+	textureData.pixels.assign(data, data + (static_cast<size_t>(width) * static_cast<size_t>(height) * STBI_rgb_alpha));
 	stbi_image_free(data);
 
 	return textureData;

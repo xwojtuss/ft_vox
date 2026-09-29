@@ -21,7 +21,7 @@ SCENARIO("Errors say which part of the game they come from", "[error]") {
 			REQUIRE(std::string(failure.what()) == "entity 7 has no component of this type");
 		}
 		AND_THEN("it can still be caught as a standard error") {
-			REQUIRE_THROWS_AS(throw failure, std::runtime_error);
+			REQUIRE_THROWS_AS(throw error::EcsError("entity 7 has no component of this type"), std::runtime_error);
 		}
 	}
 

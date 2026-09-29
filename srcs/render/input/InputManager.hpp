@@ -13,10 +13,10 @@ namespace render::input {
 		static float axis(InputEvents activeEvents, InputEvent positive, InputEvent negative);
 
 	public:
-		[[nodiscard]] InputCommand       buildCommand();
-		void                             processMouseMove(double xPos, double yPos);
-		void                             processMouseButton(int button, InputAction action, InputMods modifiers);
-		void                             processKey(int scancode, InputAction action, InputMods modifiers);
+		[[nodiscard]] InputCommand buildCommand();
+		void                       processMouseMove(double xPos, double yPos);
+		void                       processMouseButton(MouseButton button, InputAction action, InputMods modifiers);
+		void                       processKey(int scancode, InputAction action, InputMods modifiers);
 		[[nodiscard]] KeyInputProcessor& getKeyInputProcessor();
 	};
 }

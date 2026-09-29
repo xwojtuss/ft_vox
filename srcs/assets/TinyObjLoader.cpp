@@ -27,12 +27,12 @@ MeshData TinyObjLoader::toMeshData(const char* path) {
 		for (const auto& index: shape.mesh.indices) {
 			render::Vertex vertex{};
 
-			vertex.pos = {attrib.vertices[3 * index.vertex_index + 0], attrib.vertices[3 * index.vertex_index + 1],
-						  attrib.vertices[3 * index.vertex_index + 2]};
+			vertex.pos = {attrib.vertices[(3 * index.vertex_index) + 0], attrib.vertices[(3 * index.vertex_index) + 1],
+						  attrib.vertices[(3 * index.vertex_index) + 2]};
 
 			if (index.texcoord_index >= 0) {
-				vertex.texCoord = {attrib.texcoords[2 * index.texcoord_index + 0],
-								   1.0f - attrib.texcoords[2 * index.texcoord_index + 1]};
+				vertex.texCoord = {attrib.texcoords[(2 * index.texcoord_index) + 0],
+								   1.0f - attrib.texcoords[(2 * index.texcoord_index) + 1]};
 			}
 
 			vertex.color              = {1.0f, 1.0f, 1.0f};
@@ -44,7 +44,7 @@ MeshData TinyObjLoader::toMeshData(const char* path) {
 		}
 	}
 
-	return MeshData{vertices, indices};
+	return MeshData{.vertices = vertices, .indices = indices};
 }
 
 MeshData TinyObjLoader::toMeshData(const std::string& path) {

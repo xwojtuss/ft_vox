@@ -29,7 +29,7 @@ namespace test {
 		for (const CounterClockwiseQuad& face: faces) {
 			const auto first = static_cast<uint32_t>(mesh.vertices.size());
 			for (size_t corner = 0; corner < 4; ++corner)
-				mesh.vertices.push_back({face[corner], cubeColor, texCoords[corner]});
+				mesh.vertices.push_back({.pos = face[corner], .color = cubeColor, .texCoord = texCoords[corner]});
 			mesh.indices.insert(mesh.indices.end(), {first, first + 1, first + 2, first, first + 2, first + 3});
 		}
 		return mesh;
@@ -41,6 +41,6 @@ namespace test {
 		texture.height    = 1;
 		texture.mipLevels = 1;
 		texture.pixels    = std::move(dirtTexturePixels);
-		return game::block::BlockDatas(makeCubeMesh(), texture);
+		return {makeCubeMesh(), texture};
 	}
 }

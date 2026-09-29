@@ -21,7 +21,7 @@ jobs:
             preset: dev
             extra: -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14 -DGLFW_BUILD_WAYLAND=OFF
           - name: macOS, Apple Clang
-            os: macos-15
+            os: macos-26
             preset: dev-clang
             extra: ""
     steps:
@@ -52,34 +52,28 @@ jobs:
         run: ctest --preset ${{ matrix.preset }}
 
   lint:
-    name: Formatting and static analysis (warnings only)
+    name: Formatting and static analysis
     runs-on: ubuntu-24.04
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check formatting
+        run: pipx run pre-commit run --all-files --show-diff-on-failure
 
       - name: Install tools
         run: |
           sudo apt-get update
+          wget -qO llvm.sh https://apt.llvm.org/llvm.sh
+          sudo bash llvm.sh 21
           sudo apt-get install -y --no-install-recommends \
-            clang-18 clang-tidy-18 ninja-build \
+            clang-tidy-21 g++-14 ninja-build \
             libvulkan-dev vulkan-utility-libraries-dev glslang-tools \
             libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-          pip install --user clang-format==21.1.8
 
-      - name: Check formatting
-        run: |
-          git ls-files 'srcs/*.cpp' 'srcs/*.hpp' 'srcs/*.tpp' 'tests/*.cpp' 'tests/*.hpp' \
-            | grep -v third_party/ \
-            | xargs clang-format --dry-run --Werror
-
-      - name: Configure for clang-tidy
+      - name: Configure
         run: >
-          cmake --preset dev-clang
-          -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_WAYLAND=OFF
+          cmake --preset lint
+          -DCMAKE_C_COMPILER=clang-21 -DCMAKE_CXX_COMPILER=clang++-21 -DGLFW_BUILD_WAYLAND=OFF
 
-      - name: Run clang-tidy
-        run: >
-          run-clang-tidy-18 -p build/dev-clang -quiet
-          '^(?!.*(third_party|_deps)).*/(srcs|tests)/.*\.cpp$'
+      - name: Build with clang-tidy
+        run: cmake --build --preset lint

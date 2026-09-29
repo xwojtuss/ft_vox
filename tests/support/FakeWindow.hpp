@@ -12,7 +12,7 @@ namespace test {
 		void setMouseCursorVisible(bool visible) override {
 			cursorVisible = visible;
 		}
-		bool isMouseCursorVisible() const override {
+		[[nodiscard]] bool isMouseCursorVisible() const override {
 			return cursorVisible;
 		}
 		void setMouseCursorPositionToCenter() override {
@@ -22,13 +22,13 @@ namespace test {
 			return inputManager;
 		}
 
-		uint32_t getWidth() const override {
+		[[nodiscard]] uint32_t getWidth() const override {
 			return platform::window::winWidth;
 		}
-		uint32_t getHeight() const override {
+		[[nodiscard]] uint32_t getHeight() const override {
 			return platform::window::winHeight;
 		}
-		float getAspectRatio() const override {
+		[[nodiscard]] float getAspectRatio() const override {
 			return platform::window::aspectRatio;
 		}
 
@@ -40,17 +40,17 @@ namespace test {
 		void waitUntilNotMinimized() override {
 		}
 
-		bool shouldClose() const override {
+		[[nodiscard]] bool shouldClose() const override {
 			return false;
 		}
 
 		void pollEvents() override {
 		}
 
-		bool wasResized() const override {
+		[[nodiscard]] bool wasResized() const override {
 			return false;
 		}
-		void* getHandle() const override {
+		[[nodiscard]] void* getHandle() const override {
 			return nullptr;
 		}
 
@@ -59,7 +59,7 @@ namespace test {
 			return nullptr;
 		}
 
-		double getTime() const override {
+		[[nodiscard]] double getTime() const override {
 			return 0.0;
 		}
 

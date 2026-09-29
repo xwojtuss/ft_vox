@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include <volk.h>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -21,7 +21,6 @@ namespace render::vulkan {
 		std::unique_ptr<VulkanSwapchain>                                     m_swapchain;
 		std::unique_ptr<VulkanResourceManager>                               m_resourceManager;
 		std::unique_ptr<VulkanFrameData>                                     m_frameData;
-		std::optional<uint32_t>                                              m_frameIndex;
 		std::array<VkClearValue, 2>                                          m_clearValues{};
 		std::unordered_map<assets::PipelineType, std::unique_ptr<APipeline>> m_pipelineHandles;
 		std::vector<VkSemaphore>                                             m_renderFinishedSemaphores;
@@ -29,13 +28,18 @@ namespace render::vulkan {
 		void createPipelines();
 		void createRenderFinishedSemaphores();
 		void cleanupRenderFinishedSemaphores();
-		void recordCurrentCommandBuffer(ecs::SystemManager& systemManager);
+		void recordCommandBuffer(ecs::SystemManager& systemManager, uint32_t imageIndex);
 		void cleanupPipelines();
-		void beginFrame();
-		void endFrame();
+		void recreateSwapchain();
+		[[nodiscard]] std::optional<uint32_t> acquireImage();
+		void                                  present(uint32_t imageIndex);
 
 	public:
 		explicit VulkanRenderer(platform::window::IWindow&);
+		VulkanRenderer(const VulkanRenderer&)            = delete;
+		VulkanRenderer& operator=(const VulkanRenderer&) = delete;
+		VulkanRenderer(VulkanRenderer&&)                 = delete;
+		VulkanRenderer& operator=(VulkanRenderer&&)      = delete;
 		~VulkanRenderer() override;
 
 		void cleanup() override;

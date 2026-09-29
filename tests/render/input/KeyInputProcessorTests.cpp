@@ -21,16 +21,16 @@ namespace {
 		input::InputEvents released;
 		input::InputEvents active;
 
-		bool isPressed(InputEvent event) const {
+		[[nodiscard]] bool isPressed(InputEvent event) const {
 			return input::hasEvent(pressed, event);
 		}
-		bool isRepeated(InputEvent event) const {
+		[[nodiscard]] bool isRepeated(InputEvent event) const {
 			return input::hasEvent(repeated, event);
 		}
-		bool isReleased(InputEvent event) const {
+		[[nodiscard]] bool isReleased(InputEvent event) const {
 			return input::hasEvent(released, event);
 		}
-		bool isActive(InputEvent event) const {
+		[[nodiscard]] bool isActive(InputEvent event) const {
 			return input::hasEvent(active, event);
 		}
 	};
@@ -38,21 +38,21 @@ namespace {
 	struct Keyboard {
 		input::KeyInputProcessor processor;
 
-		void bind(int key, InputEvent event, input::InputMods mods = 0) {
+		void bind(int key, InputEvent event, input::InputMods mods = InputMod::None) {
 			processor.bindEvent(input::createInput(key, mods), event);
 		}
 
 		void bindMouse(MouseButton button, InputEvent event) {
-			processor.bindEvent(input::createMouseInput(button, 0), event);
+			processor.bindEvent(input::createMouseInput(button, InputMod::None), event);
 		}
 
-		void press(int key, input::InputMods mods = 0) {
+		void press(int key, input::InputMods mods = InputMod::None) {
 			processor.processKey(key, InputAction::Press, mods);
 		}
-		void hold(int key, input::InputMods mods = 0) {
+		void hold(int key, input::InputMods mods = InputMod::None) {
 			processor.processKey(key, InputAction::Repeat, mods);
 		}
-		void release(int key, input::InputMods mods = 0) {
+		void release(int key, input::InputMods mods = InputMod::None) {
 			processor.processKey(key, InputAction::Release, mods);
 		}
 
@@ -192,8 +192,8 @@ SCENARIO("Keys that are not bound do nothing", "[client][input][keys]") {
 			const Frame frame = keyboard.nextFrame();
 
 			THEN("no action starts") {
-				REQUIRE(frame.pressed == 0);
-				REQUIRE(frame.active == 0);
+				REQUIRE(frame.pressed == InputEvent::None);
+				REQUIRE(frame.active == InputEvent::None);
 			}
 		}
 	}
@@ -242,7 +242,7 @@ SCENARIO("Mouse buttons and keys can be used together", "[client][input][keys][m
 
 		WHEN("the player runs forward while clicking") {
 			keyboard.press(keyW);
-			keyboard.processor.processMouseButton(MouseButton::LeftButton, InputAction::Press, 0);
+			keyboard.processor.processMouseButton(MouseButton::LeftButton, InputAction::Press, InputMod::None);
 			const Frame frame = keyboard.nextFrame();
 
 			THEN("both actions are active") {
@@ -262,10 +262,10 @@ SCENARIO("Mouse buttons and keys can be used together", "[client][input][keys][m
 		}
 
 		WHEN("an unbound mouse button is pressed") {
-			keyboard.processor.processMouseButton(MouseButton::MiddleButton, InputAction::Press, 0);
+			keyboard.processor.processMouseButton(MouseButton::MiddleButton, InputAction::Press, InputMod::None);
 
 			THEN("nothing happens") {
-				REQUIRE(keyboard.nextFrame().active == 0);
+				REQUIRE(keyboard.nextFrame().active == InputEvent::None);
 			}
 		}
 	}

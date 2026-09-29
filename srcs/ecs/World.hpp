@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ecs/Registry.hpp"
@@ -22,6 +23,9 @@ namespace ecs {
 		explicit World(game::block::BlockDatas blockDatas);
 		World(const World&)            = delete;
 		World& operator=(const World&) = delete;
+		World(World&&)                 = delete;
+		World& operator=(World&&)      = delete;
+		~World()                       = default;
 
 		[[nodiscard]] EntityHandle createEntity();
 		[[nodiscard]] EntityHandle getEntity(Entity entity);
@@ -31,7 +35,7 @@ namespace ecs {
 		[[nodiscard]] Query<Components...> query();
 
 		template<typename ComponentType>
-		void describeComponentAs(std::string name);
+		void describeComponentAs(std::string_view name);
 
 		[[nodiscard]] std::vector<ComponentDescription> describe(Entity entity) const;
 

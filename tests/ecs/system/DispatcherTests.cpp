@@ -22,7 +22,7 @@ namespace {
 			calls->push_back(name + " rendered");
 		}
 
-		void onWorldReady(const ecs::WorldReadyEvent&) {
+		void onWorldReady(const ecs::WorldReadyEvent&) const {
 			calls->push_back(name + " ready");
 		}
 	};
@@ -32,9 +32,9 @@ SCENARIO("Events reach every subscriber of their type, in subscription order", "
 	GIVEN("two listeners subscribed to simulate events and one to world-ready events") {
 		ecs::Dispatcher          dispatcher;
 		std::vector<std::string> calls;
-		EventRecorder            first{"first", &calls};
-		EventRecorder            second{"second", &calls};
-		EventRecorder            other{"other", &calls};
+		EventRecorder            first{.name = "first", .calls = &calls};
+		EventRecorder            second{.name = "second", .calls = &calls};
+		EventRecorder const      other{.name = "other", .calls = &calls};
 
 		dispatcher.subscribe<ecs::SimulateEvent>(&first, &EventRecorder::onSimulate);
 		dispatcher.subscribe<ecs::SimulateEvent>(&second, &EventRecorder::onSimulate);
@@ -66,7 +66,7 @@ SCENARIO("Handlers that do not change their system can be const", "[ecs][dispatc
 	GIVEN("a listener whose render handler is a const member function") {
 		ecs::Dispatcher          dispatcher;
 		std::vector<std::string> calls;
-		const EventRecorder      listener{"listener", &calls};
+		const EventRecorder      listener{.name = "listener", .calls = &calls};
 		dispatcher.subscribe<ecs::RenderEvent>(&listener, &EventRecorder::onRender);
 
 		WHEN("a render event is emitted") {
@@ -83,7 +83,7 @@ SCENARIO("The dispatcher measures how long each event took", "[ecs][dispatcher]"
 	GIVEN("a dispatcher with one simulate listener") {
 		ecs::Dispatcher          dispatcher;
 		std::vector<std::string> calls;
-		EventRecorder            listener{"listener", &calls};
+		EventRecorder            listener{.name = "listener", .calls = &calls};
 		dispatcher.subscribe<ecs::SimulateEvent>(&listener, &EventRecorder::onSimulate);
 
 		THEN("nothing is measured before any event") {
@@ -95,7 +95,7 @@ SCENARIO("The dispatcher measures how long each event took", "[ecs][dispatcher]"
 			dispatcher.emit(ecs::RenderEvent(1.5f, 0.0));
 
 			THEN("both appear in the runtimes by name") {
-				const auto runtimes = dispatcher.getEventRuntimes();
+				const auto& runtimes = dispatcher.getEventRuntimes();
 
 				REQUIRE(runtimes.size() == 2);
 				REQUIRE(runtimes.count("SimulateEvent") == 1);

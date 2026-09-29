@@ -1,23 +1,26 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <string>
+#include <string_view>
+
 #include "error/Exception.hpp"
 #include "assets/TinyObjLoader.hpp"
 #include "support/TemporaryFile.hpp"
 
 namespace {
-	const std::string texturedSquare = "v 0 0 0\n"
-									   "v 1 0 0\n"
-									   "v 1 1 0\n"
-									   "v 0 1 0\n"
-									   "vt 0 0\n"
-									   "vt 1 0\n"
-									   "vt 1 1\n"
-									   "vt 0 1\n"
-									   "f 1/1 2/2 3/3\n"
-									   "f 1/1 3/3 4/4\n";
+	constexpr std::string_view texturedSquare = "v 0 0 0\n"
+												"v 1 0 0\n"
+												"v 1 1 0\n"
+												"v 0 1 0\n"
+												"vt 0 0\n"
+												"vt 1 0\n"
+												"vt 1 1\n"
+												"vt 0 1\n"
+												"f 1/1 2/2 3/3\n"
+												"f 1/1 3/3 4/4\n";
 
-	assets::MeshData loadObj(const std::string& content) {
-		const test::TemporaryFile file("model.obj", content);
+	assets::MeshData loadObj(const std::string_view content) {
+		const test::TemporaryFile file("model.obj", std::string(content));
 		assets::TinyObjLoader     loader;
 		return loader.toMeshData(std::string(file.path()));
 	}

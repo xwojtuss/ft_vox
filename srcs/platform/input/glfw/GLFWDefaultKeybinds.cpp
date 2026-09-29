@@ -6,18 +6,20 @@ using namespace platform::input::glfw;
 GLFWDefaultKeybinds::GLFWDefaultKeybinds() = default;
 
 void GLFWDefaultKeybinds::init() {
-	addBinding(GLFW_KEY_W, 0, render::input::InputEvent::MoveForward);
-	addBinding(GLFW_KEY_S, 0, render::input::InputEvent::MoveBackward);
-	addBinding(GLFW_KEY_D, 0, render::input::InputEvent::MoveRight);
-	addBinding(GLFW_KEY_A, 0, render::input::InputEvent::MoveLeft);
-	addBinding(GLFW_KEY_SPACE, 0, render::input::InputEvent::Jump);
-	addBinding(GLFW_KEY_LEFT_CONTROL, 0, render::input::InputEvent::Crouch);
-	addBinding(GLFW_KEY_ESCAPE, 0, render::input::InputEvent::ToggleCursor);
-	addBinding(GLFW_KEY_F3, 0, render::input::InputEvent::PlayerComponentsMenuToggle);
-	addBinding(GLFW_KEY_F3, 0, render::input::InputEvent::EventRuntimesMenuToggle);
+	addBinding(GLFW_KEY_W, render::input::InputMod::None, render::input::InputEvent::MoveForward);
+	addBinding(GLFW_KEY_S, render::input::InputMod::None, render::input::InputEvent::MoveBackward);
+	addBinding(GLFW_KEY_D, render::input::InputMod::None, render::input::InputEvent::MoveRight);
+	addBinding(GLFW_KEY_A, render::input::InputMod::None, render::input::InputEvent::MoveLeft);
+	addBinding(GLFW_KEY_SPACE, render::input::InputMod::None, render::input::InputEvent::Jump);
+	addBinding(GLFW_KEY_LEFT_CONTROL, render::input::InputMod::None, render::input::InputEvent::Crouch);
+	addBinding(GLFW_KEY_ESCAPE, render::input::InputMod::None, render::input::InputEvent::ToggleCursor);
+	addBinding(GLFW_KEY_F3, render::input::InputMod::None, render::input::InputEvent::PlayerComponentsMenuToggle);
+	addBinding(GLFW_KEY_F3, render::input::InputMod::None, render::input::InputEvent::EventRuntimesMenuToggle);
 
-	addMouseBinding(render::input::MouseButton::LeftButton, 0, render::input::InputEvent::SecondaryButton);
-	addMouseBinding(render::input::MouseButton::RightButton, 0, render::input::InputEvent::ActionButton);
+	addMouseBinding(render::input::MouseButton::LeftButton, render::input::InputMod::None,
+					render::input::InputEvent::SecondaryButton);
+	addMouseBinding(render::input::MouseButton::RightButton, render::input::InputMod::None,
+					render::input::InputEvent::ActionButton);
 
 	if (!m_bindings.empty())
 		m_initialized = true;

@@ -1,4 +1,5 @@
 #include "platform/window/glfw/GLFWWindow.hpp"
+#include <volk.h>
 #include "app/ApplicationInfo.hpp"
 #include "platform/input/glfw/GLFWInput.hpp"
 #include "error/Exception.hpp"
@@ -6,6 +7,10 @@
 using namespace platform::window::glfw;
 
 GLFWWindow::GLFWWindow() {
+	if (volkInitialize() != VK_SUCCESS)
+		throw error::WindowError("no Vulkan loader was found on this system");
+	glfwInitVulkanLoader(vkGetInstanceProcAddr);
+
 	if (glfwInit() != GLFW_TRUE)
 		throw error::WindowError("GLFW could not be initialized, is a display available?");
 	if (glfwVulkanSupported() != GLFW_TRUE) {
@@ -22,7 +27,7 @@ GLFWWindow::GLFWWindow() {
 	glfwSetWindowUserPointer(m_window, this);
 	glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
 
-	if (glfwRawMouseMotionSupported())
+	if (glfwRawMouseMotionSupported() != 0)
 		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
 	setMouseCursorVisible(false);
@@ -97,7 +102,7 @@ void GLFWWindow::getFramebufferSize(uint32_t* width, uint32_t* height) const {
 }
 
 bool GLFWWindow::shouldClose() const {
-	return glfwWindowShouldClose(m_window);
+	return glfwWindowShouldClose(m_window) != 0;
 }
 
 void GLFWWindow::pollEvents() {

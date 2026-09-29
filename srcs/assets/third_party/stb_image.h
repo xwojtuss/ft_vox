@@ -2629,33 +2629,33 @@ static void stbi__idct_simd(stbi_uc* out, int out_stride, short data[64]) {
 	// out(0) = c0[even]*x + c0[odd]*y   (c0, x, y 16-bit, out 32-bit)
 	// out(1) = c1[even]*x + c1[odd]*y
 #define dct_rot(out0,out1, x,y,c0,c1) \
-      __m128i c0##lo = _mm_unpacklo_epi16((x),(y)); \
-      __m128i c0##hi = _mm_unpackhi_epi16((x),(y)); \
-      __m128i out0##_l = _mm_madd_epi16(c0##lo, c0); \
-      __m128i out0##_h = _mm_madd_epi16(c0##hi, c0); \
-      __m128i out1##_l = _mm_madd_epi16(c0##lo, c1); \
-      __m128i out1##_h = _mm_madd_epi16(c0##hi, c1)
+      __m128i c0## lo = _mm_unpacklo_epi16((x),(y)); \
+      __m128i c0## hi = _mm_unpackhi_epi16((x),(y)); \
+      __m128i out0## _l = _mm_madd_epi16(c0## lo, c0); \
+      __m128i out0## _h = _mm_madd_epi16(c0## hi, c0); \
+      __m128i out1## _l = _mm_madd_epi16(c0## lo, c1); \
+      __m128i out1## _h = _mm_madd_epi16(c0## hi, c1)
 
 	// out = in << 12  (in 16-bit, out 32-bit)
 #define dct_widen(out, in) \
-      __m128i out##_l = _mm_srai_epi32(_mm_unpacklo_epi16(_mm_setzero_si128(), (in)), 4); \
-      __m128i out##_h = _mm_srai_epi32(_mm_unpackhi_epi16(_mm_setzero_si128(), (in)), 4)
+      __m128i out## _l = _mm_srai_epi32(_mm_unpacklo_epi16(_mm_setzero_si128(), (in)), 4); \
+      __m128i out## _h = _mm_srai_epi32(_mm_unpackhi_epi16(_mm_setzero_si128(), (in)), 4)
 
 	// wide add
 #define dct_wadd(out, a, b) \
-      __m128i out##_l = _mm_add_epi32(a##_l, b##_l); \
-      __m128i out##_h = _mm_add_epi32(a##_h, b##_h)
+      __m128i out## _l = _mm_add_epi32(a## _l, b## _l); \
+      __m128i out## _h = _mm_add_epi32(a## _h, b## _h)
 
 	// wide sub
 #define dct_wsub(out, a, b) \
-      __m128i out##_l = _mm_sub_epi32(a##_l, b##_l); \
-      __m128i out##_h = _mm_sub_epi32(a##_h, b##_h)
+      __m128i out## _l = _mm_sub_epi32(a## _l, b## _l); \
+      __m128i out## _h = _mm_sub_epi32(a## _h, b## _h)
 
 	// butterfly a/b, add bias, then shift by "s" and pack
 #define dct_bfly32o(out0, out1, a,b,bias,s) \
       { \
-         __m128i abiased_l = _mm_add_epi32(a##_l, bias); \
-         __m128i abiased_h = _mm_add_epi32(a##_h, bias); \
+         __m128i abiased_l = _mm_add_epi32(a## _l, bias); \
+         __m128i abiased_h = _mm_add_epi32(a## _h, bias); \
          dct_wadd(sum, abiased, b); \
          dct_wsub(dif, abiased, b); \
          out0 = _mm_packs_epi32(_mm_srai_epi32(sum_l, s), _mm_srai_epi32(sum_h, s)); \
@@ -2822,26 +2822,26 @@ static void stbi__idct_simd(stbi_uc* out, int out_stride, short data[64]) {
 	int16x4_t rot3_3 = vdup_n_s16(stbi__f2f(1.501321110f));
 
 #define dct_long_mul(out, inq, coeff) \
-   int32x4_t out##_l = vmull_s16(vget_low_s16(inq), coeff); \
-   int32x4_t out##_h = vmull_s16(vget_high_s16(inq), coeff)
+   int32x4_t out## _l = vmull_s16(vget_low_s16(inq), coeff); \
+   int32x4_t out## _h = vmull_s16(vget_high_s16(inq), coeff)
 
 #define dct_long_mac(out, acc, inq, coeff) \
-   int32x4_t out##_l = vmlal_s16(acc##_l, vget_low_s16(inq), coeff); \
-   int32x4_t out##_h = vmlal_s16(acc##_h, vget_high_s16(inq), coeff)
+   int32x4_t out## _l = vmlal_s16(acc## _l, vget_low_s16(inq), coeff); \
+   int32x4_t out## _h = vmlal_s16(acc## _h, vget_high_s16(inq), coeff)
 
 #define dct_widen(out, inq) \
-   int32x4_t out##_l = vshll_n_s16(vget_low_s16(inq), 12); \
-   int32x4_t out##_h = vshll_n_s16(vget_high_s16(inq), 12)
+   int32x4_t out## _l = vshll_n_s16(vget_low_s16(inq), 12); \
+   int32x4_t out## _h = vshll_n_s16(vget_high_s16(inq), 12)
 
 	// wide add
 #define dct_wadd(out, a, b) \
-   int32x4_t out##_l = vaddq_s32(a##_l, b##_l); \
-   int32x4_t out##_h = vaddq_s32(a##_h, b##_h)
+   int32x4_t out## _l = vaddq_s32(a## _l, b## _l); \
+   int32x4_t out## _h = vaddq_s32(a## _h, b## _h)
 
 	// wide sub
 #define dct_wsub(out, a, b) \
-   int32x4_t out##_l = vsubq_s32(a##_l, b##_l); \
-   int32x4_t out##_h = vsubq_s32(a##_h, b##_h)
+   int32x4_t out## _l = vsubq_s32(a## _l, b## _l); \
+   int32x4_t out## _h = vsubq_s32(a## _h, b## _h)
 
 	// butterfly a/b, then shift using "shiftop" by "s" and pack
 #define dct_bfly32o(out0,out1, a,b,shiftop,s) \

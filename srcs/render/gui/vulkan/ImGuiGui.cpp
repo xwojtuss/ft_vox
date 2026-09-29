@@ -13,25 +13,25 @@ using namespace render::gui::vulkan;
 void ImGuiGui::createDescriptorPool() {
 	constexpr std::size_t poolSize = 1000;
 
-	VkDescriptorPoolSize pool_sizes[] = {
-		{.type = VK_DESCRIPTOR_TYPE_SAMPLER, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, .descriptorCount = poolSize},
-		{.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = poolSize}};
+	auto pool_sizes = std::array<VkDescriptorPoolSize, 11>(
+		{{.type = VK_DESCRIPTOR_TYPE_SAMPLER, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, .descriptorCount = poolSize},
+		 {.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = poolSize}});
 
 	VkDescriptorPoolCreateInfo pool_info = {};
 	pool_info.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	pool_info.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 	pool_info.maxSets                    = poolSize;
 	pool_info.poolSizeCount              = std::size(pool_sizes);
-	pool_info.pPoolSizes                 = pool_sizes;
+	pool_info.pPoolSizes                 = pool_sizes.data();
 
 	if (const VkResult result =
 			vkCreateDescriptorPool(m_context.getLogicalDevice(), &pool_info, nullptr, &m_descriptorPool);
@@ -48,7 +48,7 @@ void ImGuiGui::init() {
 	init_info.Instance                     = m_context.getInstance();
 	init_info.PhysicalDevice               = m_context.getPhysicalDevice();
 	init_info.Device                       = m_context.getLogicalDevice();
-	init_info.QueueFamily                  = m_context.getQueueFamilyIndices().graphicsFamily.value();
+	init_info.QueueFamily                  = m_context.getQueueFamilies().graphics;
 	init_info.Queue                        = m_context.getGraphicsQueue();
 	init_info.PipelineCache                = VK_NULL_HANDLE;
 	init_info.DescriptorPool               = m_descriptorPool;

@@ -11,9 +11,9 @@ GuiSystem::GuiSystem(render::gui::IGui& gui) : m_gui(gui) {
 
 void GuiSystem::onWorldReady([[maybe_unused]] const WorldReadyEvent& event) {
 	render::gui::PlayerComponentsPanel playerComponentsPanel(m_gui, *m_world);
-	registerPanel(render::input::PlayerComponentsMenuToggle, playerComponentsPanel);
+	registerPanel(render::input::InputEvent::PlayerComponentsMenuToggle, playerComponentsPanel);
 	render::gui::EventsRuntimePanel eventsRuntimePanel(m_gui, m_world->getSystemManager().getDispatcher());
-	registerPanel(render::input::EventRuntimesMenuToggle, eventsRuntimePanel);
+	registerPanel(render::input::InputEvent::EventRuntimesMenuToggle, eventsRuntimePanel);
 }
 
 void GuiSystem::onInput(const InputEvent& event) {

@@ -44,6 +44,14 @@
       }
     },
     {
+      "name": "lint",
+      "displayName": "clang-tidy (Clang)",
+      "inherits": "dev-clang",
+      "cacheVariables": {
+        "FT_VOX_CLANG_TIDY": "ON"
+      }
+    },
+    {
       "name": "coverage",
       "displayName": "Coverage (Clang)",
       "inherits": "dev-clang",
@@ -77,6 +85,12 @@
       "name": "dev-clang",
       "displayName": "Build Debug (Clang)",
       "configurePreset": "dev-clang",
+      "jobs": 0
+    },
+    {
+      "name": "lint",
+      "displayName": "Build with clang-tidy (Clang)",
+      "configurePreset": "lint",
       "jobs": 0
     },
     {
@@ -139,6 +153,14 @@
         { "type": "configure", "name": "dev42" },
         { "type": "build", "name": "dev42" },
         { "type": "test", "name": "dev42" }
+      ]
+    },
+    {
+      "name": "lint",
+      "displayName": "clang-tidy, fails on any finding (Clang)",
+      "steps": [
+        { "type": "configure", "name": "lint" },
+        { "type": "build", "name": "lint" }
       ]
     },
     {

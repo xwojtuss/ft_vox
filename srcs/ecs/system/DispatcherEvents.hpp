@@ -1,6 +1,6 @@
 #pragma once
 
-#include <utility>
+#include <string_view>
 
 #include "ecs/entity/Entity.hpp"
 #include "render/input/InputTypes.hpp"
@@ -12,15 +12,15 @@ namespace render {
 namespace ecs {
 	struct DispatchEvent {
 	protected:
-		std::string m_name;
+		std::string_view m_name;
 
-		explicit DispatchEvent(std::string name) : m_name(std::move(name)) {
+		explicit DispatchEvent(const std::string_view name) : m_name(name) {
 		}
 
 	public:
 		virtual ~DispatchEvent() = default;
 
-		[[nodiscard]] const std::string& getName() const {
+		[[nodiscard]] std::string_view getName() const {
 			return m_name;
 		}
 	};

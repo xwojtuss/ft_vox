@@ -37,26 +37,26 @@ namespace test {
 
 	private:
 		void onWorldReady(const ecs::WorldReadyEvent& event) {
-			receivedEvents.push_back(event.getName());
+			receivedEvents.emplace_back(event.getName());
 		}
 
 		void onRender(const ecs::RenderEvent& event) {
-			receivedEvents.push_back(event.getName());
+			receivedEvents.emplace_back(event.getName());
 			lastAspectRatio = event.aspectRatio;
 		}
 
 		void onRendererDraw(const ecs::RendererDrawEvent& event) {
-			receivedEvents.push_back(event.getName());
+			receivedEvents.emplace_back(event.getName());
 			lastRenderer = event.renderer;
 		}
 
 		void onRendererFrame(const ecs::RendererFrameEvent& event) {
-			receivedEvents.push_back(event.getName());
+			receivedEvents.emplace_back(event.getName());
 			lastRenderer = event.renderer;
 		}
 
 		void onSimulate(const ecs::SimulateEvent& event) {
-			receivedEvents.push_back(event.getName());
+			receivedEvents.emplace_back(event.getName());
 			lastDeltaTime = event.deltaTime;
 		}
 	};
@@ -92,14 +92,14 @@ namespace test {
 
 template<>
 struct std::formatter<test::Health> : std::formatter<std::string_view> {
-	auto format(const test::Health& health, std::format_context& context) const {
+	static auto format(const test::Health& health, std::format_context& context) {
 		return std::format_to(context.out(), "Points: {}", health.points);
 	}
 };
 
 template<>
 struct std::formatter<test::Armor> : std::formatter<std::string_view> {
-	auto format(const test::Armor& armor, std::format_context& context) const {
+	static auto format(const test::Armor& armor, std::format_context& context) {
 		return std::format_to(context.out(), "Rating: {}", armor.rating);
 	}
 };

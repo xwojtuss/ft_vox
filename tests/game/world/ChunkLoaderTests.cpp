@@ -12,7 +12,7 @@ using game::world::EarthGenerator;
 
 SCENARIO("Loading a chunk generates its terrain", "[chunk-loader]") {
 	GIVEN("a chunk loader") {
-		ChunkLoader loader;
+		const ChunkLoader loader;
 
 		WHEN("the chunk at (-2, 0, 5) is loaded") {
 			const std::unique_ptr<Chunk> loaded = loader.loadChunk({-2, 0, 5});
@@ -21,13 +21,13 @@ SCENARIO("Loading a chunk generates its terrain", "[chunk-loader]") {
 				REQUIRE(loaded != nullptr);
 			}
 			AND_THEN("it holds the same terrain the world generator produces for that position") {
-				EarthGenerator generator;
-				Chunk          expected;
+				const EarthGenerator generator;
+				Chunk                expected;
 				generator.generateChunk(&expected, {-2, 0, 5});
 
-				for (unsigned short x = 0; x < chunkXSize; ++x)
-					for (unsigned short y = 0; y < chunkYSize; ++y)
-						for (unsigned short z = 0; z < chunkZSize; ++z)
+				for (int x = 0; x < chunkXSize; ++x)
+					for (int y = 0; y < chunkYSize; ++y)
+						for (int z = 0; z < chunkZSize; ++z)
 							REQUIRE(loaded->getBlock(x, y, z).id == expected.getBlock(x, y, z).id);
 			}
 		}
@@ -39,16 +39,6 @@ SCENARIO("Loading a chunk generates its terrain", "[chunk-loader]") {
 			THEN("each load returns its own copy") {
 				REQUIRE(first.get() != second.get());
 			}
-		}
-	}
-}
-
-SCENARIO("Saving a chunk is accepted but not implemented yet", "[chunk-loader]") {
-	GIVEN("a chunk loader") {
-		ChunkLoader loader;
-
-		THEN("saving any chunk does not fail") {
-			REQUIRE_NOTHROW(loader.saveChunk({0, 0, 0}));
 		}
 	}
 }

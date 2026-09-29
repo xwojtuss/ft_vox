@@ -1,6 +1,7 @@
 #include "ecs/component/Components.hpp"
 
 #include <tuple>
+#include <utility>
 #include <magic_enum/magic_enum.hpp>
 
 #include "scene/WorldInfo.hpp"
@@ -36,7 +37,7 @@ glm::mat4 Transform::toModelMatrix() const {
 }
 
 std::format_context::iterator std::formatter<Transform>::format(const Transform&     transform,
-																std::format_context& context) const {
+																std::format_context& context) {
 	const auto& [position, rotation, scale] = std::tie(transform.position, transform.rotation, transform.scale);
 	return std::format_to(context.out(),
 						  "\tPosition: (X:{:.2f}, Y:{:.2f}, Z:{:.2f})\n"
@@ -46,8 +47,7 @@ std::format_context::iterator std::formatter<Transform>::format(const Transform&
 						  scale.y, scale.z);
 }
 
-std::format_context::iterator std::formatter<Velocity>::format(const Velocity&      velocity,
-															   std::format_context& context) const {
+std::format_context::iterator std::formatter<Velocity>::format(const Velocity& velocity, std::format_context& context) {
 	return std::format_to(context.out(),
 						  "\tVelocity: (X:{:.2f}, Y:{:.2f}, Z:{:.2f})\n"
 						  "\tDesired Velocity: (X:{:.2f}, Y:{:.2f}, Z:{:.2f})\n"
@@ -60,21 +60,20 @@ std::format_context::iterator std::formatter<Velocity>::format(const Velocity&  
 						  velocity.acceleration, velocity.deceleration, velocity.canMove);
 }
 
-std::format_context::iterator std::formatter<Camera>::format(const Camera& camera, std::format_context& context) const {
+std::format_context::iterator std::formatter<Camera>::format(const Camera& camera, std::format_context& context) {
 	return std::format_to(context.out(), "\tFOV: {:.2f}\n", camera.fov);
 }
 
-std::format_context::iterator std::formatter<Mesh>::format(const Mesh& mesh, std::format_context& context) const {
+std::format_context::iterator std::formatter<Mesh>::format(const Mesh& mesh, std::format_context& context) {
 	return std::format_to(context.out(), "\tMesh Handle: {}\n\tPipeline Type: {}\n", mesh.mesh.id,
 						  magic_enum::enum_name(mesh.pipelineType));
 }
 
-std::format_context::iterator std::formatter<Texture>::format(const Texture&       texture,
-															  std::format_context& context) const {
+std::format_context::iterator std::formatter<Texture>::format(const Texture& texture, std::format_context& context) {
 	return std::format_to(context.out(), "\tTexture Handle: {}\n", texture.texture.id);
 }
 
-std::format_context::iterator std::formatter<Input>::format(const Input& input, std::format_context& context) const {
+std::format_context::iterator std::formatter<Input>::format(const Input& input, std::format_context& context) {
 	const render::input::InputCommand& command = input.command;
 	return std::format_to(context.out(),
 						  "\tMouse Sensitivity: {:.2f}\n"
@@ -89,6 +88,7 @@ std::format_context::iterator std::formatter<Input>::format(const Input& input, 
 						  "\t\tReleased Events: {}\n"
 						  "\t\tActive Events: {}\n",
 						  input.mouseSensitivity, command.moveForward, command.moveRight, command.moveUp,
-						  command.lookUp, command.lookRight, command.startedEvents, command.repeatedEvents,
-						  command.releasedEvents, command.activeEvents);
+						  command.lookUp, command.lookRight, std::to_underlying(command.startedEvents),
+						  std::to_underlying(command.repeatedEvents), std::to_underlying(command.releasedEvents),
+						  std::to_underlying(command.activeEvents));
 }

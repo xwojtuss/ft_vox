@@ -1,5 +1,4 @@
 #include "render/vulkan/pipeline/APipeline.hpp"
-#include <bit>
 #include "render/vulkan/VulkanVertexUtils.hpp"
 #include "platform/filesystem/readFile.hpp"
 #include "render/vulkan/VulkanError.hpp"
@@ -8,13 +7,13 @@ using namespace render::vulkan;
 
 APipeline::APipeline() = default;
 
-VkShaderModule APipeline::createShaderModule(const std::vector<char>& code, VkDevice device) {
+VkShaderModule APipeline::createShaderModule(const std::vector<uint32_t>& code, VkDevice device) {
 	VkShaderModuleCreateInfo createInfo{};
 	VkShaderModule           shaderModule = nullptr;
 
 	createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = code.size();
-	createInfo.pCode    = std::bit_cast<const uint32_t*>(code.data());
+	createInfo.codeSize = code.size() * sizeof(uint32_t);
+	createInfo.pCode    = code.data();
 
 	if (const VkResult result = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
 		result != VK_SUCCESS) {
@@ -30,20 +29,20 @@ void APipeline::createShaderStages(VkDevice device, const char* vertPath, const 
 	vertShaderStageInfo        = {};
 	vertShaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vertShaderStageInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	vertShaderStageInfo.module = createShaderModule(readFile(vertPath), device);
+	vertShaderStageInfo.module = createShaderModule(readSpirv(vertPath), device);
 	vertShaderStageInfo.pName  = "main";
 
 	fragShaderStageInfo        = {};
 	fragShaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fragShaderStageInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fragShaderStageInfo.module = createShaderModule(readFile(fragPath), device);
+	fragShaderStageInfo.module = createShaderModule(readSpirv(fragPath), device);
 	fragShaderStageInfo.pName  = "main";
 }
 
 void APipeline::createScissor(const VkExtent2D& extent) {
 	m_scissor = {};
 
-	m_scissor.offset = {0, 0};
+	m_scissor.offset = {.x = 0, .y = 0};
 	m_scissor.extent = extent;
 }
 

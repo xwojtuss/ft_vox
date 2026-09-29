@@ -1,5 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <utility>
+
 #include "scene/WorldInfo.hpp"
 #include "ecs/component/Components.hpp"
 #include "ecs/entity/EntityHandle.hpp"
@@ -19,23 +21,22 @@ namespace {
 
 	constexpr int chunksAroundSpawn = (spawnRenderDistance.x + 1) * (spawnRenderDistance.z + 1) * spawnRenderDistance.y;
 
-	constexpr size_t trianglesInSolidChunk = 6 * chunkXSize * chunkZSize * 2;
+	constexpr size_t trianglesInSolidChunk = 6uz * chunkXSize * chunkZSize * 2;
 
 	struct SpawnedWorld {
 		std::vector<unsigned char>    dirtPixels = {10, 20, 30, 255};
 		game::block::BlockDatas       blockDatas = test::makeBlockDatas(dirtPixels);
 		ecs::World                    world{blockDatas};
 		test::FakeRenderer            renderer;
-		std::unique_ptr<ChunkManager> manager;
-		size_t                        meshesAtSpawn;
+		std::unique_ptr<ChunkManager> manager       = createManager();
+		size_t                        meshesAtSpawn = renderer.createdMeshes.size();
 
-		SpawnedWorld() {
+		std::unique_ptr<ChunkManager> createManager() {
 			world.createSystem<ecs::RenderSystem>();
-			manager       = std::make_unique<ChunkManager>(blockDatas, world, renderer, spawnRenderDistance);
-			meshesAtSpawn = renderer.createdMeshes.size();
+			return std::make_unique<ChunkManager>(blockDatas, world, renderer, spawnRenderDistance);
 		}
 
-		size_t meshCount() const {
+		[[nodiscard]] size_t meshCount() const {
 			return renderer.createdMeshes.size();
 		}
 
@@ -71,7 +72,7 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 				REQUIRE(env.renderer.createdMeshTriangleCounts[i] > 0);
 		}
 		AND_THEN("each chunk mesh becomes a textured entity drawn by the render system") {
-			ecs::RenderSystem* renderSystem = env.world.getSystemManager().getSystem<ecs::RenderSystem>();
+			const auto* renderSystem = env.world.getSystemManager().getSystem<ecs::RenderSystem>();
 
 			for (size_t i = 0; i < env.meshesAtSpawn; ++i) {
 				ecs::EntityHandle           entity = env.entityOfMesh(i);
@@ -97,7 +98,7 @@ SCENARIO("Starting the world loads every chunk around spawn", "[chunk-manager]")
 				REQUIRE(std::abs(chunk.x) <= halfDistance);
 				REQUIRE(std::abs(chunk.z) <= halfDistance);
 				REQUIRE(chunk.y >= 0);
-				REQUIRE(chunk.y < spawnRenderDistance.y);
+				REQUIRE(std::cmp_less(chunk.y, spawnRenderDistance.y));
 			}
 		}
 	}
@@ -134,7 +135,7 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager][!mayfail]") {
 			env.manager->loadRange({50, -2, 50}, {51, -2, 52});
 
 			THEN("every chunk in the range, both ends included, gets a mesh") {
-				REQUIRE(env.meshCount() == meshesBefore + 2 * 1 * 3);
+				REQUIRE(env.meshCount() == meshesBefore + (2uz * 1 * 3));
 			}
 		}
 
@@ -168,13 +169,13 @@ SCENARIO("Unloading a chunk forgets it", "[chunk-manager][!mayfail]") {
 		WHEN("a visible chunk is unloaded") {
 			const size_t meshIndex = env.meshCount();
 			env.manager->loadChunk(65, -1, 65);
-			ecs::EntityHandle chunkEntity = env.entityOfMesh(meshIndex);
+			ecs::EntityHandle const chunkEntity = env.entityOfMesh(meshIndex);
 			REQUIRE(chunkEntity.has<ecs::component::Mesh>());
 
 			env.manager->unloadChunk(65, -1, 65);
 
 			THEN("it disappears from the world: it is no longer drawn") {
-				ecs::RenderSystem* renderSystem = env.world.getSystemManager().getSystem<ecs::RenderSystem>();
+				const auto* renderSystem = env.world.getSystemManager().getSystem<ecs::RenderSystem>();
 
 				REQUIRE_FALSE(renderSystem->processes(chunkEntity.id()));
 				REQUIRE_FALSE(chunkEntity.has<ecs::component::Mesh>());

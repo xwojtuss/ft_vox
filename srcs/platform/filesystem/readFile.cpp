@@ -1,5 +1,6 @@
 #include "platform/filesystem/readFile.hpp"
 
+#include <cstring>
 #include <fstream>
 
 #include "platform/filesystem/resolvePath.hpp"
@@ -18,4 +19,15 @@ std::vector<char> readFile(const std::string& filename) {
 	file.close();
 
 	return buffer;
+}
+
+std::vector<uint32_t> readSpirv(const std::string& filename) {
+	const std::vector<char> bytes = readFile(filename);
+
+	if (bytes.size() % sizeof(uint32_t) != 0)
+		throw error::FileError(filename, "is not SPIR-V: its size is not a whole number of 32-bit words");
+
+	std::vector<uint32_t> words(bytes.size() / sizeof(uint32_t));
+	std::memcpy(words.data(), bytes.data(), bytes.size());
+	return words;
 }

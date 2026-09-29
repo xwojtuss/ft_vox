@@ -44,13 +44,13 @@ void VulkanSwapchain::createSwapChain(const VulkanContext& context) {
 	createInfo.imageExtent                  = extent;
 	createInfo.imageArrayLayers             = 1;
 	createInfo.imageUsage                   = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	QueueFamilyIndices indices              = context.getQueueFamilyIndices();
-	uint32_t           queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+	const QueueFamilies& families           = context.getQueueFamilies();
+	const std::array     queueFamilyIndices = {families.graphics, families.present};
 
-	if (indices.graphicsFamily != indices.presentFamily) {
+	if (families.graphics != families.present) {
 		createInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
 		createInfo.queueFamilyIndexCount = 2;
-		createInfo.pQueueFamilyIndices   = queueFamilyIndices;
+		createInfo.pQueueFamilyIndices   = queueFamilyIndices.data();
 	} else {
 		createInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
 		createInfo.queueFamilyIndexCount = 0;
@@ -74,7 +74,8 @@ void VulkanSwapchain::createSwapChain(const VulkanContext& context) {
 }
 
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-	constexpr VkSurfaceFormatKHR preferred = {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
+	constexpr VkSurfaceFormatKHR preferred = {.format     = VK_FORMAT_B8G8R8A8_SRGB,
+											  .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
 
 	if (availableFormats.size() == 1 && availableFormats.front().format == VK_FORMAT_UNDEFINED)
 		return preferred;
@@ -116,7 +117,7 @@ VkExtent2D VulkanSwapchain::chooseSwapExtent(const platform::window::IWindow& wi
 	int height = 0;
 	glfwGetFramebufferSize(static_cast<GLFWwindow*>(window.getHandle()), &width, &height);
 
-	VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+	VkExtent2D actualExtent = {.width = static_cast<uint32_t>(width), .height = static_cast<uint32_t>(height)};
 
 	actualExtent.width =
 		std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);

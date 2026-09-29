@@ -41,47 +41,47 @@ namespace ecs::component {
 	};
 
 	struct Mesh {
-		assets::MeshHandle   mesh;
+		assets::MeshHandle   mesh{};
 		assets::PipelineType pipelineType = assets::PipelineType::Textured;
 	};
 
 	struct Texture {
-		assets::TextureHandle texture;
+		assets::TextureHandle texture{};
 	};
 
 	struct Input {
-		render::input::InputCommand command;
+		render::input::InputCommand command{};
 		float                       mouseSensitivity{};
 	};
 }
 
 template<>
 struct std::formatter<ecs::component::Transform> : std::formatter<std::string_view> {
-	std::format_context::iterator format(const ecs::component::Transform& transform,
-										 std::format_context&             context) const;
+	static std::format_context::iterator format(const ecs::component::Transform& transform,
+												std::format_context&             context);
 };
 
 template<>
 struct std::formatter<ecs::component::Velocity> : std::formatter<std::string_view> {
-	std::format_context::iterator format(const ecs::component::Velocity& velocity, std::format_context& context) const;
+	static std::format_context::iterator format(const ecs::component::Velocity& velocity, std::format_context& context);
 };
 
 template<>
 struct std::formatter<ecs::component::Camera> : std::formatter<std::string_view> {
-	std::format_context::iterator format(const ecs::component::Camera& camera, std::format_context& context) const;
+	static std::format_context::iterator format(const ecs::component::Camera& camera, std::format_context& context);
 };
 
 template<>
 struct std::formatter<ecs::component::Mesh> : std::formatter<std::string_view> {
-	std::format_context::iterator format(const ecs::component::Mesh& mesh, std::format_context& context) const;
+	static std::format_context::iterator format(const ecs::component::Mesh& mesh, std::format_context& context);
 };
 
 template<>
 struct std::formatter<ecs::component::Texture> : std::formatter<std::string_view> {
-	std::format_context::iterator format(const ecs::component::Texture& texture, std::format_context& context) const;
+	static std::format_context::iterator format(const ecs::component::Texture& texture, std::format_context& context);
 };
 
 template<>
 struct std::formatter<ecs::component::Input> : std::formatter<std::string_view> {
-	std::format_context::iterator format(const ecs::component::Input& input, std::format_context& context) const;
+	static std::format_context::iterator format(const ecs::component::Input& input, std::format_context& context);
 };

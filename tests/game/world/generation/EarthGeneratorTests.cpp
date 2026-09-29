@@ -1,4 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
+
+#include <utility>
 #include <catch2/generators/catch_generators.hpp>
 
 #include <cstdlib>
@@ -16,8 +18,8 @@ using game::world::EarthGenerator;
 
 namespace {
 	Chunk generate(glm::ivec3 chunkPosition) {
-		EarthGenerator generator;
-		Chunk          chunk;
+		const EarthGenerator generator;
+		Chunk                chunk;
 
 		generator.generateChunk(&chunk, chunkPosition);
 		return chunk;
@@ -25,24 +27,24 @@ namespace {
 
 	size_t countBlocks(const Chunk& chunk, game::BlockId id) {
 		size_t count = 0;
-		for (unsigned short x = 0; x < chunkXSize; ++x)
-			for (unsigned short y = 0; y < chunkYSize; ++y)
-				for (unsigned short z = 0; z < chunkZSize; ++z)
-					count += chunk.getBlock(x, y, z).id == id;
+		for (int x = 0; x < chunkXSize; ++x)
+			for (int y = 0; y < chunkYSize; ++y)
+				for (int z = 0; z < chunkZSize; ++z)
+					count += static_cast<size_t>(chunk.getBlock(x, y, z).id == id);
 		return count;
 	}
 
-	std::map<int, bool> solidByWorldHeight(const std::map<int, Chunk>& stack, unsigned short x, unsigned short z) {
+	std::map<int, bool> solidByWorldHeight(const std::map<int, Chunk>& stack, int x, int z) {
 		std::map<int, bool> solid;
 		for (const auto& [chunkY, chunk]: stack)
-			for (unsigned short y = 0; y < chunkYSize; ++y)
-				solid[chunkY * chunkYSize + y] = chunk.getBlock(x, y, z).id != test::air;
+			for (int y = 0; y < chunkYSize; ++y)
+				solid[(chunkY * chunkYSize) + y] = chunk.getBlock(x, y, z).id != test::air;
 		return solid;
 	}
 
-	int surfaceHeight(const Chunk& groundChunk, unsigned short x, unsigned short z) {
+	int surfaceHeight(const Chunk& groundChunk, int x, int z) {
 		int height = 0;
-		while (height < chunkYSize && groundChunk.getBlock(x, height, z).id != test::air)
+		while (std::cmp_less(height, chunkYSize) && groundChunk.getBlock(x, height, z).id != test::air)
 			++height;
 		return height;
 	}
@@ -54,9 +56,9 @@ SCENARIO("The same chunk is always generated the same way", "[generation]") {
 		const Chunk second = generate({2, 0, -3});
 
 		THEN("both contain exactly the same blocks") {
-			for (unsigned short x = 0; x < chunkXSize; ++x)
-				for (unsigned short y = 0; y < chunkYSize; ++y)
-					for (unsigned short z = 0; z < chunkZSize; ++z)
+			for (int x = 0; x < chunkXSize; ++x)
+				for (int y = 0; y < chunkYSize; ++y)
+					for (int z = 0; z < chunkZSize; ++z)
 						REQUIRE(first.getBlock(x, y, z).id == second.getBlock(x, y, z).id);
 		}
 	}
@@ -103,8 +105,8 @@ SCENARIO("Terrain has no floating blocks or caves", "[generation]") {
 			stack.emplace(chunkY, generate({column.x, chunkY, column.y}));
 
 		THEN("in every block column, all blocks below the surface are solid and all above are air") {
-			for (unsigned short x = 0; x < chunkXSize; ++x) {
-				for (unsigned short z = 0; z < chunkZSize; ++z) {
+			for (int x = 0; x < chunkXSize; ++x) {
+				for (int z = 0; z < chunkZSize; ++z) {
 					bool reachedSurface = false;
 					for (const auto& [worldY, solid]: solidByWorldHeight(stack, x, z)) {
 						if (!solid)
@@ -124,7 +126,7 @@ SCENARIO("Terrain continues smoothly across chunk borders", "[generation][regres
 		const Chunk east = generate({0, 0, 0});
 
 		THEN("the surface steps by at most 2 blocks between the touching columns") {
-			for (unsigned short z = 0; z < chunkZSize; ++z)
+			for (int z = 0; z < chunkZSize; ++z)
 				REQUIRE(std::abs(surfaceHeight(west, chunkXSize - 1, z) - surfaceHeight(east, 0, z)) <= 2);
 		}
 	}
@@ -134,7 +136,7 @@ SCENARIO("Terrain continues smoothly across chunk borders", "[generation][regres
 		const Chunk south = generate({3, 0, 0});
 
 		THEN("the surface steps by at most 2 blocks between the touching columns") {
-			for (unsigned short x = 0; x < chunkXSize; ++x)
+			for (int x = 0; x < chunkXSize; ++x)
 				REQUIRE(std::abs(surfaceHeight(north, x, chunkZSize - 1) - surfaceHeight(south, x, 0)) <= 2);
 		}
 	}

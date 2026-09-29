@@ -1,13 +1,22 @@
 #pragma once
 
+#include <cstdint>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <glm/glm.hpp>
+#include <magic_enum/magic_enum.hpp>
+#include <magic_enum/magic_enum_flags.hpp>
 
 namespace render::input {
-	using InputEvents = uint32_t;
+	using magic_enum::bitwise_operators::operator~;
+	using magic_enum::bitwise_operators::operator|;
+	using magic_enum::bitwise_operators::operator&;
+	using magic_enum::bitwise_operators::operator|=;
+	using magic_enum::bitwise_operators::operator&=;
 
-	enum InputEvent : uint32_t {
+	enum class InputEvent : uint32_t {
+		None                       = 0,
 		MoveForward                = 1U << 0U,
 		MoveBackward               = 1U << 1U,
 		MoveRight                  = 1U << 2U,
@@ -21,10 +30,13 @@ namespace render::input {
 		AnyMouseButton             = ActionButton | SecondaryButton,
 		PlayerComponentsMenuToggle = 1U << 9U,
 		EventRuntimesMenuToggle    = 1U << 10U,
-		All                        = 1U << ((sizeof(InputEvents) * 8U) - 1U)
+		All                        = 1U << 31U
 	};
 
-	enum MouseButton : uint32_t {
+	using InputEvents = InputEvent;
+
+	enum class MouseButton : uint32_t {
+		None         = 0,
 		LeftButton   = 1U << 0U,
 		RightButton  = 1U << 1U,
 		MiddleButton = 1U << 2U,
@@ -50,36 +62,36 @@ namespace render::input {
 		float maxPitch = glm::radians(89.0f);
 	};
 
-	enum InputAction { Press, Release, Repeat };
+	enum class InputAction : uint8_t { Press, Release, Repeat };
 
-	using InputMods = uint32_t;
+	enum class InputMod : uint32_t { None = 0, Shift = 1U << 0U, Control = 1U << 1U, Alt = 1U << 2U, Super = 1U << 3U };
 
-	enum InputMod : uint32_t { Shift = 1U << 0U, Control = 1U << 1U, Alt = 1U << 2U, Super = 1U << 3U };
+	using InputMods = InputMod;
 
 	[[nodiscard]] constexpr bool hasModifier(const InputMods mods, const InputMod mod) {
-		return (mods & mod) != 0;
+		return magic_enum::enum_flags_test(mods, mod);
 	}
 
 	[[nodiscard]] constexpr bool hasEvent(const InputEvents events, const InputEvent event) {
-		return (events & event) != 0;
+		return magic_enum::enum_flags_test(events, event);
 	}
 
 	[[nodiscard]] constexpr bool hasAnyEvent(const InputEvents events, const InputEvents other) {
-		return (events & other) != 0;
+		return magic_enum::enum_flags_test_any(events, other);
 	}
 
 	[[nodiscard]] constexpr bool hasAllEvents(const InputEvents events, const InputEvents other) {
-		return (events & other) == other;
+		return magic_enum::enum_flags_test(events, other);
 	}
 
 	using Input = long;
 
 	[[nodiscard]] constexpr Input createInput(const int scancode, const InputMods mods) {
-		return (static_cast<Input>(scancode) << 8) | static_cast<Input>(mods);
+		return (static_cast<Input>(scancode) << 8) | static_cast<Input>(std::to_underlying(mods));
 	}
 
 	[[nodiscard]] constexpr Input createMouseInput(const MouseButton button, const InputMods mods) {
-		return (static_cast<Input>(button) << 16) | static_cast<Input>(mods);
+		return (static_cast<Input>(std::to_underlying(button)) << 16) | static_cast<Input>(std::to_underlying(mods));
 	}
 
 	[[nodiscard]] constexpr int getScancode(const Input input) {
