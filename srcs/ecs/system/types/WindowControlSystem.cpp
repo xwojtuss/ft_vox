@@ -12,10 +12,10 @@ void WindowControlSystem::onInput([[maybe_unused]] const InputEvent& event) cons
 		const render::input::InputEvents started = input.command.startedEvents;
 
 		if (!m_window.isMouseCursorVisible() && hasEvent(started, render::input::InputEvent::ToggleCursor))
-			releaseCursor(m_world->getEntity(entity));
+			releaseCursor(m_registry->getEntity(entity));
 		else if (m_window.isMouseCursorVisible() && !m_gui.wantsMouseCapture() &&
 				 hasAnyEvent(started, render::input::InputEvent::AnyMouseButton))
-			captureCursor(m_world->getEntity(entity));
+			captureCursor(m_registry->getEntity(entity));
 	}
 }
 

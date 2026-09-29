@@ -2,7 +2,7 @@
 
 #include <glm/gtc/epsilon.hpp>
 
-#include "scene/WorldInfo.hpp"
+#include "scene/PlanetInfo.hpp"
 #include "ecs/component/Components.hpp"
 #include "ecs/system/types/CameraSystem.hpp"
 #include "support/FakeRenderer.hpp"
@@ -10,7 +10,7 @@
 
 using ecs::component::Camera;
 using ecs::component::Transform;
-namespace worldinfo = scene::worldinfo;
+namespace planetinfo = scene::planetinfo;
 
 namespace {
 	bool nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
@@ -23,21 +23,21 @@ namespace {
 	}
 }
 
-SCENARIO("The camera sees the world from its entity's position and direction", "[ecs][camera]") {
+SCENARIO("The camera sees the scene from its entity's position and direction", "[ecs][camera]") {
 	GIVEN("a camera with a 70 degree field of view at (1, 2, 3), turned 90 degrees to the left") {
-		test::TestWorld testWorld;
-		testWorld.addSystem<ecs::CameraSystem>();
-		ecs::EntityHandle cameraEntity = testWorld.createEntity();
+		test::TestRegistry testRegistry;
+		testRegistry.addSystem<ecs::CameraSystem>();
+		ecs::EntityHandle cameraEntity = testRegistry.createEntity();
 		Transform         transform;
 		Camera            camera;
 		transform.position = {1.0f, 2.0f, 3.0f};
-		transform.rotation = glm::angleAxis(glm::radians(90.0f), worldinfo::up);
+		transform.rotation = glm::angleAxis(glm::radians(90.0f), planetinfo::up);
 		camera.fov         = 70.0f;
 		cameraEntity.add(transform);
 		cameraEntity.add(camera);
 
 		WHEN("a frame is rendered in a 16:9 window") {
-			testWorld.world.getSystemManager().onRender(16.0f / 9.0f, 1.0);
+			testRegistry.registry.getSystemManager().onRender(16.0f / 9.0f, 1.0);
 			const Camera& updated = cameraEntity.get<Camera>();
 
 			THEN("the projection uses its field of view and the window's aspect ratio") {
@@ -49,12 +49,12 @@ SCENARIO("The camera sees the world from its entity's position and direction", "
 			}
 			AND_THEN("what is in front of the entity is straight ahead in the view") {
 				REQUIRE(
-					nearlyEqual(seenFromCamera(updated, transform.position + worldinfo::left), {0.0f, 0.0f, -1.0f}));
+					nearlyEqual(seenFromCamera(updated, transform.position + planetinfo::left), {0.0f, 0.0f, -1.0f}));
 			}
 
 			AND_WHEN("the renderer finishes the frame") {
 				test::FakeRenderer renderer;
-				testWorld.world.getSystemManager().onRendererFrame(renderer);
+				testRegistry.registry.getSystemManager().onRendererFrame(renderer);
 
 				THEN("the renderer receives the camera's view") {
 					REQUIRE(renderer.cameraViews.size() == 1);

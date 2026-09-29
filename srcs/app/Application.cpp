@@ -5,7 +5,7 @@
 #include "assets/StbTextureLoader.hpp"
 #include "assets/TinyObjLoader.hpp"
 #include "game/block/BlockData.hpp"
-#include "game/world/ChunkManager.hpp"
+#include "game/planet/ChunkManager.hpp"
 #include "ecs/entity/EntityHandle.hpp"
 #include "ecs/system/types/CameraSystem.hpp"
 #include "ecs/system/types/ChunkSystem.hpp"
@@ -32,7 +32,7 @@ Application::Application() {
 	auto defaultTextureData         = m_textureLoader->toTextureData("textures/default.png");
 	defaultTextureData.pixelPerfect = true;
 	game::block::BlockDatas blockDatas(m_modelLoader->toMeshData("models/cube.obj"), std::move(defaultTextureData));
-	m_world = std::make_unique<World>(std::move(blockDatas));
+	m_registry = std::make_unique<Registry>(std::move(blockDatas));
 
 	m_window->getInputManager().getKeyInputProcessor().resetBindings();
 
@@ -40,16 +40,16 @@ Application::Application() {
 }
 
 void Application::init() const {
-	m_world->createSystem<CameraSystem>();
-	m_world->createSystem<MovementSystem>();
-	m_world->createSystem<RenderSystem>();
-	m_world->createSystem<WindowControlSystem>(*m_window, *m_gui);
-	m_world->createSystem<PlayerInputSystem>(m_window->getInputManager());
-	m_world->createSystem<GuiSystem>(*m_gui);
-	m_world->createSystem<ChunkSystem>(*m_world, *m_renderer);
-	m_world->getSystemManager().onWorldReady();
+	m_registry->createSystem<CameraSystem>();
+	m_registry->createSystem<MovementSystem>();
+	m_registry->createSystem<RenderSystem>();
+	m_registry->createSystem<WindowControlSystem>(*m_window, *m_gui);
+	m_registry->createSystem<PlayerInputSystem>(m_window->getInputManager());
+	m_registry->createSystem<GuiSystem>(*m_gui);
+	m_registry->createSystem<ChunkSystem>(*m_registry, *m_renderer);
+	m_registry->getSystemManager().onRegistryReady();
 
-	EntityHandle player = m_world->createEntity();
+	EntityHandle player = m_registry->createEntity();
 	player.add(component::Transform{});
 	player.add(component::Velocity{.maxSpeed = 10.0f, .acceleration = 4.5f, .deceleration = 10.0f});
 	player.add(component::Camera{.fov = 90.0f});
@@ -68,7 +68,7 @@ void Application::run() {
 }
 
 void Application::update() const {
-	m_world->getSystemManager().onRender(m_window->getAspectRatio(), m_window->getTime());
+	m_registry->getSystemManager().onRender(m_window->getAspectRatio(), m_window->getTime());
 }
 
 void Application::simulate() {
@@ -80,9 +80,9 @@ void Application::simulate() {
 	}
 	m_lastSimulateTime = time;
 
-	m_world->getSystemManager().onSimulate(static_cast<float>(dt), static_cast<float>(time));
+	m_registry->getSystemManager().onSimulate(static_cast<float>(dt), static_cast<float>(time));
 }
 
 void Application::render() const {
-	m_renderer->render(m_world->getSystemManager());
+	m_renderer->render(m_registry->getSystemManager());
 }

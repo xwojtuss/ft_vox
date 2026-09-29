@@ -3,7 +3,7 @@
 
 #include <glm/gtc/epsilon.hpp>
 
-#include "scene/WorldInfo.hpp"
+#include "scene/PlanetInfo.hpp"
 #include "ecs/component/Components.hpp"
 #include "ecs/system/types/MovementSystem.hpp"
 #include "ecs/system/types/PlayerInputSystem.hpp"
@@ -13,8 +13,8 @@ using Catch::Approx;
 using ecs::component::Input;
 using ecs::component::Transform;
 using render::input::InputAction;
-namespace input     = render::input;
-namespace worldinfo = scene::worldinfo;
+namespace input      = render::input;
+namespace planetinfo = scene::planetinfo;
 
 namespace {
 	constexpr int forwardKey = 17;
@@ -34,18 +34,18 @@ namespace {
 
 SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]") {
 	GIVEN("a player, with the forward key bound to moving forward") {
-		test::TestWorld             testWorld;
+		test::TestRegistry          testRegistry;
 		render::input::InputManager inputManager;
 		InputRecorder               recorder;
-		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
-		testWorld.dispatcher().subscribe(&recorder, &InputRecorder::onInput);
-		ecs::EntityHandle player = test::createPlayer(testWorld);
+		testRegistry.addSystem<ecs::PlayerInputSystem>(inputManager);
+		testRegistry.dispatcher().subscribe(&recorder, &InputRecorder::onInput);
+		ecs::EntityHandle player = test::createPlayer(testRegistry);
 		inputManager.getKeyInputProcessor().bindEvent(render::input::createInput(forwardKey, input::InputMod::None),
 													  input::InputEvent::MoveForward);
 
 		WHEN("the forward key is pressed and a simulation step runs") {
 			inputManager.processKey(forwardKey, InputAction::Press, input::InputMod::None);
-			testWorld.simulate(0.016f, 1.0f);
+			testRegistry.simulate(0.016f, 1.0f);
 
 			THEN("the player's command says they started moving forward") {
 				const render::input::InputCommand& command = player.get<Input>().command;
@@ -60,7 +60,7 @@ SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]"
 			}
 
 			AND_WHEN("the key is held through another step") {
-				testWorld.simulate(0.016f, 1.016f);
+				testRegistry.simulate(0.016f, 1.016f);
 
 				THEN("the player still moves forward, but it no longer counts as just started") {
 					const render::input::InputCommand& command = player.get<Input>().command;
@@ -75,15 +75,15 @@ SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]"
 
 // TODO: make pass
 SCENARIO("Without a player, no input event is sent", "[ecs][player-input][!mayfail]") {
-	GIVEN("a world with the player input system but no player") {
-		test::TestWorld             testWorld;
+	GIVEN("a registry with the player input system but no player") {
+		test::TestRegistry          testRegistry;
 		render::input::InputManager inputManager;
 		InputRecorder               recorder;
-		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
-		testWorld.dispatcher().subscribe(&recorder, &InputRecorder::onInput);
+		testRegistry.addSystem<ecs::PlayerInputSystem>(inputManager);
+		testRegistry.dispatcher().subscribe(&recorder, &InputRecorder::onInput);
 
 		WHEN("a simulation step runs") {
-			testWorld.simulate(0.016f, 1.0f);
+			testRegistry.simulate(0.016f, 1.0f);
 
 			THEN("nothing is sent") {
 				REQUIRE(recorder.events.empty());
@@ -94,25 +94,25 @@ SCENARIO("Without a player, no input event is sent", "[ecs][player-input][!mayfa
 
 SCENARIO("The mouse turns the player the way it moves", "[ecs][player-input][movement]") {
 	GIVEN("a player facing forward, turning 1 degree per pixel of mouse movement") {
-		test::TestWorld             testWorld;
+		test::TestRegistry          testRegistry;
 		render::input::InputManager inputManager;
-		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
-		testWorld.addSystem<ecs::MovementSystem>();
-		ecs::EntityHandle player = test::createPlayer(testWorld, glm::radians(1.0f));
+		testRegistry.addSystem<ecs::PlayerInputSystem>(inputManager);
+		testRegistry.addSystem<ecs::MovementSystem>();
+		ecs::EntityHandle player = test::createPlayer(testRegistry, glm::radians(1.0f));
 		inputManager.processMouseMove(0.0, 0.0);
 
 		WHEN("the mouse moves 90 pixels to the right") {
 			inputManager.processMouseMove(90.0, 0.0);
-			testWorld.simulate(0.016f, 1.0f);
+			testRegistry.simulate(0.016f, 1.0f);
 
 			THEN("the player turns 90 degrees to the right") {
-				REQUIRE(nearlyEqual(player.get<Transform>().forward(), worldinfo::right));
+				REQUIRE(nearlyEqual(player.get<Transform>().forward(), planetinfo::right));
 			}
 		}
 
 		WHEN("the mouse moves 30 pixels up the screen") {
 			inputManager.processMouseMove(0.0, -30.0);
-			testWorld.simulate(0.016f, 1.0f);
+			testRegistry.simulate(0.016f, 1.0f);
 
 			THEN("the player looks 30 degrees up") {
 				REQUIRE(player.get<Transform>().forward().y == Approx(std::sin(glm::radians(30.0f))).epsilon(1e-4));

@@ -59,8 +59,8 @@ namespace ecs {
 		}
 	};
 
-	struct WorldReadyEvent : public DispatchEvent {
-		WorldReadyEvent() : DispatchEvent("WorldReadyEvent") {
+	struct RegistryReadyEvent : public DispatchEvent {
+		RegistryReadyEvent() : DispatchEvent("RegistryReadyEvent") {
 		}
 	};
 

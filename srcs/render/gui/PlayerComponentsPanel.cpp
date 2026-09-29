@@ -4,14 +4,14 @@
 
 using namespace render::gui;
 
-PlayerComponentsPanel::PlayerComponentsPanel(IGui& gui, ecs::World& world) : APanel(gui), m_world(world) {
+PlayerComponentsPanel::PlayerComponentsPanel(IGui& gui, ecs::Registry& registry) : APanel(gui), m_registry(registry) {
 }
 
 void PlayerComponentsPanel::display() {
-	if (!m_isOpen || !m_world.getEntity(m_caller).has<ecs::component::Transform>())
+	if (!m_isOpen || !m_registry.getEntity(m_caller).has<ecs::component::Transform>())
 		return;
 
-	const std::vector<ecs::ComponentDescription> components = m_world.describe(m_caller);
+	const std::vector<ecs::ComponentDescription> components = m_registry.describe(m_caller);
 
 	if (m_gui.beginWindow("Player Components", &m_isOpen)) {
 		for (const auto& [name, details]: components) {

@@ -3,19 +3,19 @@
 #include "ecs/system/Dispatcher.hpp"
 
 namespace ecs {
-	class World;
+	class Registry;
 
 	class ASystem {
 	protected:
-		World* m_world{nullptr};
+		Registry* m_registry{nullptr};
 
 	public:
 		virtual ~ASystem() = default;
 
 		virtual void bindEvents(Dispatcher& dispatcher) = 0;
 
-		void registerWorld(World* world) {
-			m_world = world;
+		void setRegistry(Registry* registry) {
+			m_registry = registry;
 		}
 	};
 }

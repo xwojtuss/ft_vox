@@ -1,15 +1,15 @@
 #pragma once
 
 #include "render/gui/APanel.hpp"
-#include "ecs/World.hpp"
+#include "ecs/Registry.hpp"
 
 namespace render::gui {
 	class PlayerComponentsPanel : public APanel {
 	private:
-		ecs::World& m_world;
+		ecs::Registry& m_registry;
 
 	public:
-		PlayerComponentsPanel(IGui& gui, ecs::World& world);
+		PlayerComponentsPanel(IGui& gui, ecs::Registry& registry);
 
 		void display() override;
 	};

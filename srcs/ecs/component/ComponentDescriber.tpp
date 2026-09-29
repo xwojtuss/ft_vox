@@ -7,8 +7,8 @@ namespace ecs {
 	void ComponentDescriber::add(const std::string_view name) {
 		m_describers.push_back(
 			{.name     = std::string(name),
-			 .describe = [](const Registry& registry, const Entity entity) -> std::optional<std::string> {
-				 if (const ComponentType* component = registry.try_get<ComponentType>(entity))
+			 .describe = [](const Storage& storage, const Entity entity) -> std::optional<std::string> {
+				 if (const ComponentType* component = storage.try_get<ComponentType>(entity))
 					 return std::format("{}", *component);
 				 return std::nullopt;
 			 }});

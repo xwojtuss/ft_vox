@@ -6,7 +6,7 @@ A co-op voxel survival game in a triple star system: three suns reshape every pl
 
 ## Premise
 
-- Your ship crashed on a planet in a triple star system. _(open)_ A likely cause is flying through one star's zenith, when its forces are at their strongest.
+- Your ship crashed on a planet in a triple star system.
 - There is no story, narrator or quest book. **The research tree is the only guide**: its final goal is visible from day one.
 
 ## The world

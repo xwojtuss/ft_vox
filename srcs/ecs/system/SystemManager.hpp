@@ -21,7 +21,7 @@ namespace ecs {
 		template<typename SystemType>
 		[[nodiscard]] SystemType* getSystem();
 
-		void                      onWorldReady();
+		void                      onRegistryReady();
 		void                      onRender(float aspectRatio, double time);
 		void                      onRendererDraw(render::IRenderer& renderer);
 		void                      onRendererFrame(render::IRenderer& renderer);

@@ -1,4 +1,4 @@
-# End goal (draft)
+# End goal
 
 ## Winning
 

@@ -2,7 +2,7 @@
 
 ## Decision
 
-Every planet is a **flat square map that loops in both directions**. It turns into a sphere **only visually** as the player climbs, so players can fly around a planet and on to other planets with no loading cut, while gameplay stays on a simple flat grid. See [decisions/0001](../decisions/0001-looping-flat-planets.md).
+Every planet is a **flat square map that loops in both directions**. It turns into a sphere **only visually** as the player climbs, so players can fly around a planet and on to other planets with no loading cut, while gameplay stays on a simple flat grid. Decided in [#72](https://github.com/xwojtuss/ft_vox/issues/72).
 
 ## What it requires
 

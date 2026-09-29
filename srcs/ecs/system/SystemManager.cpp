@@ -2,8 +2,8 @@
 
 using namespace ecs;
 
-void SystemManager::onWorldReady() {
-	m_dispatcher.emit<WorldReadyEvent>(WorldReadyEvent{});
+void SystemManager::onRegistryReady() {
+	m_dispatcher.emit<RegistryReadyEvent>(RegistryReadyEvent{});
 }
 
 void SystemManager::onRender(const float aspectRatio, const double time) {

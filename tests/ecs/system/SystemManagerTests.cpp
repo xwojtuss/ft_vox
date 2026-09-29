@@ -30,11 +30,11 @@ SCENARIO("The system manager turns engine phases into events", "[ecs][systems]")
 		auto&              system = manager.addSystem<HealthSystem>();
 		system.bindEvents(manager.getDispatcher());
 
-		WHEN("the world becomes ready") {
-			manager.onWorldReady();
+		WHEN("the registry becomes ready") {
+			manager.onRegistryReady();
 
-			THEN("a world-ready event is sent") {
-				REQUIRE(system.receivedEvents == std::vector<std::string>{"WorldReadyEvent"});
+			THEN("a registry-ready event is sent") {
+				REQUIRE(system.receivedEvents == std::vector<std::string>{"RegistryReadyEvent"});
 			}
 		}
 

@@ -4,8 +4,8 @@
 #include "support/TestEcs.hpp"
 
 namespace test {
-	inline ecs::EntityHandle createPlayer(TestWorld& testWorld, float mouseSensitivity = 1.0f) {
-		ecs::EntityHandle player = testWorld.createEntity();
+	inline ecs::EntityHandle createPlayer(TestRegistry& testRegistry, float mouseSensitivity = 1.0f) {
+		ecs::EntityHandle player = testRegistry.createEntity();
 
 		player.add(ecs::component::Transform{});
 		player.add(ecs::component::Velocity{.maxSpeed = 10.0f, .acceleration = 5.0f, .deceleration = 5.0f});

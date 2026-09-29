@@ -12,17 +12,17 @@ namespace ecs {
 		if (!isAlive())
 			throw error::EcsError(std::format("cannot add {} to entity {}, it does not exist",
 											  entt::type_name<ComponentType>::value(), std::to_underlying(m_entity)));
-		return m_registry->emplace_or_replace<ComponentType>(m_entity, std::move(component));
+		return m_storage->emplace_or_replace<ComponentType>(m_entity, std::move(component));
 	}
 
 	template<typename ComponentType>
 	void EntityHandle::remove() const {
-		m_registry->remove<ComponentType>(m_entity);
+		m_storage->remove<ComponentType>(m_entity);
 	}
 
 	template<typename ComponentType>
 	bool EntityHandle::has() const {
-		return m_registry->all_of<ComponentType>(m_entity);
+		return m_storage->all_of<ComponentType>(m_entity);
 	}
 
 	template<typename ComponentType>
@@ -41,11 +41,11 @@ namespace ecs {
 
 	template<typename ComponentType>
 	ComponentType* EntityHandle::tryGet() {
-		return m_registry->try_get<ComponentType>(m_entity);
+		return m_storage->try_get<ComponentType>(m_entity);
 	}
 
 	template<typename ComponentType>
 	const ComponentType* EntityHandle::tryGet() const {
-		return std::as_const(*m_registry).try_get<ComponentType>(m_entity);
+		return std::as_const(*m_storage).try_get<ComponentType>(m_entity);
 	}
 }

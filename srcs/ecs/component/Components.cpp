@@ -4,28 +4,28 @@
 #include <utility>
 #include <magic_enum/magic_enum.hpp>
 
-#include "scene/WorldInfo.hpp"
+#include "scene/PlanetInfo.hpp"
 
 using namespace ecs::component;
 
 glm::vec3 Transform::forward() const {
-	return rotation * scene::worldinfo::forward;
+	return rotation * scene::planetinfo::forward;
 }
 
 glm::vec3 Transform::right() const {
-	return rotation * scene::worldinfo::right;
+	return rotation * scene::planetinfo::right;
 }
 
 glm::vec3 Transform::left() const {
-	return rotation * scene::worldinfo::left;
+	return rotation * scene::planetinfo::left;
 }
 
 glm::vec3 Transform::up() const {
-	return rotation * scene::worldinfo::up;
+	return rotation * scene::planetinfo::up;
 }
 
 glm::vec3 Transform::down() const {
-	return rotation * scene::worldinfo::down;
+	return rotation * scene::planetinfo::down;
 }
 
 glm::mat4 Transform::toModelMatrix() const {
