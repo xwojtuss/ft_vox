@@ -11,7 +11,3 @@
 ## Shape
 
 Every planet is a flat square map that loops in both directions and is shown as a sphere from above (see [../technical/planet-rendering.md](../technical/planet-rendering.md)).
-
-## Open
-
-- _(open)_ How many planets, and which kinds. Specific worlds are deliberately not decided yet.

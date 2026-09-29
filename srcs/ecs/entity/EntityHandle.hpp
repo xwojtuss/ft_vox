@@ -1,16 +1,16 @@
 #pragma once
 
 #include "ecs/entity/Entity.hpp"
-#include "ecs/Registry.hpp"
+#include "ecs/Storage.hpp"
 
 namespace ecs {
 	class EntityHandle {
 	private:
-		Registry* m_registry{};
-		Entity    m_entity;
+		Storage* m_storage{};
+		Entity   m_entity;
 
 	public:
-		EntityHandle(Registry& registry, Entity entity);
+		EntityHandle(Storage& storage, Entity entity);
 
 		[[nodiscard]] Entity id() const;
 		[[nodiscard]] bool   isAlive() const;

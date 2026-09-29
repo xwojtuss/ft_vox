@@ -22,14 +22,14 @@ namespace {
 			calls->push_back(name + " rendered");
 		}
 
-		void onWorldReady(const ecs::WorldReadyEvent&) const {
+		void onRegistryReady(const ecs::RegistryReadyEvent&) const {
 			calls->push_back(name + " ready");
 		}
 	};
 }
 
 SCENARIO("Events reach every subscriber of their type, in subscription order", "[ecs][dispatcher]") {
-	GIVEN("two listeners subscribed to simulate events and one to world-ready events") {
+	GIVEN("two listeners subscribed to simulate events and one to registry-ready events") {
 		ecs::Dispatcher          dispatcher;
 		std::vector<std::string> calls;
 		EventRecorder            first{.name = "first", .calls = &calls};
@@ -38,7 +38,7 @@ SCENARIO("Events reach every subscriber of their type, in subscription order", "
 
 		dispatcher.subscribe<ecs::SimulateEvent>(&first, &EventRecorder::onSimulate);
 		dispatcher.subscribe<ecs::SimulateEvent>(&second, &EventRecorder::onSimulate);
-		dispatcher.subscribe<ecs::WorldReadyEvent>(&other, &EventRecorder::onWorldReady);
+		dispatcher.subscribe<ecs::RegistryReadyEvent>(&other, &EventRecorder::onRegistryReady);
 
 		WHEN("a simulate event is emitted") {
 			dispatcher.emit(ecs::SimulateEvent(0.25f, 1.0f));
@@ -52,8 +52,8 @@ SCENARIO("Events reach every subscriber of their type, in subscription order", "
 			}
 		}
 
-		WHEN("a world-ready event is emitted") {
-			dispatcher.emit(ecs::WorldReadyEvent());
+		WHEN("a registry-ready event is emitted") {
+			dispatcher.emit(ecs::RegistryReadyEvent());
 
 			THEN("only its own listener gets it") {
 				REQUIRE(calls == std::vector<std::string>{"other ready"});
@@ -114,7 +114,7 @@ SCENARIO("Every event type has a readable name", "[ecs][dispatcher]") {
 		REQUIRE(ecs::RendererDrawEvent(nullptr).getName() == "RendererDrawEvent");
 		REQUIRE(ecs::RendererFrameEvent(nullptr).getName() == "RendererFrameEvent");
 		REQUIRE(ecs::InputEvent().getName() == "InputEvent");
-		REQUIRE(ecs::WorldReadyEvent().getName() == "WorldReadyEvent");
+		REQUIRE(ecs::RegistryReadyEvent().getName() == "RegistryReadyEvent");
 		REQUIRE(ecs::SimulateEvent(0.0f, 0.0f).getName() == "SimulateEvent");
 		REQUIRE(ecs::PlayerMoveEvent(glm::vec3(0.0f), glm::vec3(1.0f)).getName() == "PlayerMoveEvent");
 	}

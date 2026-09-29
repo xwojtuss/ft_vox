@@ -7,7 +7,7 @@
 #include "render/gui/IGui.hpp"
 #include "assets/IModelLoader.hpp"
 #include "assets/ITextureLoader.hpp"
-#include "ecs/World.hpp"
+#include "ecs/Registry.hpp"
 
 namespace app {
 	class Application {
@@ -17,7 +17,7 @@ namespace app {
 		std::unique_ptr<render::gui::IGui>         m_gui;
 		std::unique_ptr<assets::IModelLoader>      m_modelLoader;
 		std::unique_ptr<assets::ITextureLoader>    m_textureLoader;
-		std::unique_ptr<ecs::World>                m_world;
+		std::unique_ptr<ecs::Registry>             m_registry;
 		double                                     m_lastSimulateTime = 0.0;
 
 		void init() const;

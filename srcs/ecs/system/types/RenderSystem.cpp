@@ -5,7 +5,7 @@ using namespace ecs;
 
 void RenderSystem::onRendererDraw(const RendererDrawEvent& event) const {
 	for (auto&& [entity, transform, mesh]: entities()) {
-		const auto* texture = m_world->getEntity(entity).tryGet<component::Texture>();
+		const auto* texture = m_registry->getEntity(entity).tryGet<component::Texture>();
 		event.renderer->drawMesh(mesh, texture, transform);
 	}
 }

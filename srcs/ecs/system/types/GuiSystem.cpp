@@ -1,6 +1,6 @@
 #include "ecs/system/types/GuiSystem.hpp"
 #include "render/IRenderer.hpp"
-#include "ecs/World.hpp"
+#include "ecs/Registry.hpp"
 #include "render/gui/PlayerComponentsPanel.hpp"
 #include "render/gui/EventsRuntimePanel.hpp"
 
@@ -9,10 +9,10 @@ using namespace ecs;
 GuiSystem::GuiSystem(render::gui::IGui& gui) : m_gui(gui) {
 }
 
-void GuiSystem::onWorldReady([[maybe_unused]] const WorldReadyEvent& event) {
-	render::gui::PlayerComponentsPanel playerComponentsPanel(m_gui, *m_world);
+void GuiSystem::onRegistryReady([[maybe_unused]] const RegistryReadyEvent& event) {
+	render::gui::PlayerComponentsPanel playerComponentsPanel(m_gui, *m_registry);
 	registerPanel(render::input::InputEvent::PlayerComponentsMenuToggle, playerComponentsPanel);
-	render::gui::EventsRuntimePanel eventsRuntimePanel(m_gui, m_world->getSystemManager().getDispatcher());
+	render::gui::EventsRuntimePanel eventsRuntimePanel(m_gui, m_registry->getSystemManager().getDispatcher());
 	registerPanel(render::input::InputEvent::EventRuntimesMenuToggle, eventsRuntimePanel);
 }
 
@@ -46,5 +46,5 @@ void GuiSystem::onRendererFrame(const RendererFrameEvent& event) {
 void GuiSystem::bindEvents(Dispatcher& dispatcher) {
 	dispatcher.subscribe<InputEvent>(this, &GuiSystem::onInput);
 	dispatcher.subscribe<RendererFrameEvent>(this, &GuiSystem::onRendererFrame);
-	dispatcher.subscribe<WorldReadyEvent>(this, &GuiSystem::onWorldReady);
+	dispatcher.subscribe<RegistryReadyEvent>(this, &GuiSystem::onRegistryReady);
 }

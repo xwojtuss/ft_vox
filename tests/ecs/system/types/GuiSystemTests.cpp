@@ -25,28 +25,28 @@ namespace {
 		}
 	};
 
-	struct GuiWorld {
-		test::TestWorld    testWorld;
+	struct GuiRegistry {
+		test::TestRegistry testRegistry;
 		test::FakeGui      gui;
 		test::FakeRenderer renderer;
-		ecs::EntityHandle  player = test::createPlayer(testWorld);
+		ecs::EntityHandle  player = test::createPlayer(testRegistry);
 
-		GuiWorld() {
-			testWorld.addSystem<ecs::GuiSystem>(gui);
+		GuiRegistry() {
+			testRegistry.addSystem<ecs::GuiSystem>(gui);
 		}
 
-		void worldReady() {
-			testWorld.world.getSystemManager().onWorldReady();
+		void registryReady() {
+			testRegistry.registry.getSystemManager().onRegistryReady();
 		}
 
 		void press(input::InputEvents events) {
-			testWorld.dispatcher().emit(test::inputFrom(player, test::pressing(events)));
+			testRegistry.dispatcher().emit(test::inputFrom(player, test::pressing(events)));
 		}
 
 		void renderFrame() {
 			gui.openedWindows.clear();
 			gui.texts.clear();
-			testWorld.world.getSystemManager().onRendererFrame(renderer);
+			testRegistry.registry.getSystemManager().onRendererFrame(renderer);
 		}
 
 		[[nodiscard]] bool isShown(const std::string& window) const {
@@ -64,8 +64,8 @@ namespace {
 
 SCENARIO("The GUI is drawn as its own step at the end of every frame", "[ecs][gui]") {
 	GIVEN("a GUI with no open panels") {
-		GuiWorld env;
-		env.worldReady();
+		GuiRegistry env;
+		env.registryReady();
 
 		WHEN("a frame is rendered") {
 			env.renderFrame();
@@ -82,9 +82,9 @@ SCENARIO("The GUI is drawn as its own step at the end of every frame", "[ecs][gu
 }
 
 SCENARIO("The player components panel is toggled from the keyboard", "[ecs][gui]") {
-	GIVEN("a ready world with a player") {
-		GuiWorld env;
-		env.worldReady();
+	GIVEN("a ready registry with a player") {
+		GuiRegistry env;
+		env.registryReady();
 
 		WHEN("the player presses the player components toggle") {
 			env.press(input::InputEvent::PlayerComponentsMenuToggle);
@@ -117,8 +117,8 @@ SCENARIO("The player components panel is toggled from the keyboard", "[ecs][gui]
 		}
 	}
 
-	GIVEN("a world that is not ready yet") {
-		GuiWorld env;
+	GIVEN("a registry that is not ready yet") {
+		GuiRegistry env;
 
 		WHEN("the player presses the player components toggle") {
 			env.press(input::InputEvent::PlayerComponentsMenuToggle);
@@ -132,15 +132,15 @@ SCENARIO("The player components panel is toggled from the keyboard", "[ecs][gui]
 }
 
 SCENARIO("The events panel lists how long each event took", "[ecs][gui]") {
-	GIVEN("a ready world where a simulation step takes about 20 ms") {
-		GuiWorld         env;
+	GIVEN("a ready registry where a simulation step takes about 20 ms") {
+		GuiRegistry      env;
 		const SlowSystem slowSystem;
-		env.testWorld.dispatcher().subscribe(&slowSystem, &SlowSystem::onSimulate);
-		env.worldReady();
+		env.testRegistry.dispatcher().subscribe(&slowSystem, &SlowSystem::onSimulate);
+		env.registryReady();
 
 		WHEN("the events panel is opened after a simulation step") {
 			env.press(input::InputEvent::EventRuntimesMenuToggle);
-			env.testWorld.simulate(0.016f, 1.0f);
+			env.testRegistry.simulate(0.016f, 1.0f);
 			env.renderFrame();
 
 			THEN("the panel is shown and lists the simulate event") {
@@ -152,15 +152,15 @@ SCENARIO("The events panel lists how long each event took", "[ecs][gui]") {
 }
 
 SCENARIO("Event runtimes are shown in milliseconds", "[ecs][gui]") {
-	GIVEN("a ready world where a simulation step takes about 20 ms") {
-		GuiWorld         env;
+	GIVEN("a ready registry where a simulation step takes about 20 ms") {
+		GuiRegistry      env;
 		const SlowSystem slowSystem;
-		env.testWorld.dispatcher().subscribe(&slowSystem, &SlowSystem::onSimulate);
-		env.worldReady();
+		env.testRegistry.dispatcher().subscribe(&slowSystem, &SlowSystem::onSimulate);
+		env.registryReady();
 
 		WHEN("the events panel is opened after a simulation step") {
 			env.press(input::InputEvent::EventRuntimesMenuToggle);
-			env.testWorld.simulate(0.016f, 1.0f);
+			env.testRegistry.simulate(0.016f, 1.0f);
 			env.renderFrame();
 
 			THEN("the simulate event is shown as taking at least 20 ms") {

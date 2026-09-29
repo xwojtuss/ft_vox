@@ -2,7 +2,7 @@
 
 using namespace ecs;
 
-EntityHandle::EntityHandle(Registry& registry, const Entity entity) : m_registry(&registry), m_entity(entity) {
+EntityHandle::EntityHandle(Storage& storage, const Entity entity) : m_storage(&storage), m_entity(entity) {
 }
 
 Entity EntityHandle::id() const {
@@ -10,10 +10,10 @@ Entity EntityHandle::id() const {
 }
 
 bool EntityHandle::isAlive() const {
-	return m_registry->valid(m_entity);
+	return m_storage->valid(m_entity);
 }
 
 void EntityHandle::destroy() {
 	if (isAlive())
-		m_registry->destroy(m_entity);
+		m_storage->destroy(m_entity);
 }

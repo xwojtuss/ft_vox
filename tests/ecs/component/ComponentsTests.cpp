@@ -4,12 +4,12 @@
 #include <format>
 #include <glm/gtc/epsilon.hpp>
 
-#include "scene/WorldInfo.hpp"
+#include "scene/PlanetInfo.hpp"
 #include "ecs/component/Components.hpp"
 
 using Catch::Matchers::ContainsSubstring;
 using namespace ecs::component;
-namespace worldinfo = scene::worldinfo;
+namespace planetinfo = scene::planetinfo;
 
 namespace {
 	bool nearlyEqual(const glm::vec3& a, const glm::vec3& b) {
@@ -22,11 +22,11 @@ namespace {
 	}
 
 	glm::quat turnLeft90() {
-		return glm::angleAxis(glm::radians(90.0f), worldinfo::up);
+		return glm::angleAxis(glm::radians(90.0f), planetinfo::up);
 	}
 }
 
-SCENARIO("An unrotated transform faces the world's forward direction", "[ecs][transform]") {
+SCENARIO("An unrotated transform faces the planet's forward direction", "[ecs][transform]") {
 	GIVEN("a default transform") {
 		const Transform transform;
 
@@ -34,12 +34,12 @@ SCENARIO("An unrotated transform faces the world's forward direction", "[ecs][tr
 			REQUIRE(transform.position == glm::vec3(0.0f));
 			REQUIRE(transform.scale == glm::vec3(1.0f));
 		}
-		AND_THEN("its directions are the world's directions") {
-			REQUIRE(nearlyEqual(transform.forward(), worldinfo::forward));
-			REQUIRE(nearlyEqual(transform.right(), worldinfo::right));
-			REQUIRE(nearlyEqual(transform.left(), worldinfo::left));
-			REQUIRE(nearlyEqual(transform.up(), worldinfo::up));
-			REQUIRE(nearlyEqual(transform.down(), worldinfo::down));
+		AND_THEN("its directions are the planet's directions") {
+			REQUIRE(nearlyEqual(transform.forward(), planetinfo::forward));
+			REQUIRE(nearlyEqual(transform.right(), planetinfo::right));
+			REQUIRE(nearlyEqual(transform.left(), planetinfo::left));
+			REQUIRE(nearlyEqual(transform.up(), planetinfo::up));
+			REQUIRE(nearlyEqual(transform.down(), planetinfo::down));
 		}
 	}
 }
@@ -50,15 +50,15 @@ SCENARIO("Rotating a transform turns its directions with it", "[ecs][transform]"
 		transform.rotation = turnLeft90();
 
 		THEN("it now faces what used to be left") {
-			REQUIRE(nearlyEqual(transform.forward(), worldinfo::left));
+			REQUIRE(nearlyEqual(transform.forward(), planetinfo::left));
 		}
 		AND_THEN("its right is what used to be forward") {
-			REQUIRE(nearlyEqual(transform.right(), worldinfo::forward));
-			REQUIRE(nearlyEqual(transform.left(), worldinfo::backward));
+			REQUIRE(nearlyEqual(transform.right(), planetinfo::forward));
+			REQUIRE(nearlyEqual(transform.left(), planetinfo::backward));
 		}
 		AND_THEN("up and down do not change") {
-			REQUIRE(nearlyEqual(transform.up(), worldinfo::up));
-			REQUIRE(nearlyEqual(transform.down(), worldinfo::down));
+			REQUIRE(nearlyEqual(transform.up(), planetinfo::up));
+			REQUIRE(nearlyEqual(transform.down(), planetinfo::down));
 		}
 	}
 }
@@ -77,9 +77,9 @@ SCENARIO("The model matrix scales, then rotates, then moves", "[ecs][transform]"
 		WHEN("it is also turned 90 degrees to the left") {
 			transform.rotation = turnLeft90();
 
-			THEN("a point 1 unit in front of the model ends up 2 units to the world's left of the position") {
-				const glm::vec4 front = transform.toModelMatrix() * glm::vec4(worldinfo::forward, 1.0f);
-				REQUIRE(nearlyEqual(glm::vec3(front), transform.position + 2.0f * worldinfo::left));
+			THEN("a point 1 unit in front of the model ends up 2 units to the planet's left of the position") {
+				const glm::vec4 front = transform.toModelMatrix() * glm::vec4(planetinfo::forward, 1.0f);
+				REQUIRE(nearlyEqual(glm::vec3(front), transform.position + 2.0f * planetinfo::left));
 			}
 		}
 	}

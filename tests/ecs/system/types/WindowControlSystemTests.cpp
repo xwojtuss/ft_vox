@@ -12,9 +12,9 @@ using ecs::component::Velocity;
 namespace input = render::input;
 
 namespace {
-	void press(test::TestWorld& testWorld, ecs::EntityHandle& player, render::input::InputEvents events) {
+	void press(test::TestRegistry& testRegistry, ecs::EntityHandle& player, render::input::InputEvents events) {
 		player.get<Input>().command = test::pressing(events);
-		testWorld.dispatcher().emit(test::inputFrom(player, player.get<Input>().command));
+		testRegistry.dispatcher().emit(test::inputFrom(player, player.get<Input>().command));
 	}
 
 	bool isFrozen(ecs::EntityHandle& player) {
@@ -28,14 +28,14 @@ namespace {
 
 SCENARIO("Releasing the cursor freezes the player until they click back into the game", "[ecs][window-control]") {
 	GIVEN("a player playing with the cursor captured") {
-		test::TestWorld  testWorld;
-		test::FakeWindow window;
-		test::FakeGui    gui;
-		testWorld.addSystem<ecs::WindowControlSystem>(window, gui);
-		ecs::EntityHandle player = test::createPlayer(testWorld);
+		test::TestRegistry testRegistry;
+		test::FakeWindow   window;
+		test::FakeGui      gui;
+		testRegistry.addSystem<ecs::WindowControlSystem>(window, gui);
+		ecs::EntityHandle player = test::createPlayer(testRegistry);
 
 		WHEN("they press the cursor toggle") {
-			press(testWorld, player, input::InputEvent::ToggleCursor);
+			press(testRegistry, player, input::InputEvent::ToggleCursor);
 
 			THEN("the cursor is shown in the middle of the window") {
 				REQUIRE(window.cursorVisible);
@@ -46,7 +46,7 @@ SCENARIO("Releasing the cursor freezes the player until they click back into the
 			}
 
 			AND_WHEN("they click into the game") {
-				press(testWorld, player, input::InputEvent::ActionButton);
+				press(testRegistry, player, input::InputEvent::ActionButton);
 
 				THEN("the cursor is captured again and the player can move and look around") {
 					REQUIRE_FALSE(window.cursorVisible);
@@ -56,7 +56,7 @@ SCENARIO("Releasing the cursor freezes the player until they click back into the
 
 			AND_WHEN("they click on a menu") {
 				gui.capturingMouse = true;
-				press(testWorld, player, input::InputEvent::SecondaryButton);
+				press(testRegistry, player, input::InputEvent::SecondaryButton);
 
 				THEN("the cursor stays visible and the player stays frozen") {
 					REQUIRE(window.cursorVisible);
@@ -66,7 +66,7 @@ SCENARIO("Releasing the cursor freezes the player until they click back into the
 		}
 
 		WHEN("they click while the cursor is already captured") {
-			press(testWorld, player, input::InputEvent::ActionButton);
+			press(testRegistry, player, input::InputEvent::ActionButton);
 
 			THEN("nothing changes") {
 				REQUIRE_FALSE(window.cursorVisible);
@@ -76,21 +76,21 @@ SCENARIO("Releasing the cursor freezes the player until they click back into the
 	}
 
 	GIVEN("an entity with only an Input component") {
-		test::TestWorld  testWorld;
-		test::FakeWindow window;
-		test::FakeGui    gui;
-		testWorld.addSystem<ecs::WindowControlSystem>(window, gui);
-		ecs::EntityHandle controller = testWorld.createEntity();
+		test::TestRegistry testRegistry;
+		test::FakeWindow   window;
+		test::FakeGui      gui;
+		testRegistry.addSystem<ecs::WindowControlSystem>(window, gui);
+		ecs::EntityHandle controller = testRegistry.createEntity();
 		Input             input;
 		input.command = test::pressing(input::InputEvent::ToggleCursor);
 		controller.add(input);
 
 		THEN("it can still toggle the cursor both ways") {
-			testWorld.dispatcher().emit(test::inputFrom(controller, input.command));
+			testRegistry.dispatcher().emit(test::inputFrom(controller, input.command));
 			REQUIRE(window.cursorVisible);
 
 			controller.get<Input>().command = test::pressing(input::InputEvent::ActionButton);
-			testWorld.dispatcher().emit(test::inputFrom(controller, input.command));
+			testRegistry.dispatcher().emit(test::inputFrom(controller, input.command));
 			REQUIRE_FALSE(window.cursorVisible);
 		}
 	}

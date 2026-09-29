@@ -2,18 +2,18 @@
 
 #include "ecs/system/ASystem.hpp"
 #include "ecs/system/DispatcherEvents.hpp"
-#include "game/world/ChunkManager.hpp"
+#include "game/planet/ChunkManager.hpp"
 
 namespace ecs {
-	class World;
+	class Registry;
 
 	class ChunkSystem : public ASystem {
 	private:
-		game::world::ChunkManager m_chunkManager;
+		game::planet::ChunkManager m_chunkManager;
 
 	public:
-		ChunkSystem(World& world, render::IRenderer& renderer,
-					glm::vec<3, unsigned short> renderDistance = scene::worldinfo::renderDistance);
+		ChunkSystem(Registry& registry, render::IRenderer& renderer,
+					glm::vec<3, unsigned short> renderDistance = scene::planetinfo::renderDistance);
 
 		void bindEvents(Dispatcher& dispatcher) override;
 	};

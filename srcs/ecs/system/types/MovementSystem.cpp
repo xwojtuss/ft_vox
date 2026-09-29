@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "scene/WorldInfo.hpp"
+#include "scene/PlanetInfo.hpp"
 
 using namespace ecs;
 
@@ -36,21 +36,21 @@ void MovementSystem::onSimulate(const SimulateEvent& event) const {
 	}
 
 	for (const PlayerMoveEvent& move: moves)
-		m_world->getSystemManager().getDispatcher().emit(move);
+		m_registry->getSystemManager().getDispatcher().emit(move);
 }
 
 void MovementSystem::onInput(const InputEvent& event) const {
 	if (!processes(event.source))
 		return;
 
-	EntityHandle                       player    = m_world->getEntity(event.source);
+	EntityHandle                       player    = m_registry->getEntity(event.source);
 	auto&                              velocity  = player.get<component::Velocity>();
 	auto&                              transform = player.get<component::Transform>();
 	const component::Input&            input     = player.get<component::Input>();
 	const render::input::InputCommand& command   = event.command;
 
 	velocity.desiredVelocity = transform.forward() * command.moveForward + transform.right() * command.moveRight +
-							   scene::worldinfo::up * command.moveUp;
+							   scene::planetinfo::up * command.moveUp;
 	if (!transform.canRotate)
 		return;
 
@@ -62,7 +62,7 @@ void MovementSystem::onInput(const InputEvent& event) const {
 	const float clampedDelta = glm::clamp(pitchDelta, -command.maxPitch, command.maxPitch);
 
 	const glm::quat rotX = glm::angleAxis(clampedDelta, transform.right());
-	const glm::quat rotY = glm::angleAxis(angleY, scene::worldinfo::up);
+	const glm::quat rotY = glm::angleAxis(angleY, scene::planetinfo::up);
 	transform.rotation   = glm::normalize(rotY * rotX * transform.rotation);
 }
 

@@ -10,8 +10,8 @@ using ecs::component::Texture;
 using ecs::component::Transform;
 
 namespace {
-	ecs::EntityHandle createDrawable(test::TestWorld& testWorld, const glm::vec3 position) {
-		ecs::EntityHandle entity = testWorld.createEntity();
+	ecs::EntityHandle createDrawable(test::TestRegistry& testRegistry, const glm::vec3 position) {
+		ecs::EntityHandle entity = testRegistry.createEntity();
 		entity.add(Transform{.position = position});
 		entity.add(Mesh{});
 		return entity;
@@ -30,17 +30,17 @@ namespace {
 
 SCENARIO("Every entity with a mesh and a position is drawn each frame", "[ecs][render]") {
 	GIVEN("a textured mesh, an untextured mesh, and a position without a mesh") {
-		test::TestWorld    testWorld;
+		test::TestRegistry testRegistry;
 		test::FakeRenderer renderer;
-		testWorld.addSystem<ecs::RenderSystem>();
+		testRegistry.addSystem<ecs::RenderSystem>();
 
-		ecs::EntityHandle textured = createDrawable(testWorld, {1.0f, 0.0f, 0.0f});
+		ecs::EntityHandle textured = createDrawable(testRegistry, {1.0f, 0.0f, 0.0f});
 		textured.add(Texture{});
-		ecs::EntityHandle const untextured = createDrawable(testWorld, {2.0f, 0.0f, 0.0f});
-		testWorld.createEntity().add(Transform{.position = {3.0f, 0.0f, 0.0f}});
+		ecs::EntityHandle const untextured = createDrawable(testRegistry, {2.0f, 0.0f, 0.0f});
+		testRegistry.createEntity().add(Transform{.position = {3.0f, 0.0f, 0.0f}});
 
 		WHEN("the renderer draws the scene") {
-			testWorld.world.getSystemManager().onRendererDraw(renderer);
+			testRegistry.registry.getSystemManager().onRendererDraw(renderer);
 
 			THEN("only the two meshes are drawn") {
 				REQUIRE(renderer.drawnMeshes.size() == 2);

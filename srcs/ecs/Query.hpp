@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <utility>
 
-#include "ecs/Registry.hpp"
+#include "ecs/Storage.hpp"
 
 namespace ecs {
 	/**
@@ -13,12 +13,12 @@ namespace ecs {
 	template<typename... Components>
 	class Query {
 	private:
-		using View = decltype(std::declval<Registry&>().view<Components...>());
+		using View = decltype(std::declval<Storage&>().view<Components...>());
 
 		View m_view{};
 
 	public:
-		explicit Query(Registry& registry) : m_view(registry.view<Components...>()) {
+		explicit Query(Storage& storage) : m_view(storage.view<Components...>()) {
 		}
 
 		[[nodiscard]] auto begin() const {

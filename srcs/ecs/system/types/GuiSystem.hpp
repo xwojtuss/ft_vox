@@ -26,7 +26,7 @@ namespace ecs {
 	public:
 		explicit GuiSystem(render::gui::IGui& gui);
 
-		void onWorldReady(const WorldReadyEvent& event);
+		void onRegistryReady(const RegistryReadyEvent& event);
 		void onInput(const InputEvent& event);
 		void onRendererFrame(const RendererFrameEvent& event);
 		void bindEvents(Dispatcher& dispatcher) override;
