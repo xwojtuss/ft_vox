@@ -20,7 +20,8 @@ namespace game::planet {
 	private:
 		struct ModelTriangle {
 			std::array<render::Vertex, 3> vertices;
-			std::optional<Face>           cullFace;
+			Face                          face{};
+			bool                          cullable{};
 		};
 
 		struct PreparedModel {
