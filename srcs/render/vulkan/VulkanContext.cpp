@@ -40,8 +40,8 @@ namespace {
 	}
 
 	bool hasExtension(const std::vector<VkExtensionProperties>& extensions, const std::string_view name) {
-		return std::any_of(extensions.begin(), extensions.end(),
-						   [name](const VkExtensionProperties& extension) { return name == extension.extensionName; });
+		return std::ranges::any_of(
+			extensions, [name](const VkExtensionProperties& extension) { return name == extension.extensionName; });
 	}
 
 	void addExtensionOnce(std::vector<const char*>& extensions, const char* name) {
@@ -56,6 +56,9 @@ bool QueueFamilyIndices::isComplete() const {
 }
 
 void VulkanContext::createInstance() {
+	if (const VkResult result = volkInitialize(); result != VK_SUCCESS)
+		throw VulkanError("no Vulkan loader was found on this system", result);
+
 	const std::vector<VkExtensionProperties> availableExtensions = availableInstanceExtensions();
 
 	uint32_t           windowExtensionCount = 0;
@@ -103,6 +106,7 @@ void VulkanContext::createInstance() {
 
 	if (const VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance); result != VK_SUCCESS)
 		throw VulkanError("failed to create instance", result);
+	volkLoadInstance(m_instance);
 
 	if (logValidation)
 		m_debugMessenger = VulkanValidationLayers::createMessenger(m_instance);
@@ -172,8 +176,6 @@ bool VulkanContext::checkExtensionSupport(VkPhysicalDevice device) {
 	return requiredExtensions.empty();
 }
 
-const DeviceExtensions VulkanContext::deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
 VulkanContext::VulkanContext(platform::window::IWindow& window) : m_window(window) {
 	createInstance();
 	createSurface();
@@ -216,8 +218,11 @@ void VulkanContext::choosePhysicalDevice() {
 	if (m_physicalDevice == VK_NULL_HANDLE)
 		throw VulkanError("failed to find a GPU that can draw to this window");
 
-	m_queueFamilyIndices = findQueueFamilies(m_physicalDevice);
-	m_swapChainSupport   = querySwapChainSupport(m_physicalDevice);
+	const QueueFamilyIndices indices = findQueueFamilies(m_physicalDevice);
+	if (!indices.graphicsFamily || !indices.presentFamily)
+		throw VulkanError("the chosen GPU has no queue that can draw or present");
+	m_queueFamilies    = {.graphics = *indices.graphicsFamily, .present = *indices.presentFamily};
+	m_swapChainSupport = querySwapChainSupport(m_physicalDevice);
 
 	VkPhysicalDeviceProperties properties;
 	vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
@@ -226,10 +231,8 @@ void VulkanContext::choosePhysicalDevice() {
 }
 
 void VulkanContext::createLogicalDevice() {
-	QueueFamilyIndices indices = findQueueFamilies(m_physicalDevice);
-
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	const std::set uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+	const std::set                       uniqueQueueFamilies = {m_queueFamilies.graphics, m_queueFamilies.present};
 
 	constexpr float queuePriority = 1.0f;
 	for (const uint32_t queueFamily: uniqueQueueFamilies) {
@@ -250,7 +253,7 @@ void VulkanContext::createLogicalDevice() {
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
 
-	DeviceExtensions enabledExtensions = deviceExtensions;
+	DeviceExtensions enabledExtensions(deviceExtensions.begin(), deviceExtensions.end());
 	if (hasExtension(availableDeviceExtensions(m_physicalDevice), portabilitySubsetExtension))
 		enabledExtensions.push_back(portabilitySubsetExtension);
 
@@ -267,8 +270,9 @@ void VulkanContext::createLogicalDevice() {
 		result != VK_SUCCESS) {
 		throw VulkanError("failed to create logical device", result);
 	}
-	vkGetDeviceQueue(m_logicalDevice, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
-	vkGetDeviceQueue(m_logicalDevice, indices.presentFamily.value(), 0, &m_presentQueue);
+	volkLoadDevice(m_logicalDevice);
+	vkGetDeviceQueue(m_logicalDevice, m_queueFamilies.graphics, 0, &m_graphicsQueue);
+	vkGetDeviceQueue(m_logicalDevice, m_queueFamilies.present, 0, &m_presentQueue);
 }
 
 uint32_t VulkanContext::findMemoryType(const uint32_t typeFilter, const VkMemoryPropertyFlags properties) const {
@@ -277,7 +281,8 @@ uint32_t VulkanContext::findMemoryType(const uint32_t typeFilter, const VkMemory
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
 
 	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+		if (((typeFilter & (1 << i)) != 0u) &&
+			(memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
 			return i;
 		}
 	}
@@ -357,8 +362,8 @@ SwapChainSupportDetails VulkanContext::querySwapChainSupport(VkPhysicalDevice de
 	return details;
 }
 
-const QueueFamilyIndices& VulkanContext::getQueueFamilyIndices() const {
-	return m_queueFamilyIndices;
+const QueueFamilies& VulkanContext::getQueueFamilies() const {
+	return m_queueFamilies;
 }
 
 const VkInstance& VulkanContext::getInstance() const {

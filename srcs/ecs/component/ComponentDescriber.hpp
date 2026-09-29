@@ -4,6 +4,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ecs/Registry.hpp"
@@ -25,7 +26,7 @@ namespace ecs {
 
 	public:
 		template<typename ComponentType>
-		void add(std::string name);
+		void add(std::string_view name);
 
 		[[nodiscard]] std::vector<ComponentDescription> describe(const Registry& registry, Entity entity) const;
 	};

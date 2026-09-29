@@ -1,4 +1,5 @@
 #include "render/vulkan/VulkanRenderer.hpp"
+#include <cstring>
 #include "render/vulkan/VulkanValidationLayers.hpp"
 #include "render/vulkan/VulkanVertexUtils.hpp"
 #include "render/vulkan/pipeline/TexturePipeline.hpp"
@@ -6,6 +7,8 @@
 #include "platform/filesystem/readFile.hpp"
 #include "render/vulkan/VulkanError.hpp"
 #include "ecs/component/Components.hpp"
+
+#include <ranges>
 
 using namespace render::vulkan;
 
@@ -19,7 +22,7 @@ VulkanRenderer::VulkanRenderer(platform::window::IWindow& window) {
 }
 
 assets::MeshHandle VulkanRenderer::createMesh(const assets::MeshData& meshData) {
-	GpuMesh mesh;
+	GpuMesh mesh{};
 
 	VulkanFrameData::createVertexBuffer(*m_context, *m_resourceManager, meshData, mesh);
 	VulkanFrameData::createIndexBuffer(*m_context, *m_resourceManager, meshData, mesh);
@@ -82,7 +85,7 @@ void VulkanRenderer::drawMesh(const ecs::component::Mesh& mesh, const ecs::compo
 
 	vkCmdBindIndexBuffer(m_frameData->getCurrentCommandBuffer(), gpuMesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-	if (texture) {
+	if (texture != nullptr) {
 		const GpuTexture& gpuTexture = m_resourceManager->getTexture(texture->texture);
 		vkCmdBindDescriptorSets(m_frameData->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,
 								pipeline.getPipelineLayout(), 1, 1, &gpuTexture.descriptorSet, 0, nullptr);
@@ -106,10 +109,7 @@ void VulkanRenderer::updateCamera(const ecs::component::Camera& camera) {
 	memcpy(m_frameData->getCurrentMappedFrameUBO(), &frameUbo, sizeof(frameUbo));
 }
 
-void VulkanRenderer::recordCurrentCommandBuffer(ecs::SystemManager& systemManager) {
-	if (!m_frameIndex.has_value())
-		return;
-
+void VulkanRenderer::recordCommandBuffer(ecs::SystemManager& systemManager, const uint32_t imageIndex) {
 	VkCommandBuffer commandBuffer = m_frameData->getCurrentCommandBuffer();
 
 	VkCommandBufferBeginInfo beginInfo{};
@@ -124,8 +124,8 @@ void VulkanRenderer::recordCurrentCommandBuffer(ecs::SystemManager& systemManage
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass        = m_swapchain->getRenderPass();
-	renderPassInfo.framebuffer       = m_swapchain->getFramebuffer(m_frameIndex.value());
-	renderPassInfo.renderArea.offset = {0, 0};
+	renderPassInfo.framebuffer       = m_swapchain->getFramebuffer(imageIndex);
+	renderPassInfo.renderArea.offset = {.x = 0, .y = 0};
 	renderPassInfo.renderArea.extent = m_swapchain->getExtent();
 
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(m_clearValues.size());
@@ -141,59 +141,56 @@ void VulkanRenderer::recordCurrentCommandBuffer(ecs::SystemManager& systemManage
 	}
 }
 
-void VulkanRenderer::beginFrame() {
-	m_frameIndex = 0;
+void VulkanRenderer::recreateSwapchain() {
+	vkDeviceWaitIdle(m_context->getLogicalDevice());
+	cleanupPipelines();
 
+	m_swapchain->recreateSwapChain(*m_context);
+	createPipelines();
+	createRenderFinishedSemaphores();
+}
+
+std::optional<uint32_t> VulkanRenderer::acquireImage() {
 	if (const VkResult result = m_frameData->waitForFences(*m_context, m_frameData->getCurrentFrame());
 		result != VK_SUCCESS)
 		throw VulkanError("failed to wait for the previous frame", result);
 
+	uint32_t       imageIndex = 0;
 	const VkResult result =
 		vkAcquireNextImageKHR(m_context->getLogicalDevice(), m_swapchain->getSwapChain(), UINT64_MAX,
-							  m_frameData->getCurrentImageAvailableSemaphore(), VK_NULL_HANDLE, &m_frameIndex.value());
+							  m_frameData->getCurrentImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-		vkDeviceWaitIdle(m_context->getLogicalDevice());
-		cleanupPipelines();
-
-		m_swapchain->recreateSwapChain(*m_context);
-		createPipelines();
-		createRenderFinishedSemaphores();
-
-		m_frameIndex.reset();
-		return;
+		recreateSwapchain();
+		return std::nullopt;
 	}
 	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 		throw VulkanError("failed to acquire swap chain image", result);
 	}
+	return imageIndex;
 }
 
 void VulkanRenderer::render(ecs::SystemManager& systemManager) {
-	beginFrame();
-	if (!m_frameIndex.has_value()) {
-		endFrame();
+	const std::optional<uint32_t> imageIndex = acquireImage();
+	if (!imageIndex)
 		return;
-	}
 
 	// Only reset the fence if we are submitting work
 	m_frameData->resetFences(*m_context, m_frameData->getCurrentFrame());
 
 	vkResetCommandBuffer(m_frameData->getCurrentCommandBuffer(), 0);
-	recordCurrentCommandBuffer(systemManager);
-	m_frameData->submitCommandBuffer(*m_context, m_renderFinishedSemaphores[m_frameIndex.value()]);
+	recordCommandBuffer(systemManager, *imageIndex);
+	m_frameData->submitCommandBuffer(*m_context, m_renderFinishedSemaphores[*imageIndex]);
 
-	endFrame();
+	present(*imageIndex);
 }
 
 void VulkanRenderer::render(render::gui::IGui& gui) {
 	gui.render(m_frameData->getCurrentCommandBuffer());
 }
 
-void VulkanRenderer::endFrame() {
-	if (!m_frameIndex.has_value())
-		return;
-
-	VkSemaphore signalSemaphore = m_renderFinishedSemaphores[m_frameIndex.value()];
+void VulkanRenderer::present(const uint32_t imageIndex) {
+	VkSemaphore signalSemaphore = m_renderFinishedSemaphores[imageIndex];
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -201,20 +198,15 @@ void VulkanRenderer::endFrame() {
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores    = &signalSemaphore;
 
-	const VkSwapchainKHR swapChains[] = {m_swapchain->getSwapChain()};
-	presentInfo.swapchainCount        = 1;
-	presentInfo.pSwapchains           = swapChains;
-	presentInfo.pImageIndices         = &m_frameIndex.value();
-	presentInfo.pResults              = nullptr;
+	auto* const swapChain      = m_swapchain->getSwapChain();
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains    = &swapChain;
+	presentInfo.pImageIndices  = &imageIndex;
+	presentInfo.pResults       = nullptr;
 
 	if (const VkResult result = vkQueuePresentKHR(m_context->getPresentQueue(), &presentInfo);
 		result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_context->getWindow().wasResized()) {
-		vkDeviceWaitIdle(m_context->getLogicalDevice());
-		cleanupPipelines();
-
-		m_swapchain->recreateSwapChain(*m_context);
-		createPipelines();
-		createRenderFinishedSemaphores();
+		recreateSwapchain();
 	} else if (result != VK_SUCCESS) {
 		throw VulkanError("failed to present swap chain image", result);
 	}
@@ -224,7 +216,7 @@ void VulkanRenderer::endFrame() {
 
 void VulkanRenderer::setClearColor(float r, float g, float b, float a) {
 	m_clearValues[0].color        = {{r, g, b, a}};
-	m_clearValues[1].depthStencil = {1.0f, 0};
+	m_clearValues[1].depthStencil = {.depth = 1.0f, .stencil = 0};
 }
 
 void VulkanRenderer::setClearColor(int hexColor) {
@@ -236,7 +228,7 @@ void VulkanRenderer::setClearColor(int hexColor) {
 }
 
 void VulkanRenderer::cleanupPipelines() {
-	for (auto const& [_, pipeline]: m_pipelineHandles) {
+	for (const auto& pipeline: m_pipelineHandles | std::views::values) {
 		pipeline->cleanup(m_context->getLogicalDevice());
 	}
 	m_pipelineHandles.clear();

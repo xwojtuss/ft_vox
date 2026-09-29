@@ -1,6 +1,7 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include <volk.h>
+#include <array>
 #include <vector>
 #include <optional>
 
@@ -20,6 +21,11 @@ namespace render::vulkan {
 		[[nodiscard]] bool isComplete() const;
 	};
 
+	struct QueueFamilies {
+		uint32_t graphics;
+		uint32_t present;
+	};
+
 	struct SwapChainSupportDetails {
 		VkSurfaceCapabilitiesKHR        capabilities{};
 		std::vector<VkSurfaceFormatKHR> formats;
@@ -37,7 +43,7 @@ namespace render::vulkan {
 		VkSurfaceKHR               m_surface{};
 		VkDebugUtilsMessengerEXT   m_debugMessenger{};
 		SwapChainSupportDetails    m_swapChainSupport;
-		QueueFamilyIndices         m_queueFamilyIndices;
+		QueueFamilies              m_queueFamilies{};
 		VkSampleCountFlagBits      m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 		std::optional<uint32_t>    m_memoryType;
 		bool                       m_samplerAnisotropyEnabled = false;
@@ -49,11 +55,15 @@ namespace render::vulkan {
 		static bool        checkExtensionSupport(VkPhysicalDevice device);
 
 	public:
-		static const DeviceExtensions deviceExtensions;
+		static constexpr std::array deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 		[[nodiscard]] static int deviceTypeScore(VkPhysicalDeviceType type);
 
 		explicit VulkanContext(platform::window::IWindow&);
+		VulkanContext(const VulkanContext&)            = delete;
+		VulkanContext& operator=(const VulkanContext&) = delete;
+		VulkanContext(VulkanContext&&)                 = delete;
+		VulkanContext& operator=(VulkanContext&&)      = delete;
 		~VulkanContext();
 
 		void                    choosePhysicalDevice();
@@ -64,7 +74,7 @@ namespace render::vulkan {
 													VkFormatFeatureFlags features) const;
 		QueueFamilyIndices      findQueueFamilies(VkPhysicalDevice device) const;
 		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) const;
-		[[nodiscard]] const QueueFamilyIndices&    getQueueFamilyIndices() const;
+		[[nodiscard]] const QueueFamilies&         getQueueFamilies() const;
 		[[nodiscard]] const VkInstance&            getInstance() const;
 		[[nodiscard]] const VkSurfaceKHR&          getSurface() const;
 		[[nodiscard]] const VkDevice&              getLogicalDevice() const;

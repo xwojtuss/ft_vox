@@ -66,7 +66,7 @@ SCENARIO("Movement input sets where the player wants to go, relative to where th
 		}
 
 		WHEN("the input comes from an entity that is not in the movement system") {
-			ecs::EntityHandle stranger = testWorld.createEntity();
+			ecs::EntityHandle const stranger = testWorld.createEntity();
 			testWorld.dispatcher().emit(test::inputFrom(stranger, moving(1.0f, 0.0f, 0.0f)));
 
 			THEN("the player is not affected") {
@@ -124,7 +124,7 @@ SCENARIO("The player speeds up towards where they want to go, up to their top sp
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
 		ecs::EntityHandle player   = test::createPlayer(testWorld);
-		Velocity&         velocity = player.get<Velocity>();
+		auto&             velocity = player.get<Velocity>();
 		velocity.desiredVelocity   = worldinfo::forward;
 
 		WHEN("0.1 s passes") {
@@ -163,7 +163,7 @@ SCENARIO("The player slows down to a stop when no direction is held", "[ecs][mov
 		test::TestWorld testWorld;
 		testWorld.addSystem<ecs::MovementSystem>();
 		ecs::EntityHandle player   = test::createPlayer(testWorld);
-		Velocity&         velocity = player.get<Velocity>();
+		auto&             velocity = player.get<Velocity>();
 		velocity.velocity          = worldinfo::forward;
 
 		WHEN("0.1 s passes") {

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <spdlog/async.h>
@@ -15,7 +16,7 @@ namespace logging {
 	namespace {
 		constexpr std::size_t queueSize         = 8192;
 		constexpr std::size_t backgroundThreads = 1;
-		constexpr std::size_t bytesPerMegabyte  = 1024 * 1024;
+		constexpr std::size_t bytesPerMegabyte  = static_cast<const std::size_t>(1024 * 1024);
 
 		constexpr std::array domains = {error::Domain::Filesystem, error::Domain::Asset,  error::Domain::Ecs,
 										error::Domain::Input,      error::Domain::Window, error::Domain::Render};

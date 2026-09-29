@@ -2,6 +2,7 @@ Checks: >
   -*,
   bugprone-*,
   -bugprone-easily-swappable-parameters,
+  -bugprone-invalid-enum-default-initialization,
   cppcoreguidelines-*,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-non-private-member-variables-in-classes,
@@ -12,6 +13,7 @@ Checks: >
   -cppcoreguidelines-avoid-do-while,
   -cppcoreguidelines-avoid-const-or-ref-data-members,
   -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -bugprone-signed-bitwise,
   -hicpp-signed-bitwise,
   misc-*,
@@ -28,8 +30,13 @@ Checks: >
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-magic-numbers,
+  -readability-named-parameter,
+  -readability-redundant-member-init,
   -readability-trailing-comma,
   -readability-uppercase-literal-suffix
 HeaderFilterRegex: '.*/(srcs|tests)/.*'
-ExcludeHeaderFilterRegex: '.*/third_party/.*'
+ExcludeHeaderFilterRegex: '.*/(third_party|_deps)/.*'
 FormatStyle: file
+CheckOptions:
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
+  misc-header-include-cycle.IgnoredFilesList: '.*/glm/.*;quaternion.hpp;norm.hpp'

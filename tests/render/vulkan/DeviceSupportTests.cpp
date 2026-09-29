@@ -21,9 +21,12 @@ SCENARIO("The most capable kind of GPU is preferred, but any kind can be used", 
 }
 
 SCENARIO("The window uses an sRGB format whenever the display offers one", "[render][vulkan]") {
-	constexpr VkSurfaceFormatKHR bgraSrgb   = {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
-	constexpr VkSurfaceFormatKHR rgbaSrgb   = {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
-	constexpr VkSurfaceFormatKHR bgraLinear = {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
+	constexpr VkSurfaceFormatKHR bgraSrgb   = {.format     = VK_FORMAT_B8G8R8A8_SRGB,
+											   .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
+	constexpr VkSurfaceFormatKHR rgbaSrgb   = {.format     = VK_FORMAT_R8G8B8A8_SRGB,
+											   .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
+	constexpr VkSurfaceFormatKHR bgraLinear = {.format     = VK_FORMAT_B8G8R8A8_UNORM,
+											   .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
 
 	THEN("BGRA sRGB is chosen when available") {
 		const VkSurfaceFormatKHR chosen = VulkanSwapchain::chooseSwapSurfaceFormat({bgraLinear, rgbaSrgb, bgraSrgb});
@@ -38,8 +41,8 @@ SCENARIO("The window uses an sRGB format whenever the display offers one", "[ren
 		REQUIRE(chosen.format == VK_FORMAT_B8G8R8A8_UNORM);
 	}
 	AND_THEN("sRGB is chosen when an old driver says any format is fine") {
-		const VkSurfaceFormatKHR chosen =
-			VulkanSwapchain::chooseSwapSurfaceFormat({{VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
+		const VkSurfaceFormatKHR chosen = VulkanSwapchain::chooseSwapSurfaceFormat(
+			{{.format = VK_FORMAT_UNDEFINED, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
 		REQUIRE(chosen.format == VK_FORMAT_B8G8R8A8_SRGB);
 		REQUIRE(chosen.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 	}

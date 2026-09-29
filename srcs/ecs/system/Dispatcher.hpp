@@ -2,7 +2,7 @@
 
 #include <chrono>
 #include <unordered_map>
-#include <string>
+#include <string_view>
 #include <vector>
 #include <typeindex>
 #include <functional>
@@ -12,8 +12,8 @@ namespace ecs {
 
 	class Dispatcher {
 	private:
-		std::unordered_map<std::type_index, std::vector<Listener>>    m_listeners;
-		std::unordered_map<std::string, std::chrono::duration<float>> m_eventRuntimes;
+		std::unordered_map<std::type_index, std::vector<Listener>>         m_listeners;
+		std::unordered_map<std::string_view, std::chrono::duration<float>> m_eventRuntimes;
 
 	public:
 		template<typename Event, typename SystemType>
@@ -25,7 +25,8 @@ namespace ecs {
 		template<typename Event>
 		void emit(const Event& event);
 
-		[[nodiscard]] std::unordered_map<std::string, std::chrono::duration<float>> getEventRuntimes() const;
+		[[nodiscard]] const std::unordered_map<std::string_view, std::chrono::duration<float>>& getEventRuntimes()
+			const;
 	};
 }
 

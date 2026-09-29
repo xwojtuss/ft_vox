@@ -1,5 +1,6 @@
 #include "game/world/generation/Perlin2DMap.hpp"
 #include <algorithm>
+#include <utility>
 
 #include <glm/vec2.hpp>
 #include <glm/gtc/noise.hpp>
@@ -28,8 +29,8 @@ float Perlin2DMap::sampleValue(const int x, const int y) const {
 }
 
 float Perlin2DMap::getValue(const int x, const int y) const {
-	if (x >= 0 && y >= 0 && static_cast<unsigned int>(x) < m_width && static_cast<unsigned int>(y) < m_height) {
-		return m_data[static_cast<unsigned int>(x) + m_width * static_cast<unsigned int>(y)];
+	if (x >= 0 && y >= 0 && std::cmp_less(x, m_width) && std::cmp_less(y, m_height)) {
+		return m_data[static_cast<unsigned int>(x) + (m_width * static_cast<unsigned int>(y))];
 	}
 	return sampleValue(x, y);
 }
@@ -45,7 +46,7 @@ inline float Perlin2DMap::perlinNoise(const float x, const float y) {
 void Perlin2DMap::generate() {
 	for (unsigned int x = 0; x < m_width; ++x) {
 		for (unsigned int y = 0; y < m_height; ++y) {
-			m_data[x + m_width * y] = sampleValue(static_cast<int>(x), static_cast<int>(y));
+			m_data[x + (m_width * y)] = sampleValue(static_cast<int>(x), static_cast<int>(y));
 		}
 	}
 }

@@ -18,7 +18,8 @@ namespace {
 	}
 
 	glm::vec3 seenFromCamera(const Camera& camera, const glm::vec3& point) {
-		return glm::vec3(camera.view * glm::vec4(point, 1.0f));
+		const glm::vec3 seen(camera.view * glm::vec4(point, 1.0f));
+		return seen;
 	}
 }
 

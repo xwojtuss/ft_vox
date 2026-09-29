@@ -16,15 +16,15 @@ namespace platform::input::glfw {
 	}
 
 	render::input::InputMods glfwToInputMods(const int glfwMods) {
-		render::input::InputMods mods = 0;
+		render::input::InputMods mods = render::input::InputMod::None;
 
-		if (glfwMods & GLFW_MOD_SHIFT)
+		if ((glfwMods & GLFW_MOD_SHIFT) != 0)
 			mods = mods | render::input::InputMod::Shift;
-		if (glfwMods & GLFW_MOD_CONTROL)
+		if ((glfwMods & GLFW_MOD_CONTROL) != 0)
 			mods = mods | render::input::InputMod::Control;
-		if (glfwMods & GLFW_MOD_ALT)
+		if ((glfwMods & GLFW_MOD_ALT) != 0)
 			mods = mods | render::input::InputMod::Alt;
-		if (glfwMods & GLFW_MOD_SUPER)
+		if ((glfwMods & GLFW_MOD_SUPER) != 0)
 			mods = mods | render::input::InputMod::Super;
 
 		return mods;

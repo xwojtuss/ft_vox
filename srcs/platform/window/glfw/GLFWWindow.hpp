@@ -27,6 +27,8 @@ namespace platform::window::glfw {
 		GLFWWindow();
 		GLFWWindow(const GLFWWindow&)            = delete;
 		GLFWWindow& operator=(const GLFWWindow&) = delete;
+		GLFWWindow(GLFWWindow&&)                 = delete;
+		GLFWWindow& operator=(GLFWWindow&&)      = delete;
 		~GLFWWindow() override;
 
 		[[nodiscard]] uint32_t getWidth() const override;

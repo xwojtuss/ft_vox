@@ -18,10 +18,10 @@ InputCommand InputManager::buildCommand() {
 	command.lookRight += static_cast<float>(deltaX);
 	command.lookUp += static_cast<float>(deltaY);
 
-	InputEvents pressedEvents  = 0;
-	InputEvents repeatedEvents = 0;
-	InputEvents releasedEvents = 0;
-	InputEvents activeEvents   = 0;
+	InputEvents pressedEvents  = InputEvent::None;
+	InputEvents repeatedEvents = InputEvent::None;
+	InputEvents releasedEvents = InputEvent::None;
+	InputEvents activeEvents   = InputEvent::None;
 	m_keyInputProcessor.getKeyEvents(pressedEvents, repeatedEvents, releasedEvents, activeEvents);
 
 	command.startedEvents  = pressedEvents;
@@ -29,9 +29,9 @@ InputCommand InputManager::buildCommand() {
 	command.releasedEvents = releasedEvents;
 	command.activeEvents   = activeEvents;
 
-	command.moveForward = axis(activeEvents, MoveForward, MoveBackward);
-	command.moveRight   = axis(activeEvents, MoveRight, MoveLeft);
-	command.moveUp      = axis(activeEvents, Jump, Crouch);
+	command.moveForward = axis(activeEvents, InputEvent::MoveForward, InputEvent::MoveBackward);
+	command.moveRight   = axis(activeEvents, InputEvent::MoveRight, InputEvent::MoveLeft);
+	command.moveUp      = axis(activeEvents, InputEvent::Jump, InputEvent::Crouch);
 
 	return command;
 }
@@ -40,8 +40,8 @@ void InputManager::processMouseMove(const double xPos, const double yPos) {
 	m_mouseProcessor.processMouseMove(-xPos, -yPos);
 }
 
-void InputManager::processMouseButton(int button, const InputAction action, const InputMods modifiers) {
-	m_keyInputProcessor.processMouseButton(static_cast<MouseButton>(button), action, modifiers);
+void InputManager::processMouseButton(const MouseButton button, const InputAction action, const InputMods modifiers) {
+	m_keyInputProcessor.processMouseButton(button, action, modifiers);
 }
 
 void InputManager::processKey(const int scancode, const InputAction action, const InputMods modifiers) {

@@ -1,0 +1,31 @@
+#!/bin/sh
+# Formats staged C++ files with the project's .clang-format before every commit.
+
+required_major=21
+clang_format=$(command -v clang-format)
+
+if [ -z "$clang_format" ]; then
+	echo "pre-commit: clang-format not found, skipping formatting." >&2
+	echo "pre-commit: install it with: pipx install clang-format==21.1.8" >&2
+	exit 0
+fi
+
+major=$("$clang_format" --version | sed -E 's/.*version ([0-9]+).*/\1/')
+if [ "$major" != "$required_major" ]; then
+	echo "pre-commit: clang-format $major found but the project uses $required_major; CI may disagree." >&2
+	echo "pre-commit: install the pinned version with: pipx install clang-format==21.1.8" >&2
+fi
+
+files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.cpp' '*.hpp' '*.tpp' '*.h' | grep -v '/third_party/')
+[ -z "$files" ] && exit 0
+
+status=0
+for file in $files; do
+	if git diff --quiet -- "$file"; then
+		"$clang_format" -i "$file" && git add -- "$file"
+	elif ! "$clang_format" --dry-run --Werror "$file" >/dev/null 2>&1; then
+		echo "pre-commit: $file is only partially staged and not formatted; run clang-format -i $file and stage it again." >&2
+		status=1
+	fi
+done
+exit $status

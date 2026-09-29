@@ -36,7 +36,7 @@ SCENARIO("Every entity with a mesh and a position is drawn each frame", "[ecs][r
 
 		ecs::EntityHandle textured = createDrawable(testWorld, {1.0f, 0.0f, 0.0f});
 		textured.add(Texture{});
-		ecs::EntityHandle untextured = createDrawable(testWorld, {2.0f, 0.0f, 0.0f});
+		ecs::EntityHandle const untextured = createDrawable(testWorld, {2.0f, 0.0f, 0.0f});
 		testWorld.createEntity().add(Transform{.position = {3.0f, 0.0f, 0.0f}});
 
 		WHEN("the renderer draws the scene") {

@@ -9,8 +9,8 @@ namespace ecs {
 	}
 
 	template<typename ComponentType>
-	void World::describeComponentAs(std::string name) {
-		m_componentDescriber.add<ComponentType>(std::move(name));
+	void World::describeComponentAs(const std::string_view name) {
+		m_componentDescriber.add<ComponentType>(name);
 	}
 
 	template<typename SystemType, typename... Args>

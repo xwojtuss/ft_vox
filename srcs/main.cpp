@@ -1,13 +1,36 @@
+#include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
 
 #include "app/Application.hpp"
 #include "app/ApplicationInfo.hpp"
+#include "error/Assert.hpp"
 #include "error/Exception.hpp"
 #include "log/Log.hpp"
 
+namespace {
+	void reportFatalError(const error::Exception& exception) noexcept {
+		try {
+			logging::logException(exception);
+			std::cerr << '[' << exception.domainName() << "] " << exception.what() << '\n';
+		} catch (...) {
+			std::fputs("a fatal error happened and could not be reported\n", stderr);
+		}
+	}
+
+	void reportFatalError(const char* message) noexcept {
+		try {
+			logging::app().critical("{}", message);
+			std::cerr << message << '\n';
+		} catch (...) {
+			std::fputs("a fatal error happened and could not be reported\n", stderr);
+		}
+	}
+}
+
 int main() {
+	error::installAssertionHandler();
 	const logging::ShutdownGuard loggingShutdown;
 
 	try {
@@ -17,15 +40,14 @@ int main() {
 		app::Application app;
 
 		app.run();
+		logging::app().info("{} closed normally", app::appName);
+		return EXIT_SUCCESS;
 	} catch (const error::Exception& e) {
-		logging::logException(e);
-		std::cerr << '[' << e.domainName() << "] " << e.what() << '\n';
-		return EXIT_FAILURE;
+		reportFatalError(e);
 	} catch (const std::exception& e) {
-		logging::app().critical("{}", e.what());
-		std::cerr << e.what() << '\n';
-		return EXIT_FAILURE;
+		reportFatalError(e.what());
+	} catch (...) {
+		reportFatalError("an unknown error stopped the game");
 	}
-	logging::app().info("{} closed normally", app::appName);
-	return EXIT_SUCCESS;
+	return EXIT_FAILURE;
 }

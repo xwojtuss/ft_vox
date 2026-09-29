@@ -16,7 +16,7 @@ namespace {
 			world.createSystem<ecs::ChunkSystem>(world, renderer, glm::vec<3, unsigned short>{2, 4, 2});
 		}
 
-		size_t meshCount() const {
+		[[nodiscard]] size_t meshCount() const {
 			return renderer.createdMeshes.size();
 		}
 

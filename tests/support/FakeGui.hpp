@@ -14,10 +14,10 @@ namespace test {
 		bool                     capturingMouse = false;
 
 		void beginFrame() override {
-			calls.push_back("beginFrame");
+			calls.emplace_back("beginFrame");
 		}
 		void endFrame() override {
-			calls.push_back("endFrame");
+			calls.emplace_back("endFrame");
 		}
 
 		bool beginWindow(const std::string& name, bool*) override {
@@ -31,7 +31,7 @@ namespace test {
 		void text(const std::string& value) override {
 			texts.push_back(value);
 		}
-		bool wantsMouseCapture() const override {
+		[[nodiscard]] bool wantsMouseCapture() const override {
 			return capturingMouse;
 		}
 
@@ -51,7 +51,7 @@ namespace test {
 		void render(VkCommandBuffer) override {
 		}
 
-		bool wantsKeyboardCapture() const override {
+		[[nodiscard]] bool wantsKeyboardCapture() const override {
 			return false;
 		}
 	};

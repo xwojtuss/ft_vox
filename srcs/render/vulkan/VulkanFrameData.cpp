@@ -1,5 +1,6 @@
 #include "render/vulkan/VulkanFrameData.hpp"
 #include <chrono>
+#include <cstring>
 #include "render/GpuTypes.hpp"
 #include "render/vulkan/VulkanError.hpp"
 #include "render/vulkan/VulkanContext.hpp"
@@ -261,17 +262,16 @@ void VulkanFrameData::submitCommandBuffer(const VulkanContext& context, VkSemaph
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	const VkSemaphore    waitSemaphores[] = {m_imageAvailableSemaphores[m_currentFrame]};
-	VkPipelineStageFlags waitStages[]     = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-	submitInfo.waitSemaphoreCount         = 1;
-	submitInfo.pWaitSemaphores            = waitSemaphores;
-	submitInfo.pWaitDstStageMask          = waitStages;
-	submitInfo.commandBufferCount         = 1;
-	submitInfo.pCommandBuffers            = &m_commandBuffers[m_currentFrame];
+	auto* const                    waitSemaphore = m_imageAvailableSemaphores[m_currentFrame];
+	constexpr VkPipelineStageFlags waitStage     = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	submitInfo.waitSemaphoreCount                = 1;
+	submitInfo.pWaitSemaphores                   = &waitSemaphore;
+	submitInfo.pWaitDstStageMask                 = &waitStage;
+	submitInfo.commandBufferCount                = 1;
+	submitInfo.pCommandBuffers                   = &m_commandBuffers[m_currentFrame];
 
-	const VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
-	submitInfo.signalSemaphoreCount      = 1;
-	submitInfo.pSignalSemaphores         = signalSemaphores;
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores    = &renderFinishedSemaphore;
 
 	if (const VkResult result =
 			vkQueueSubmit(context.getGraphicsQueue(), 1, &submitInfo, m_inFlightFences[m_currentFrame]);

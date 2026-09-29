@@ -19,14 +19,14 @@ void EarthGenerator::generateChunk(Chunk* chunk, const glm::ivec3 chunkPosition)
 	int           worldZ           = 0;
 	int           terrainHeight    = 0;
 
-	for (unsigned short blockX = 0; blockX < chunkXSize; ++blockX) {
-		for (unsigned short blockZ = 0; blockZ < chunkZSize; ++blockZ) {
-			worldX = static_cast<int>(chunkPosition.x) * chunkXSize + static_cast<int>(blockX);
-			worldZ = static_cast<int>(chunkPosition.z) * chunkZSize + static_cast<int>(blockZ);
+	for (int blockX = 0; blockX < chunkXSize; ++blockX) {
+		for (int blockZ = 0; blockZ < chunkZSize; ++blockZ) {
+			worldX = (static_cast<int>(chunkPosition.x) * chunkXSize) + blockX;
+			worldZ = (static_cast<int>(chunkPosition.z) * chunkZSize) + blockZ;
 
 			terrainHeight = static_cast<int>(m_heightMap.getNormalizedValue(worldX, worldZ) * maxTerrainHeight);
 
-			for (unsigned short blockY = 0; blockY < chunkYSize; ++blockY) {
+			for (int blockY = 0; blockY < chunkYSize; ++blockY) {
 				worldY = worldChunkBaseY + blockY;
 
 				if (worldY >= terrainHeight)

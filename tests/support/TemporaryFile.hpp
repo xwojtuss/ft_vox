@@ -22,8 +22,10 @@ namespace test {
 
 		TemporaryFile(const TemporaryFile&)            = delete;
 		TemporaryFile& operator=(const TemporaryFile&) = delete;
+		TemporaryFile(TemporaryFile&&)                 = delete;
+		TemporaryFile& operator=(TemporaryFile&&)      = delete;
 
-		std::string path() const {
+		[[nodiscard]] std::string path() const {
 			return m_path.string();
 		}
 	};

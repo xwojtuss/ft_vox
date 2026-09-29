@@ -7,7 +7,7 @@ namespace ecs {
 
 		m_panels.emplace(typeIdx, std::make_unique<PanelType>(panel));
 
-		if (m_eventToPanelType.find(toggleEvent) != m_eventToPanelType.end()) {
+		if (m_eventToPanelType.contains(toggleEvent)) {
 			m_eventToPanelType[toggleEvent].push_back(typeIdx);
 			return;
 		}

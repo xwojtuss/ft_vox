@@ -5,6 +5,7 @@ project(ft_vox LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
@@ -24,6 +25,41 @@ endif()
 
 option(FT_VOX_BUILD_TESTS "Build the Catch2 unit tests" ON)
 option(FT_VOX_COVERAGE "Instrument the tests and the code they run for coverage (gcovr)" OFF)
+option(FT_VOX_CLANG_TIDY "Run clang-tidy on our sources while compiling; any finding fails the build" OFF)
+
+find_program(PRE_COMMIT_PROGRAM pre-commit)
+if(PRE_COMMIT_PROGRAM AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+  execute_process(COMMAND "${PRE_COMMIT_PROGRAM}" install --overwrite
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_QUIET)
+  message(STATUS "pre-commit hook installed (formats staged C++ files on commit)")
+else()
+  message(STATUS "pre-commit not found, commits are not formatted automatically (install: pipx install pre-commit)")
+endif()
+
+set(FT_VOX_CLANG_TIDY_MAJOR 21)
+if(FT_VOX_CLANG_TIDY)
+  find_program(CLANG_TIDY_PROGRAM NAMES clang-tidy-${FT_VOX_CLANG_TIDY_MAJOR} clang-tidy REQUIRED)
+  execute_process(COMMAND "${CLANG_TIDY_PROGRAM}" --version OUTPUT_VARIABLE CLANG_TIDY_VERSION)
+  if(NOT CLANG_TIDY_VERSION MATCHES "version ${FT_VOX_CLANG_TIDY_MAJOR}\\.")
+    message(FATAL_ERROR "${CLANG_TIDY_PROGRAM} is not clang-tidy ${FT_VOX_CLANG_TIDY_MAJOR}, which CI uses. "
+      "Install it with: pipx install clang-tidy==${FT_VOX_CLANG_TIDY_MAJOR}.1.6")
+  endif()
+  set(FT_VOX_CLANG_TIDY_COMMAND "${CLANG_TIDY_PROGRAM}" --quiet --warnings-as-errors=*)
+  if(APPLE)
+    execute_process(COMMAND xcrun --show-sdk-path OUTPUT_VARIABLE MACOS_SDK OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND xcrun clang -print-resource-dir OUTPUT_VARIABLE CLANG_RESOURCE_DIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    list(APPEND FT_VOX_CLANG_TIDY_COMMAND --extra-arg=-isysroot${MACOS_SDK}
+      --extra-arg=-resource-dir=${CLANG_RESOURCE_DIR} --extra-arg=-isystem/usr/local/include)
+  endif()
+  message(STATUS "clang-tidy enabled: ${CLANG_TIDY_PROGRAM}")
+endif()
+
+function(ft_vox_enable_clang_tidy target)
+  if(FT_VOX_CLANG_TIDY)
+    set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "${FT_VOX_CLANG_TIDY_COMMAND}")
+  endif()
+endfunction()
 
 file(GLOB_RECURSE FT_VOX_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.cpp"
@@ -79,27 +115,49 @@ FetchContent_Declare(
   GIT_TAG   b4e58bdd364ad72246c123a0c28538eab3252672 # v3.16.0
 )
 
+FetchContent_Declare(
+  volk
+  GIT_REPOSITORY https://github.com/zeux/volk.git
+  GIT_TAG   776893306c5d3b22b6185b5d4a258b81d94572bf # vulkan-sdk-1.4.357.0
+  SYSTEM
+)
+
+FetchContent_Declare(
+  libassert
+  GIT_REPOSITORY https://github.com/jeremy-rifkin/libassert.git
+  GIT_TAG   bd33ba116f209bf71761c58dccc2f3bf277e0824 # v2.2.1
+  SYSTEM
+)
+
 FetchContent_MakeAvailable(magic_enum)
+FetchContent_MakeAvailable(libassert)
+FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(EnTT)
 set(SPDLOG_USE_STD_FORMAT ON CACHE BOOL "Use std::format instead of the bundled fmt" FORCE)
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(nlohmann_json)
 
+set(IMGUI_SOURCES
+  "${imgui_SOURCE_DIR}/imgui.cpp"
+  "${imgui_SOURCE_DIR}/imgui_demo.cpp"
+  "${imgui_SOURCE_DIR}/imgui_draw.cpp"
+  "${imgui_SOURCE_DIR}/imgui_tables.cpp"
+  "${imgui_SOURCE_DIR}/imgui_widgets.cpp"
+  "${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp"
+  "${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp"
+)
+set_source_files_properties(${IMGUI_SOURCES} PROPERTIES SKIP_LINTING ON)
+
 function(ft_vox_add_core target optimization)
-  add_library(${target} STATIC ${FT_VOX_SOURCES}
-    "${imgui_SOURCE_DIR}/imgui.cpp"
-    "${imgui_SOURCE_DIR}/imgui_demo.cpp"
-    "${imgui_SOURCE_DIR}/imgui_draw.cpp"
-    "${imgui_SOURCE_DIR}/imgui_tables.cpp"
-    "${imgui_SOURCE_DIR}/imgui_widgets.cpp"
-    "${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp"
-    "${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp"
-  )
+  add_library(${target} STATIC ${FT_VOX_SOURCES} ${IMGUI_SOURCES})
 
   target_compile_definitions(${target} PUBLIC
     GLM_FORCE_CTOR_INIT
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_ENABLE_EXPERIMENTAL
+    GLFW_INCLUDE_NONE
+    VK_NO_PROTOTYPES
+    IMGUI_IMPL_VULKAN_USE_VOLK
     PROJECT_ROOT_DIR="${PROJECT_SOURCE_DIR}"
   )
 
@@ -108,7 +166,7 @@ function(ft_vox_add_core target optimization)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${target} PUBLIC -Wno-error=maybe-uninitialized)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${target} PUBLIC -Wno-unknown-warning-option)
+    target_compile_options(${target} PUBLIC -Wno-unknown-warning-option -Wmissing-designated-field-initializers)
   endif()
 
   target_include_directories(${target} PUBLIC
@@ -119,13 +177,15 @@ function(ft_vox_add_core target optimization)
   )
 
   target_link_libraries(${target} PUBLIC
-    Vulkan::Vulkan
+    Vulkan::Headers
+    volk::volk
     glfw
     glm::glm
     magic_enum::magic_enum
     EnTT::EnTT
     spdlog::spdlog
     nlohmann_json::nlohmann_json
+    libassert::assert
   )
 endfunction()
 
@@ -142,9 +202,11 @@ foreach(FILE IN LISTS FT_VOX_FILES_OUTSIDE_ECS)
 endforeach()
 
 ft_vox_add_core(ft_vox_core -O2)
+ft_vox_enable_clang_tidy(ft_vox_core)
 
 add_executable(ft_vox "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
 target_link_libraries(ft_vox PRIVATE ft_vox_core)
+ft_vox_enable_clang_tidy(ft_vox)
 
 if(FT_VOX_BUILD_TESTS)
   ft_vox_add_core(ft_vox_core_tests -O0)

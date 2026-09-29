@@ -18,7 +18,7 @@ namespace logging {
 
 		std::string readLevel(const nlohmann::json& value, const std::string& setting, const std::string& source) {
 			const auto level = value.get<std::string>();
-			if (std::find(knownLevels.begin(), knownLevels.end(), level) == knownLevels.end())
+			if (std::ranges::find(knownLevels, level) == knownLevels.end())
 				throw error::FileError(source, "unknown log level \"" + level + "\" for " + setting);
 			return level;
 		}
@@ -60,7 +60,7 @@ namespace logging {
 		if (!std::filesystem::exists(resolved))
 			return {};
 
-		std::ifstream file(resolved);
+		std::ifstream const file(resolved);
 		if (!file.is_open())
 			throw error::FileError(path, "could not be opened");
 

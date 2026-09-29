@@ -40,11 +40,11 @@ SCENARIO("Pressed keys become the player's input command", "[ecs][player-input]"
 		testWorld.addSystem<ecs::PlayerInputSystem>(inputManager);
 		testWorld.dispatcher().subscribe(&recorder, &InputRecorder::onInput);
 		ecs::EntityHandle player = test::createPlayer(testWorld);
-		inputManager.getKeyInputProcessor().bindEvent(render::input::createInput(forwardKey, 0),
+		inputManager.getKeyInputProcessor().bindEvent(render::input::createInput(forwardKey, input::InputMod::None),
 													  input::InputEvent::MoveForward);
 
 		WHEN("the forward key is pressed and a simulation step runs") {
-			inputManager.processKey(forwardKey, InputAction::Press, 0);
+			inputManager.processKey(forwardKey, InputAction::Press, input::InputMod::None);
 			testWorld.simulate(0.016f, 1.0f);
 
 			THEN("the player's command says they started moving forward") {

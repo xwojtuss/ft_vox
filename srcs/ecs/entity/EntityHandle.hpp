@@ -20,7 +20,7 @@ namespace ecs {
 		decltype(auto) add(ComponentType component);
 
 		template<typename ComponentType>
-		void remove();
+		void remove() const;
 
 		template<typename ComponentType>
 		[[nodiscard]] bool has() const;

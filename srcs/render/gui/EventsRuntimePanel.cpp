@@ -12,7 +12,7 @@ void EventsRuntimePanel::display() {
 	if (!m_isOpen)
 		return;
 
-	auto runtimes = m_dispatcher.getEventRuntimes();
+	const auto& runtimes = m_dispatcher.getEventRuntimes();
 
 	if (m_gui.beginWindow("EventsRuntime", &m_isOpen)) {
 		bool              first = true;

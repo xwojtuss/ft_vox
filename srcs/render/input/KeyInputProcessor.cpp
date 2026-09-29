@@ -8,7 +8,7 @@ using namespace render::input;
 
 void KeyInputProcessor::processKey(const int scancode, const InputAction action, const InputMods modifiers) {
 	const Input input       = createInput(scancode, modifiers);
-	const Input singleInput = createInput(scancode, 0);
+	const Input singleInput = createInput(scancode, InputMod::None);
 
 	auto it = m_bindings.find(input);
 	if (it == m_bindings.end())
@@ -27,15 +27,15 @@ void KeyInputProcessor::getKeyEvents(InputEvents& pressedEvents, InputEvents& re
 	repeatedEvents   = m_repeatedEvents;
 	releasedEvents   = m_releasedEvents;
 	activeEvents     = m_activeEvents;
-	m_pressedEvents  = 0;
-	m_repeatedEvents = 0;
-	m_releasedEvents = 0;
+	m_pressedEvents  = InputEvent::None;
+	m_repeatedEvents = InputEvent::None;
+	m_releasedEvents = InputEvent::None;
 }
 
 void KeyInputProcessor::processMouseButton(const MouseButton button, const InputAction action,
 										   const InputMods modifiers) {
 	const Input input       = createMouseInput(button, modifiers);
-	const Input singleInput = createMouseInput(button, 0);
+	const Input singleInput = createMouseInput(button, InputMod::None);
 
 	auto it = m_bindings.find(input);
 	if (it == m_bindings.end())
@@ -50,15 +50,15 @@ void KeyInputProcessor::processMouseButton(const MouseButton button, const Input
 
 void KeyInputProcessor::switchEvent(const InputEvent event, const InputAction action) {
 	switch (action) {
-		case Press:
+		case InputAction::Press:
 			m_pressedEvents |= event;
 			m_activeEvents |= event;
 			break;
-		case Release:
+		case InputAction::Release:
 			m_releasedEvents |= event;
 			m_activeEvents &= ~event;
 			break;
-		case Repeat:
+		case InputAction::Repeat:
 			m_repeatedEvents |= event;
 			break;
 		default:

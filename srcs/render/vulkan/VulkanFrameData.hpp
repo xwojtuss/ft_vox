@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <vulkan/vulkan.h>
+#include <volk.h>
 
 #include "assets/Resources.hpp"
 
@@ -39,7 +39,7 @@ namespace render::vulkan {
 
 		[[nodiscard]] VkDescriptorSetLayout getFrameDescriptorSetLayout() const;
 		[[nodiscard]] VkDescriptorSetLayout getTextureDescriptorSetLayout() const;
-		VkDescriptorSet                     createTextureDescriptorSet(const VulkanContext& context) const;
+		[[nodiscard]] VkDescriptorSet       createTextureDescriptorSet(const VulkanContext& context) const;
 		static void                         createVertexBuffer(VulkanContext&, VulkanResourceManager& resourceManager,
 															   const assets::MeshData& meshData, GpuMesh& mesh);
 		static void                         createIndexBuffer(VulkanContext&, VulkanResourceManager& resourceManager,

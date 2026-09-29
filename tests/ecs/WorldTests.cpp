@@ -112,7 +112,7 @@ SCENARIO("A component describes itself for the debug panel", "[ecs][world]") {
 	}
 
 	GIVEN("the null entity") {
-		test::TestWorld testWorld;
+		test::TestWorld const testWorld;
 
 		THEN("it has nothing to describe") {
 			REQUIRE(testWorld.world.describe(ecs::nullEntity).empty());
@@ -123,7 +123,7 @@ SCENARIO("A component describes itself for the debug panel", "[ecs][world]") {
 SCENARIO("A system processes every entity that has the components it needs", "[ecs][world][systems]") {
 	GIVEN("a health system and entities with Health, with Armor only and with nothing") {
 		test::TestWorld   testWorld;
-		HealthSystem&     system        = testWorld.addSystem<HealthSystem>();
+		auto&             system        = testWorld.addSystem<HealthSystem>();
 		ecs::EntityHandle withHealth    = testWorld.createEntity();
 		ecs::EntityHandle withArmorOnly = testWorld.createEntity();
 		ecs::EntityHandle withNothing   = testWorld.createEntity();
@@ -175,7 +175,7 @@ SCENARIO("Systems created by the world are connected to it", "[ecs][world]") {
 		test::TestWorld testWorld;
 
 		WHEN("a health system is created through the world") {
-			HealthSystem& system = testWorld.addSystem<HealthSystem>();
+			auto& system = testWorld.addSystem<HealthSystem>();
 
 			THEN("it receives the world's events") {
 				testWorld.world.getSystemManager().onWorldReady();
@@ -201,7 +201,7 @@ SCENARIO("The world keeps the block definitions it was created with", "[ecs][wor
 SCENARIO("Destroying an entity removes it and all of its components", "[ecs][world]") {
 	GIVEN("an entity with Health and Armor next to another entity with Health, and a health system") {
 		test::TestWorld   testWorld;
-		HealthSystem&     system   = testWorld.addSystem<HealthSystem>();
+		auto&             system   = testWorld.addSystem<HealthSystem>();
 		ecs::EntityHandle doomed   = testWorld.createEntity();
 		ecs::EntityHandle survivor = testWorld.createEntity();
 		doomed.add(Health{.points = 1});

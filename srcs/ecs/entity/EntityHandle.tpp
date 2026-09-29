@@ -16,7 +16,7 @@ namespace ecs {
 	}
 
 	template<typename ComponentType>
-	void EntityHandle::remove() {
+	void EntityHandle::remove() const {
 		m_registry->remove<ComponentType>(m_entity);
 	}
 
@@ -32,7 +32,7 @@ namespace ecs {
 
 	template<typename ComponentType>
 	const ComponentType& EntityHandle::get() const {
-		const ComponentType* component = tryGet<ComponentType>();
+		const auto* component = tryGet<ComponentType>();
 		if (component == nullptr)
 			throw error::EcsError(std::format("entity {} has no {}", std::to_underlying(m_entity),
 											  entt::type_name<ComponentType>::value()));

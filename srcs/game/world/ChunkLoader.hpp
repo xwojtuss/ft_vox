@@ -11,6 +11,5 @@ namespace game::world {
 
 	public:
 		[[nodiscard]] std::unique_ptr<Chunk> loadChunk(glm::ivec3 chunkPosition) const;
-		void                                 saveChunk(glm::ivec3 chunkPosition) const;
 	};
 }

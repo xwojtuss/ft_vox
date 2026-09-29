@@ -19,8 +19,9 @@ target_include_directories(ft_vox_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 target_link_libraries(ft_vox_tests PRIVATE
   ft_vox_core_tests
-  Catch2::Catch2WithMain
+  Catch2::Catch2
 )
+ft_vox_enable_clang_tidy(ft_vox_tests)
 
 catch_discover_tests(ft_vox_tests DISCOVERY_MODE PRE_TEST)
 

@@ -24,7 +24,7 @@ void MovementSystem::onSimulate(const SimulateEvent& event) const {
 			if (glm::length(velocity.velocity) > velocity.maxSpeed)
 				velocity.velocity = glm::normalize(velocity.velocity) * velocity.maxSpeed;
 		} else if (speed > 0.0f) {
-			const float slowedSpeed = std::max(0.0f, speed - velocity.deceleration * event.deltaTime);
+			const float slowedSpeed = std::max(0.0f, speed - (velocity.deceleration * event.deltaTime));
 			velocity.velocity =
 				(slowedSpeed > 0.0f) ? glm::normalize(velocity.velocity) * slowedSpeed : glm::vec3(0.0f);
 		} else {

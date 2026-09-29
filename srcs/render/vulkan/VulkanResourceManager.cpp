@@ -1,4 +1,5 @@
 #include "render/vulkan/VulkanResourceManager.hpp"
+#include <cstring>
 #include "render/GpuTypes.hpp"
 #include "render/vulkan/VulkanError.hpp"
 #include "log/Log.hpp"
@@ -33,12 +34,11 @@ VkCommandPool VulkanResourceManager::getCommandPool() const {
 }
 
 void VulkanResourceManager::createCommandPool(const VulkanContext& context) {
-	QueueFamilyIndices queueFamilyIndices = context.getQueueFamilyIndices();
 
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+	poolInfo.queueFamilyIndex = context.getQueueFamilies().graphics;
 
 	if (const VkResult result = vkCreateCommandPool(context.getLogicalDevice(), &poolInfo, nullptr, &m_commandPool);
 		result != VK_SUCCESS) {
@@ -134,8 +134,8 @@ void VulkanResourceManager::copyBufferToImage(const VulkanContext& context, VkBu
 	region.imageSubresource.baseArrayLayer = 0;
 	region.imageSubresource.layerCount     = 1;
 
-	region.imageOffset = {0, 0, 0};
-	region.imageExtent = {width, height, 1};
+	region.imageOffset = {.x = 0, .y = 0, .z = 0};
+	region.imageExtent = {.width = width, .height = height, .depth = 1};
 	vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 	VulkanFrameData::endSingleTimeCommands(commandBuffer, m_commandPool, context.getGraphicsQueue(),
@@ -171,14 +171,14 @@ void VulkanResourceManager::generateMipmaps(const VulkanContext& context, VkImag
 							 nullptr, 0, nullptr, 1, &barrier);
 
 		VkImageBlit blit{};
-		blit.srcOffsets[0]                 = {0, 0, 0};
-		blit.srcOffsets[1]                 = {mipWidth, mipHeight, 1};
+		blit.srcOffsets[0]                 = {.x = 0, .y = 0, .z = 0};
+		blit.srcOffsets[1]                 = {.x = mipWidth, .y = mipHeight, .z = 1};
 		blit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 		blit.srcSubresource.mipLevel       = i - 1;
 		blit.srcSubresource.baseArrayLayer = 0;
 		blit.srcSubresource.layerCount     = 1;
-		blit.dstOffsets[0]                 = {0, 0, 0};
-		blit.dstOffsets[1]                 = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
+		blit.dstOffsets[0]                 = {.x = 0, .y = 0, .z = 0};
+		blit.dstOffsets[1] = {.x = mipWidth > 1 ? mipWidth / 2 : 1, .y = mipHeight > 1 ? mipHeight / 2 : 1, .z = 1};
 		blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 		blit.dstSubresource.mipLevel       = i;
 		blit.dstSubresource.baseArrayLayer = 0;

@@ -1,5 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstdint>
+#include <utility>
+
 #include "render/input/InputManager.hpp"
 
 namespace input = render::input;
@@ -7,7 +10,8 @@ using input::InputAction;
 using input::InputEvent;
 
 namespace {
-	enum Key { W = 17, S = 31, A = 30, D = 32, Space = 57, Control = 29 };
+	enum class Key : std::uint8_t { W = 17, S = 31, A = 30, D = 32, Space = 57, Control = 29 };
+	using enum Key;
 
 	struct Controls {
 		input::InputManager manager;
@@ -19,22 +23,24 @@ namespace {
 			bind(D, InputEvent::MoveRight);
 			bind(Space, InputEvent::Jump);
 			bind(Control, InputEvent::Crouch);
-			manager.getKeyInputProcessor().bindEvent(input::createMouseInput(input::MouseButton::LeftButton, 0),
-													 InputEvent::ActionButton);
+			manager.getKeyInputProcessor().bindEvent(
+				input::createMouseInput(input::MouseButton::LeftButton, input::InputMod::None),
+				InputEvent::ActionButton);
 		}
 
 		void bind(Key key, InputEvent event) {
-			manager.getKeyInputProcessor().bindEvent(input::createInput(key, 0), event);
+			manager.getKeyInputProcessor().bindEvent(input::createInput(std::to_underlying(key), input::InputMod::None),
+													 event);
 		}
 
 		void press(std::initializer_list<Key> keys) {
-			for (Key key: keys)
-				manager.processKey(key, InputAction::Press, 0);
+			for (Key const key: keys)
+				manager.processKey(std::to_underlying(key), InputAction::Press, input::InputMod::None);
 		}
 
 		void release(std::initializer_list<Key> keys) {
-			for (Key key: keys)
-				manager.processKey(key, InputAction::Release, 0);
+			for (Key const key: keys)
+				manager.processKey(std::to_underlying(key), InputAction::Release, input::InputMod::None);
 		}
 	};
 }
@@ -147,7 +153,8 @@ SCENARIO("Mouse clicks become part of the command", "[client][input][command][mo
 
 		WHEN("it is clicked while holding forward") {
 			controls.press({W});
-			controls.manager.processMouseButton(input::MouseButton::LeftButton, InputAction::Press, 0);
+			controls.manager.processMouseButton(input::MouseButton::LeftButton, InputAction::Press,
+												input::InputMod::None);
 			const input::InputCommand command = controls.manager.buildCommand();
 
 			THEN("the command moves forward and starts the action") {
