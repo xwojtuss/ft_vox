@@ -235,7 +235,7 @@ void VulkanSwapchain::createRenderPass(const VulkanContext& context) {
 
 void VulkanSwapchain::createImage(const VulkanContext& context, VkExtent2D extent, uint32_t mipLevels,
 								  VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
-								  VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+								  VkImageUsageFlags usage, VmaAllocationCreateFlags allocationFlags,
 								  SwapChainImage& swapChainImage) {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -252,33 +252,22 @@ void VulkanSwapchain::createImage(const VulkanContext& context, VkExtent2D exten
 	imageInfo.samples       = numSamples;
 	imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (const VkResult result = vkCreateImage(context.getLogicalDevice(), &imageInfo, nullptr, &swapChainImage.image);
+	VmaAllocationCreateInfo allocationInfo{};
+	allocationInfo.usage = VMA_MEMORY_USAGE_AUTO;
+	allocationInfo.flags = allocationFlags;
+
+	if (const VkResult result = vmaCreateImage(context.getAllocator(), &imageInfo, &allocationInfo,
+											   &swapChainImage.image, &swapChainImage.allocation, nullptr);
 		result != VK_SUCCESS) {
 		throw VulkanError("failed to create image", result);
 	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(context.getLogicalDevice(), swapChainImage.image, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize  = memRequirements.size;
-	allocInfo.memoryTypeIndex = context.findMemoryType(memRequirements.memoryTypeBits, properties);
-
-	if (const VkResult result =
-			vkAllocateMemory(context.getLogicalDevice(), &allocInfo, nullptr, &swapChainImage.imageMemory);
-		result != VK_SUCCESS) {
-		throw VulkanError("failed to allocate image memory", result);
-	}
-
-	vkBindImageMemory(context.getLogicalDevice(), swapChainImage.image, swapChainImage.imageMemory, 0);
 }
 
 void VulkanSwapchain::createDepthResources(const VulkanContext& context) {
 	const VkFormat depthFormat = context.findDepthFormat();
 
 	createImage(context, m_swapChainExtent, 1, context.getMsaaSamples(), depthFormat, VK_IMAGE_TILING_OPTIMAL,
-				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_depthImage);
+				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, m_depthImage);
 	m_depthImage.imageView =
 		createImageView(context.getLogicalDevice(), m_depthImage.image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 }
@@ -288,7 +277,7 @@ void VulkanSwapchain::createColorResources(const VulkanContext& context) {
 
 	createImage(context, m_swapChainExtent, 1, context.getMsaaSamples(), colorFormat, VK_IMAGE_TILING_OPTIMAL,
 				VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_colorImage);
+				VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, m_colorImage);
 	m_colorImage.imageView =
 		createImageView(context.getLogicalDevice(), m_colorImage.image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
@@ -350,12 +339,10 @@ size_t VulkanSwapchain::getImageCount() const {
 
 void VulkanSwapchain::cleanupSwapChain(const VulkanContext& context) const {
 	vkDestroyImageView(context.getLogicalDevice(), m_depthImage.imageView, nullptr);
-	vkDestroyImage(context.getLogicalDevice(), m_depthImage.image, nullptr);
-	vkFreeMemory(context.getLogicalDevice(), m_depthImage.imageMemory, nullptr);
+	vmaDestroyImage(context.getAllocator(), m_depthImage.image, m_depthImage.allocation);
 
 	vkDestroyImageView(context.getLogicalDevice(), m_colorImage.imageView, nullptr);
-	vkDestroyImage(context.getLogicalDevice(), m_colorImage.image, nullptr);
-	vkFreeMemory(context.getLogicalDevice(), m_colorImage.imageMemory, nullptr);
+	vmaDestroyImage(context.getAllocator(), m_colorImage.image, m_colorImage.allocation);
 
 	for (auto* framebuffer: m_swapChainFramebuffers) {
 		vkDestroyFramebuffer(context.getLogicalDevice(), framebuffer, nullptr);

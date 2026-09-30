@@ -8,6 +8,7 @@
 #include "render/vulkan/VulkanValidationLayers.hpp"
 #include "app/ApplicationInfo.hpp"
 #include "render/vulkan/VulkanError.hpp"
+#include "render/vulkan/VulkanMemory.hpp"
 #include "log/Log.hpp"
 #include <vulkan/vk_enum_string_helper.h>
 
@@ -185,6 +186,7 @@ VulkanContext::VulkanContext(platform::window::IWindow& window) : m_window(windo
 }
 
 VulkanContext::~VulkanContext() {
+	destroyAllocator(m_allocator);
 	vkDestroyDevice(m_logicalDevice, nullptr);
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 	VulkanValidationLayers::destroyMessenger(m_instance, m_debugMessenger);
@@ -271,23 +273,9 @@ void VulkanContext::createLogicalDevice() {
 		throw VulkanError("failed to create logical device", result);
 	}
 	volkLoadDevice(m_logicalDevice);
+	m_allocator = createAllocator(m_instance, m_physicalDevice, m_logicalDevice, vulkanApiVersion);
 	vkGetDeviceQueue(m_logicalDevice, m_queueFamilies.graphics, 0, &m_graphicsQueue);
 	vkGetDeviceQueue(m_logicalDevice, m_queueFamilies.present, 0, &m_presentQueue);
-}
-
-uint32_t VulkanContext::findMemoryType(const uint32_t typeFilter, const VkMemoryPropertyFlags properties) const {
-	VkPhysicalDeviceMemoryProperties memProperties;
-
-	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
-
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-		if (((typeFilter & (1 << i)) != 0u) &&
-			(memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-			return i;
-		}
-	}
-
-	throw VulkanError("failed to find suitable memory type");
 }
 
 VkFormat VulkanContext::findDepthFormat() const {
@@ -380,6 +368,10 @@ const VkDevice& VulkanContext::getLogicalDevice() const {
 
 const VkPhysicalDevice& VulkanContext::getPhysicalDevice() const {
 	return m_physicalDevice;
+}
+
+VmaAllocator VulkanContext::getAllocator() const {
+	return m_allocator;
 }
 
 const VkQueue& VulkanContext::getGraphicsQueue() const {

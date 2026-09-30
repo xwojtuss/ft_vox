@@ -47,33 +47,23 @@ void VulkanResourceManager::createCommandPool(const VulkanContext& context) {
 }
 
 void VulkanResourceManager::createBuffer(const VulkanContext& context, VkDeviceSize size, VkBufferUsageFlags usage,
-										 VkMemoryPropertyFlags properties, VkBuffer& buffer,
-										 VkDeviceMemory& bufferMemory) {
+										 VmaAllocationCreateFlags allocationFlags, VkBuffer& buffer,
+										 VmaAllocation& allocation, VmaAllocationInfo* allocationInfo) {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size        = size;
 	bufferInfo.usage       = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (const VkResult result = vkCreateBuffer(context.getLogicalDevice(), &bufferInfo, nullptr, &buffer);
+	VmaAllocationCreateInfo allocationCreateInfo{};
+	allocationCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+	allocationCreateInfo.flags = allocationFlags;
+
+	if (const VkResult result = vmaCreateBuffer(context.getAllocator(), &bufferInfo, &allocationCreateInfo, &buffer,
+												&allocation, allocationInfo);
 		result != VK_SUCCESS) {
 		throw VulkanError("failed to create buffer", result);
 	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(context.getLogicalDevice(), buffer, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize  = memRequirements.size;
-	allocInfo.memoryTypeIndex = context.findMemoryType(memRequirements.memoryTypeBits, properties);
-
-	if (const VkResult result = vkAllocateMemory(context.getLogicalDevice(), &allocInfo, nullptr, &bufferMemory);
-		result != VK_SUCCESS) {
-		throw VulkanError("failed to allocate buffer memory", result);
-	}
-
-	vkBindBufferMemory(context.getLogicalDevice(), buffer, bufferMemory, 0);
 }
 
 void VulkanResourceManager::transitionImageLayout(const VulkanContext& context, VkImage image,
@@ -221,23 +211,18 @@ SwapChainImage VulkanResourceManager::createTextureImage(const assets::TextureDa
 	if (textureData.pixels.size() < imageSize)
 		throw VulkanError("texture has fewer pixels than its size needs");
 
-	VkBuffer       stagingBuffer       = nullptr;
-	VkDeviceMemory stagingBufferMemory = nullptr;
+	VkBuffer      stagingBuffer     = nullptr;
+	VmaAllocation stagingAllocation = nullptr;
 	createBuffer(context, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-				 stagingBufferMemory);
-
-	void* data = nullptr;
-	vkMapMemory(context.getLogicalDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, textureData.pixels.data(), imageSize);
-	vkUnmapMemory(context.getLogicalDevice(), stagingBufferMemory);
+				 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, stagingBuffer, stagingAllocation);
+	vmaCopyMemoryToAllocation(context.getAllocator(), textureData.pixels.data(), stagingAllocation, 0, imageSize);
 
 	SwapChainImage swapChainImage{};
 	VulkanSwapchain::createImage(
 		context, VkExtent2D{.width = textureData.width, .height = textureData.height}, textureData.mipLevels,
 		VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, swapChainImage);
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 0,
+		swapChainImage);
 
 	transitionImageLayout(context, swapChainImage.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
 						  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, textureData.mipLevels);
@@ -245,8 +230,7 @@ SwapChainImage VulkanResourceManager::createTextureImage(const assets::TextureDa
 
 	// transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
-	vkDestroyBuffer(context.getLogicalDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(context.getLogicalDevice(), stagingBufferMemory, nullptr);
+	vmaDestroyBuffer(context.getAllocator(), stagingBuffer, stagingAllocation);
 
 	generateMipmaps(context, swapChainImage.image, VK_FORMAT_R8G8B8A8_SRGB, static_cast<int32_t>(textureData.width),
 					static_cast<int32_t>(textureData.height), textureData.mipLevels);
@@ -350,9 +334,9 @@ assets::TextureHandle VulkanResourceManager::createTexture(const assets::Texture
 
 	assets::TextureHandle handle;
 
-	m_textures[handle.id] = GpuTexture{.image         = SwapChainImage{.image       = textureImage.image,
-																	   .imageView   = textureImageView,
-																	   .imageMemory = textureImage.imageMemory},
+	m_textures[handle.id] = GpuTexture{.image         = SwapChainImage{.image      = textureImage.image,
+																	   .imageView  = textureImageView,
+																	   .allocation = textureImage.allocation},
 									   .sampler       = textureSampler,
 									   .descriptorSet = descriptorSet,
 									   .mipLevels     = textureData.mipLevels};
@@ -392,17 +376,14 @@ size_t VulkanResourceManager::getTextureCount() const {
 
 void VulkanResourceManager::cleanup(const VulkanContext& context) {
 	for (const auto& [id, mesh]: m_meshes) {
-		vkDestroyBuffer(context.getLogicalDevice(), mesh.vertexBuffer, nullptr);
-		vkFreeMemory(context.getLogicalDevice(), mesh.vertexMemory, nullptr);
-		vkDestroyBuffer(context.getLogicalDevice(), mesh.indexBuffer, nullptr);
-		vkFreeMemory(context.getLogicalDevice(), mesh.indexMemory, nullptr);
+		vmaDestroyBuffer(context.getAllocator(), mesh.vertexBuffer, mesh.vertexAllocation);
+		vmaDestroyBuffer(context.getAllocator(), mesh.indexBuffer, mesh.indexAllocation);
 	}
 
 	for (const auto& [id, texture]: m_textures) {
 		vkDestroySampler(context.getLogicalDevice(), texture.sampler, nullptr);
 		vkDestroyImageView(context.getLogicalDevice(), texture.image.imageView, nullptr);
-		vkDestroyImage(context.getLogicalDevice(), texture.image.image, nullptr);
-		vkFreeMemory(context.getLogicalDevice(), texture.image.imageMemory, nullptr);
+		vmaDestroyImage(context.getAllocator(), texture.image.image, texture.image.allocation);
 	}
 
 	vkDestroyCommandPool(context.getLogicalDevice(), m_commandPool, nullptr);

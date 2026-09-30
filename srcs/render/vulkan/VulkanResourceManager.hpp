@@ -1,7 +1,7 @@
 #pragma once
 
 #include <unordered_map>
-#include <volk.h>
+#include <vk_mem_alloc.h>
 
 #include "render/vulkan/VulkanSwapchain.hpp"
 #include "assets/Resources.hpp"
@@ -11,11 +11,11 @@ namespace render::vulkan {
 	class VulkanFrameData;
 
 	struct GpuMesh {
-		VkBuffer       vertexBuffer;
-		VkDeviceMemory vertexMemory;
-		VkBuffer       indexBuffer;
-		VkDeviceMemory indexMemory;
-		uint32_t       indexCount;
+		VkBuffer      vertexBuffer;
+		VmaAllocation vertexAllocation;
+		VkBuffer      indexBuffer;
+		VmaAllocation indexAllocation;
+		uint32_t      indexCount;
 	};
 
 	struct GpuTexture {
@@ -42,7 +42,8 @@ namespace render::vulkan {
 		void                            cleanup(const VulkanContext& context);
 
 		static void createBuffer(const VulkanContext& context, VkDeviceSize size, VkBufferUsageFlags usage,
-								 VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+								 VmaAllocationCreateFlags allocationFlags, VkBuffer& buffer, VmaAllocation& allocation,
+								 VmaAllocationInfo* allocationInfo = nullptr);
 
 	private:
 		VkCommandPool                            m_commandPool{};

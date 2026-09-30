@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <volk.h>
+#include <vk_mem_alloc.h>
 
 #include "platform/window/IWindow.hpp"
 
@@ -9,9 +9,9 @@ namespace render::vulkan {
 	class VulkanContext;
 
 	struct SwapChainImage {
-		VkImage        image;
-		VkImageView    imageView;
-		VkDeviceMemory imageMemory;
+		VkImage       image;
+		VkImageView   imageView;
+		VmaAllocation allocation;
 	};
 
 	class VulkanSwapchain {
@@ -59,7 +59,7 @@ namespace render::vulkan {
 
 		static void        createImage(const VulkanContext& context, VkExtent2D extent, uint32_t mipLevels,
 									   VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
-									   VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+									   VkImageUsageFlags usage, VmaAllocationCreateFlags allocationFlags,
 									   SwapChainImage& swapChainImage);
 		static VkImageView createImageView(VkDevice device, VkImage image, VkFormat format,
 										   VkImageAspectFlags aspectFlags, uint32_t mipLevels);

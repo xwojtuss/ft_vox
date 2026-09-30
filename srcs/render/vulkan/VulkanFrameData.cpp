@@ -10,16 +10,17 @@ using namespace render::vulkan;
 
 void VulkanFrameData::createFrameUBOs(VulkanContext& context) {
 	m_frameUBOs.resize(maxFramesInFlight);
-	m_frameUBOsMemory.resize(maxFramesInFlight);
+	m_frameUBOsAllocations.resize(maxFramesInFlight);
 	m_frameUBOsMapped.resize(maxFramesInFlight);
 
 	for (size_t i = 0; i < maxFramesInFlight; i++) {
 		constexpr VkDeviceSize bufferSize = sizeof(FrameUBO);
+		VmaAllocationInfo      allocationInfo{};
 		VulkanResourceManager::createBuffer(context, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-											VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-											m_frameUBOs[i], m_frameUBOsMemory[i]);
-
-		vkMapMemory(context.getLogicalDevice(), m_frameUBOsMemory[i], 0, bufferSize, 0, &m_frameUBOsMapped[i]);
+											VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+												VMA_ALLOCATION_CREATE_MAPPED_BIT,
+											m_frameUBOs[i], m_frameUBOsAllocations[i], &allocationInfo);
+		m_frameUBOsMapped[i] = allocationInfo.pMappedData;
 	}
 }
 
@@ -190,50 +191,40 @@ void VulkanFrameData::createVertexBuffer(VulkanContext& context, VulkanResourceM
 										 const assets::MeshData& meshData, GpuMesh& mesh) {
 	const VkDeviceSize bufferSize = sizeof(meshData.vertices[0]) * meshData.vertices.size();
 
-	VkBuffer       stagingBuffer       = nullptr;
-	VkDeviceMemory stagingBufferMemory = nullptr;
+	VkBuffer      stagingBuffer     = nullptr;
+	VmaAllocation stagingAllocation = nullptr;
 	VulkanResourceManager::createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-										VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-										stagingBuffer, stagingBufferMemory);
-
-	void* data = nullptr;
-	vkMapMemory(context.getLogicalDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, meshData.vertices.data(), static_cast<size_t>(bufferSize));
-	vkUnmapMemory(context.getLogicalDevice(), stagingBufferMemory);
+										VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, stagingBuffer,
+										stagingAllocation);
+	vmaCopyMemoryToAllocation(context.getAllocator(), meshData.vertices.data(), stagingAllocation, 0, bufferSize);
 
 	VulkanResourceManager::createBuffer(context, bufferSize,
-										VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-										VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertexBuffer, mesh.vertexMemory);
+										VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 0,
+										mesh.vertexBuffer, mesh.vertexAllocation);
 
 	resourceManager.copyBuffer(context, stagingBuffer, mesh.vertexBuffer, bufferSize);
 
-	vkDestroyBuffer(context.getLogicalDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(context.getLogicalDevice(), stagingBufferMemory, nullptr);
+	vmaDestroyBuffer(context.getAllocator(), stagingBuffer, stagingAllocation);
 }
 
 void VulkanFrameData::createIndexBuffer(VulkanContext& context, VulkanResourceManager& resourceManager,
 										const assets::MeshData& meshData, GpuMesh& mesh) {
 	const VkDeviceSize bufferSize = sizeof(meshData.indices[0]) * meshData.indices.size();
 
-	VkBuffer       stagingBuffer       = nullptr;
-	VkDeviceMemory stagingBufferMemory = nullptr;
+	VkBuffer      stagingBuffer     = nullptr;
+	VmaAllocation stagingAllocation = nullptr;
 	VulkanResourceManager::createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-										VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-										stagingBuffer, stagingBufferMemory);
-
-	void* data = nullptr;
-	vkMapMemory(context.getLogicalDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, meshData.indices.data(), static_cast<size_t>(bufferSize));
-	vkUnmapMemory(context.getLogicalDevice(), stagingBufferMemory);
+										VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, stagingBuffer,
+										stagingAllocation);
+	vmaCopyMemoryToAllocation(context.getAllocator(), meshData.indices.data(), stagingAllocation, 0, bufferSize);
 
 	VulkanResourceManager::createBuffer(context, bufferSize,
-										VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-										VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.indexBuffer, mesh.indexMemory);
+										VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 0,
+										mesh.indexBuffer, mesh.indexAllocation);
 
 	resourceManager.copyBuffer(context, stagingBuffer, mesh.indexBuffer, bufferSize);
 
-	vkDestroyBuffer(context.getLogicalDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(context.getLogicalDevice(), stagingBufferMemory, nullptr);
+	vmaDestroyBuffer(context.getAllocator(), stagingBuffer, stagingAllocation);
 
 	mesh.indexCount = static_cast<uint32_t>(meshData.indices.size());
 }
@@ -298,8 +289,7 @@ VkSemaphore VulkanFrameData::getCurrentImageAvailableSemaphore() const {
 
 void VulkanFrameData::cleanup(const VulkanContext& context) const {
 	for (size_t i = 0; i < maxFramesInFlight; i++) {
-		vkDestroyBuffer(context.getLogicalDevice(), m_frameUBOs[i], nullptr);
-		vkFreeMemory(context.getLogicalDevice(), m_frameUBOsMemory[i], nullptr);
+		vmaDestroyBuffer(context.getAllocator(), m_frameUBOs[i], m_frameUBOsAllocations[i]);
 		vkDestroySemaphore(context.getLogicalDevice(), m_imageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(context.getLogicalDevice(), m_inFlightFences[i], nullptr);
 	}
