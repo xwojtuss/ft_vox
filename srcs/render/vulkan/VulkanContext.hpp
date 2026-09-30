@@ -1,6 +1,6 @@
 #pragma once
 
-#include <volk.h>
+#include <vk_mem_alloc.h>
 #include <array>
 #include <vector>
 #include <optional>
@@ -45,7 +45,7 @@ namespace render::vulkan {
 		SwapChainSupportDetails    m_swapChainSupport;
 		QueueFamilies              m_queueFamilies{};
 		VkSampleCountFlagBits      m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
-		std::optional<uint32_t>    m_memoryType;
+		VmaAllocator               m_allocator{};
 		bool                       m_samplerAnisotropyEnabled = false;
 
 		void               createInstance();
@@ -68,7 +68,6 @@ namespace render::vulkan {
 
 		void                    choosePhysicalDevice();
 		void                    createLogicalDevice();
-		[[nodiscard]] uint32_t  findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 		[[nodiscard]] VkFormat  findDepthFormat() const;
 		[[nodiscard]] VkFormat  findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
 													VkFormatFeatureFlags features) const;
@@ -79,6 +78,7 @@ namespace render::vulkan {
 		[[nodiscard]] const VkSurfaceKHR&          getSurface() const;
 		[[nodiscard]] const VkDevice&              getLogicalDevice() const;
 		[[nodiscard]] const VkPhysicalDevice&      getPhysicalDevice() const;
+		[[nodiscard]] VmaAllocator                 getAllocator() const;
 		[[nodiscard]] const VkQueue&               getGraphicsQueue() const;
 		[[nodiscard]] const VkQueue&               getPresentQueue() const;
 		[[nodiscard]] platform::window::IWindow&   getWindow() const;

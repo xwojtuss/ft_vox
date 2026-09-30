@@ -123,6 +123,13 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
+  VulkanMemoryAllocator
+  GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+  GIT_TAG   3aa921224c154a0d2c43912bc88e1c42ce1f7607 # v3.4.0
+  SYSTEM
+)
+
+FetchContent_Declare(
   libassert
   GIT_REPOSITORY https://github.com/jeremy-rifkin/libassert.git
   GIT_TAG   bd33ba116f209bf71761c58dccc2f3bf277e0824 # v2.2.1
@@ -132,6 +139,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(magic_enum)
 FetchContent_MakeAvailable(libassert)
 FetchContent_MakeAvailable(volk)
+FetchContent_MakeAvailable(VulkanMemoryAllocator)
 FetchContent_MakeAvailable(EnTT)
 set(SPDLOG_USE_STD_FORMAT ON CACHE BOOL "Use std::format instead of the bundled fmt" FORCE)
 FetchContent_MakeAvailable(spdlog)
@@ -157,6 +165,8 @@ function(ft_vox_add_core target optimization)
     GLM_ENABLE_EXPERIMENTAL
     GLFW_INCLUDE_NONE
     VK_NO_PROTOTYPES
+    VMA_STATIC_VULKAN_FUNCTIONS=0
+    VMA_DYNAMIC_VULKAN_FUNCTIONS=1
     IMGUI_IMPL_VULKAN_USE_VOLK
     PROJECT_ROOT_DIR="${PROJECT_SOURCE_DIR}"
   )
@@ -179,6 +189,7 @@ function(ft_vox_add_core target optimization)
   target_link_libraries(${target} PUBLIC
     Vulkan::Headers
     volk::volk
+    GPUOpen::VulkanMemoryAllocator
     glfw
     glm::glm
     magic_enum::magic_enum

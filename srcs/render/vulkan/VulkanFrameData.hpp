@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <volk.h>
+#include <vk_mem_alloc.h>
 
 #include "assets/Resources.hpp"
 
@@ -18,7 +18,7 @@ namespace render::vulkan {
 		std::vector<VkSemaphore>     m_imageAvailableSemaphores;
 		std::vector<VkFence>         m_inFlightFences;
 		std::vector<VkBuffer>        m_frameUBOs;
-		std::vector<VkDeviceMemory>  m_frameUBOsMemory;
+		std::vector<VmaAllocation>   m_frameUBOsAllocations;
 		std::vector<void*>           m_frameUBOsMapped;
 		VkDescriptorPool             m_descriptorPool{};
 		std::vector<VkDescriptorSet> m_frameDescriptorSets;
