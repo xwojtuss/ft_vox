@@ -30,12 +30,9 @@ namespace render::vulkan {
 			   const VkPipelineColorBlendAttachmentState& colorBlendAttachment);
 		static VkPipelineDepthStencilStateCreateInfo createDepthStencilState();
 		static VkPipelineLayoutCreateInfo            createPipelineLayoutInfo(
-					   const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
-					   const VkPushConstantRange&                pushConstantRange);
+					   const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
 		template<int N>
 		static void destroyShaderStages(VkDevice device, std::array<VkPipelineShaderStageCreateInfo, N>& shaderStages);
-		template<typename UBO>
-		static VkPushConstantRange createPushConstantRange();
 
 	public:
 		virtual ~APipeline();

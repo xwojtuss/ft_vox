@@ -6,6 +6,8 @@
 #include "render/vulkan/VulkanContext.hpp"
 #include "render/vulkan/VulkanFrameData.hpp"
 
+#include <ranges>
+
 using namespace render::vulkan;
 
 namespace {
@@ -353,22 +355,29 @@ assets::TextureHandle VulkanResourceManager::createTexture(const assets::Texture
 	return handle;
 }
 
-void VulkanResourceManager::copyBuffer(const VulkanContext& context, VkBuffer srcBuffer, VkBuffer dstBuffer,
-									   VkDeviceSize size) const {
-	VkCommandBuffer commandBuffer = VulkanFrameData::beginSingleTimeCommands(m_commandPool, context.getLogicalDevice());
-
-	VkBufferCopy copyRegion{};
-	copyRegion.size = size;
-	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-	VulkanFrameData::endSingleTimeCommands(commandBuffer, m_commandPool, context.getGraphicsQueue(),
-										   context.getLogicalDevice());
+assets::MeshHandle VulkanResourceManager::createMesh(const VulkanContext& context, const assets::MeshData& meshData) {
+	const assets::MeshHandle handle;
+	m_meshes[handle.id] = m_meshStorage.create(context, m_commandPool, meshData);
+	return handle;
 }
 
-assets::MeshHandle VulkanResourceManager::addMesh(const GpuMesh& meshData) {
-	assets::MeshHandle handle;
-	m_meshes[handle.id] = meshData;
-	return handle;
+void VulkanResourceManager::destroyMesh(const assets::MeshHandle handle) {
+	if (const auto it = m_meshes.find(handle.id); it != m_meshes.end()) {
+		m_destroyedMeshes.push_back({.mesh = it->second, .framesLeft = maxFramesInFlight});
+		m_meshes.erase(it);
+	}
+}
+
+void VulkanResourceManager::releaseDestroyedMeshes() {
+	for (auto& [mesh, framesLeft]: m_destroyedMeshes) {
+		if (--framesLeft == 0)
+			m_meshStorage.destroy(mesh);
+	}
+	std::erase_if(m_destroyedMeshes, [](const DestroyedMesh& destroyed) { return destroyed.framesLeft == 0; });
+}
+
+const VulkanMeshStorage& VulkanResourceManager::getMeshStorage() const {
+	return m_meshStorage;
 }
 
 const GpuMesh& VulkanResourceManager::getMesh(assets::MeshHandle handle) const {
@@ -384,12 +393,11 @@ size_t VulkanResourceManager::getTextureCount() const {
 }
 
 void VulkanResourceManager::cleanup(const VulkanContext& context) {
-	for (const auto& [id, mesh]: m_meshes) {
-		vmaDestroyBuffer(context.getAllocator(), mesh.vertexBuffer, mesh.vertexAllocation);
-		vmaDestroyBuffer(context.getAllocator(), mesh.indexBuffer, mesh.indexAllocation);
-	}
+	m_meshes.clear();
+	m_destroyedMeshes.clear();
+	m_meshStorage.cleanup(context);
 
-	for (const auto& [id, texture]: m_textures) {
+	for (const auto& texture: m_textures | std::views::values) {
 		vkDestroySampler(context.getLogicalDevice(), texture.sampler, nullptr);
 		vkDestroyImageView(context.getLogicalDevice(), texture.image.imageView, nullptr);
 		vmaDestroyImage(context.getAllocator(), texture.image.image, texture.image.allocation);

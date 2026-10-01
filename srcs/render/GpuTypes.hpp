@@ -10,11 +10,8 @@ namespace render {
 		glm::mat4 proj;
 	};
 
-	/** One per draw/object
-	 * For now a push constant
-	 * using 64 bytes of the 128 available
-	 */
-	struct alignas(16) ObjectUBO {
+	/** One per drawn object, read by the vertex shader from a storage buffer indexed by the instance index */
+	struct alignas(16) ObjectData {
 		glm::mat4 model;
 	};
 

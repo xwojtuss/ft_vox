@@ -47,6 +47,8 @@ namespace render::vulkan {
 		VkSampleCountFlagBits      m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 		VmaAllocator               m_allocator{};
 		bool                       m_samplerAnisotropyEnabled = false;
+		bool                       m_indirectDrawEnabled      = false;
+		uint32_t                   m_maxDrawIndirectCount     = 1;
 
 		void               createInstance();
 		void               createSurface();
@@ -84,5 +86,7 @@ namespace render::vulkan {
 		[[nodiscard]] platform::window::IWindow&   getWindow() const;
 		[[nodiscard]] const VkSampleCountFlagBits& getMsaaSamples() const;
 		[[nodiscard]] bool                         isSamplerAnisotropyEnabled() const;
+		[[nodiscard]] bool                         isIndirectDrawEnabled() const;
+		[[nodiscard]] uint32_t                     getMaxDrawIndirectCount() const;
 	};
 }

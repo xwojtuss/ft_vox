@@ -25,8 +25,8 @@ ChunkManager::ChunkManager(block::BlockDatas& blockDatas, ecs::Registry& registr
 }
 
 void ChunkManager::makeChunkRenderable(ecs::Registry& registry, render::IRenderer& renderer, glm::ivec3 chunkPosition) {
-	auto it = m_chunks.find(chunkPosition);
-	if (it == m_chunks.end())
+	const auto it = m_chunks.find(chunkPosition);
+	if (it == m_chunks.end() || m_chunkEntities.contains(chunkPosition))
 		return;
 
 	const assets::MeshData meshData = m_chunkMesher.toMeshData(*it->second);
@@ -40,12 +40,24 @@ void ChunkManager::makeChunkRenderable(ecs::Registry& registry, render::IRendere
 	chunkEntity.add(ecs::component::Texture{.texture = m_chunkTexture});
 	chunkEntity.add(ecs::component::Transform{
 		.position = glm::vec3(chunkPosition * glm::ivec3(chunkXSize, chunkYSize, chunkZSize))});
+	m_chunkEntities[chunkPosition] = chunkEntity.id();
+}
+
+void ChunkManager::removeChunkEntity(const glm::ivec3 chunkPosition) {
+	const auto it = m_chunkEntities.find(chunkPosition);
+	if (it == m_chunkEntities.end())
+		return;
+
+	ecs::EntityHandle chunkEntity = m_registry.getEntity(it->second);
+	if (const auto* mesh = chunkEntity.tryGet<ecs::component::Mesh>(); mesh != nullptr)
+		m_renderer.destroyMesh(mesh->mesh);
+	m_registry.destroyEntity(it->second);
+	m_chunkEntities.erase(it);
 }
 
 void ChunkManager::unloadChunk(glm::ivec3 chunkPosition) {
-	if (const auto it = m_chunks.find(chunkPosition); it != m_chunks.end()) {
-		m_chunks.erase(it);
-	}
+	removeChunkEntity(chunkPosition);
+	m_chunks.erase(chunkPosition);
 }
 
 void ChunkManager::unloadChunk(int x, int y, int z) {
@@ -73,6 +85,7 @@ void ChunkManager::loadRange(const glm::ivec3 start, const glm::ivec3 end) {
 }
 
 void ChunkManager::loadChunk(const glm::ivec3 chunkPosition) {
+	removeChunkEntity(chunkPosition);
 	m_chunks[chunkPosition] = m_chunkLoader.loadChunk(chunkPosition);
 
 	makeChunkRenderable(m_registry, m_renderer, chunkPosition);

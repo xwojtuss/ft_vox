@@ -14,6 +14,7 @@ namespace game::planet {
 	class ChunkManager {
 	private:
 		std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>> m_chunks;
+		std::unordered_map<glm::ivec3, ecs::Entity>            m_chunkEntities;
 		ChunkMesher                                            m_chunkMesher;
 		ChunkLoader                                            m_chunkLoader;
 		block::BlockDatas&                                     m_blockDatas;
@@ -21,6 +22,8 @@ namespace game::planet {
 		render::IRenderer&                                     m_renderer;
 		assets::TextureHandle                                  m_chunkTexture;
 		glm::vec<3, unsigned short>                            m_renderDistance;
+
+		void removeChunkEntity(glm::ivec3 chunkPosition);
 
 	public:
 		ChunkManager(block::BlockDatas& blockDatas, ecs::Registry& registry, render::IRenderer& renderer,
