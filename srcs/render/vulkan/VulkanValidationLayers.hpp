@@ -7,10 +7,10 @@ namespace render::vulkan {
 	class VulkanValidationLayers {
 	public:
 		static constexpr std::array layers = {"VK_LAYER_KHRONOS_validation"};
-#ifdef NDEBUG
-		static constexpr bool isEnabled = false;
-#else
+#ifdef FT_VOX_VALIDATION_LAYERS
 		static constexpr bool isEnabled = true;
+#else
+		static constexpr bool isEnabled = false;
 #endif
 
 		[[nodiscard]] static bool checkSupport();
