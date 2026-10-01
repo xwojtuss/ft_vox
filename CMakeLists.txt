@@ -25,6 +25,13 @@ endif()
 
 option(FT_VOX_BUILD_TESTS "Build the Catch2 unit tests" ON)
 option(FT_VOX_COVERAGE "Instrument the tests and the code they run for coverage (gcovr)" OFF)
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(FT_VOX_VALIDATION_DEFAULT OFF)
+else()
+  set(FT_VOX_VALIDATION_DEFAULT ON)
+endif()
+option(FT_VOX_VALIDATION "Enable the Vulkan validation layers (on by default, except in Release builds)" ${FT_VOX_VALIDATION_DEFAULT})
+option(FT_VOX_LTO "Link-time optimization in Release builds" ON)
 option(FT_VOX_CLANG_TIDY "Run clang-tidy on our sources while compiling; any finding fails the build" OFF)
 
 find_program(PRE_COMMIT_PROGRAM pre-commit)
@@ -159,6 +166,10 @@ set_source_files_properties(${IMGUI_SOURCES} PROPERTIES SKIP_LINTING ON)
 function(ft_vox_add_core target optimization)
   add_library(${target} STATIC ${FT_VOX_SOURCES} ${IMGUI_SOURCES})
 
+  if(FT_VOX_VALIDATION)
+    target_compile_definitions(${target} PUBLIC FT_VOX_VALIDATION_LAYERS)
+  endif()
+
   target_compile_definitions(${target} PUBLIC
     GLM_FORCE_CTOR_INIT
     GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -171,7 +182,7 @@ function(ft_vox_add_core target optimization)
     PROJECT_ROOT_DIR="${PROJECT_SOURCE_DIR}"
   )
 
-  target_compile_options(${target} PUBLIC -Wall -Wextra -Werror ${optimization} -g)
+  target_compile_options(${target} PUBLIC -Wall -Wextra -Werror ${optimization} $<$<NOT:$<CONFIG:Release>>:-g>)
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${target} PUBLIC -Wno-error=maybe-uninitialized)
@@ -212,11 +223,19 @@ foreach(FILE IN LISTS FT_VOX_FILES_OUTSIDE_ECS)
   endif()
 endforeach()
 
-ft_vox_add_core(ft_vox_core -O2)
+ft_vox_add_core(ft_vox_core $<IF:$<CONFIG:Release>,-O3,-O2>)
 ft_vox_enable_clang_tidy(ft_vox_core)
 
 add_executable(ft_vox "${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp")
 target_link_libraries(ft_vox PRIVATE ft_vox_core)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT FT_VOX_IPO_SUPPORTED OUTPUT FT_VOX_IPO_MESSAGE LANGUAGES CXX)
+if(FT_VOX_LTO AND FT_VOX_IPO_SUPPORTED)
+  set_target_properties(ft_vox_core ft_vox PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+else()
+  message(STATUS "Link-time optimization is not available for Release builds: ${FT_VOX_IPO_MESSAGE}")
+endif()
 ft_vox_enable_clang_tidy(ft_vox)
 
 if(FT_VOX_BUILD_TESTS)

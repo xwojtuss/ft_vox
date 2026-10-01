@@ -66,6 +66,40 @@
       "cacheVariables": {
         "FT_VOX_COVERAGE": "ON"
       }
+    },
+    {
+      "name": "release",
+      "displayName": "Release (GCC)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "FT_VOX_BUILD_TESTS": "OFF",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "release-clang",
+      "displayName": "Release (Clang)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "FT_VOX_BUILD_TESTS": "OFF",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "release42",
+      "displayName": "Release (GCC) - 42 Workstations",
+      "inherits": "base",
+      "generator": "Unix Makefiles",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "FT_VOX_BUILD_TESTS": "OFF",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
     }
   ],
   "buildPresets": [
@@ -97,14 +131,36 @@
       "name": "coverage",
       "displayName": "Run tests + coverage report (Clang)",
       "configurePreset": "coverage",
-      "targets": ["coverage"],
+      "targets": [
+        "coverage"
+      ],
       "jobs": 0
     },
     {
       "name": "coverage42",
       "displayName": "Run tests + coverage report (GCC) - 42 Workstations",
       "configurePreset": "coverage42",
-      "targets": ["coverage"],
+      "targets": [
+        "coverage"
+      ],
+      "jobs": 0
+    },
+    {
+      "name": "release",
+      "displayName": "Build Release (GCC)",
+      "configurePreset": "release",
+      "jobs": 0
+    },
+    {
+      "name": "release-clang",
+      "displayName": "Build Release (Clang)",
+      "configurePreset": "release-clang",
+      "jobs": 0
+    },
+    {
+      "name": "release42",
+      "displayName": "Build Release (GCC) - 42 Workstations",
+      "configurePreset": "release42",
       "jobs": 0
     }
   ],
@@ -141,42 +197,106 @@
       "name": "test",
       "displayName": "Build and run tests (Clang)",
       "steps": [
-        { "type": "configure", "name": "dev-clang" },
-        { "type": "build", "name": "dev-clang" },
-        { "type": "test", "name": "dev-clang" }
+        {
+          "type": "configure",
+          "name": "dev-clang"
+        },
+        {
+          "type": "build",
+          "name": "dev-clang"
+        },
+        {
+          "type": "test",
+          "name": "dev-clang"
+        }
       ]
     },
     {
       "name": "test42",
       "displayName": "Build and run tests (GCC) - 42 Workstations",
       "steps": [
-        { "type": "configure", "name": "dev42" },
-        { "type": "build", "name": "dev42" },
-        { "type": "test", "name": "dev42" }
+        {
+          "type": "configure",
+          "name": "dev42"
+        },
+        {
+          "type": "build",
+          "name": "dev42"
+        },
+        {
+          "type": "test",
+          "name": "dev42"
+        }
       ]
     },
     {
       "name": "lint",
       "displayName": "clang-tidy, fails on any finding (Clang)",
       "steps": [
-        { "type": "configure", "name": "lint" },
-        { "type": "build", "name": "lint" }
+        {
+          "type": "configure",
+          "name": "lint"
+        },
+        {
+          "type": "build",
+          "name": "lint"
+        }
       ]
     },
     {
       "name": "coverage",
       "displayName": "Tests + coverage gate (Clang)",
       "steps": [
-        { "type": "configure", "name": "coverage" },
-        { "type": "build", "name": "coverage" }
+        {
+          "type": "configure",
+          "name": "coverage"
+        },
+        {
+          "type": "build",
+          "name": "coverage"
+        }
       ]
     },
     {
       "name": "coverage42",
       "displayName": "Tests + coverage gate (GCC) - 42 Workstations",
       "steps": [
-        { "type": "configure", "name": "coverage42" },
-        { "type": "build", "name": "coverage42" }
+        {
+          "type": "configure",
+          "name": "coverage42"
+        },
+        {
+          "type": "build",
+          "name": "coverage42"
+        }
+      ]
+    },
+    {
+      "name": "release",
+      "displayName": "Optimized build without debug code (Clang)",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "release-clang"
+        },
+        {
+          "type": "build",
+          "name": "release-clang"
+        }
+      ]
+    },
+    {
+      "name": "release42",
+      "displayName": "Optimized build without debug code (GCC) - 42 Workstations",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "release42"
+        },
+        {
+          "type": "build",
+          "name": "release42"
+        }
       ]
     }
   ]

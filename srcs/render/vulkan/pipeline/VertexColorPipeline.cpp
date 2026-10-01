@@ -18,7 +18,8 @@ VertexColorPipeline::VertexColorPipeline(VulkanContext& context, const VkExtent2
 	const std::vector dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	createViewportState(viewportState, dynamicState, dynamicStates);
 
-	auto pipelineLayoutInfo = createPipelineLayoutInfo(descriptorSetLayouts, createPushConstantRange<ObjectUBO>());
+	const VkPushConstantRange pushConstantRange  = createPushConstantRange<ObjectUBO>();
+	auto                      pipelineLayoutInfo = createPipelineLayoutInfo(descriptorSetLayouts, pushConstantRange);
 
 	if (const VkResult result =
 			vkCreatePipelineLayout(context.getLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
