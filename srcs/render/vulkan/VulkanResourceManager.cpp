@@ -66,6 +66,17 @@ void VulkanResourceManager::createBuffer(const VulkanContext& context, VkDeviceS
 	}
 }
 
+void VulkanResourceManager::createStagingBuffer(const VulkanContext& context, const void* data, const VkDeviceSize size,
+												VkBuffer& buffer, VmaAllocation& allocation) {
+	createBuffer(context, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, buffer, allocation);
+	if (const VkResult result = vmaCopyMemoryToAllocation(context.getAllocator(), data, allocation, 0, size);
+		result != VK_SUCCESS) {
+		vmaDestroyBuffer(context.getAllocator(), buffer, allocation);
+		throw VulkanError("failed to fill staging buffer", result);
+	}
+}
+
 void VulkanResourceManager::transitionImageLayout(const VulkanContext& context, VkImage image,
 												  [[maybe_unused]] VkFormat format, VkImageLayout oldLayout,
 												  VkImageLayout newLayout, uint32_t mipLevels) const {
@@ -213,9 +224,7 @@ SwapChainImage VulkanResourceManager::createTextureImage(const assets::TextureDa
 
 	VkBuffer      stagingBuffer     = nullptr;
 	VmaAllocation stagingAllocation = nullptr;
-	createBuffer(context, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, stagingBuffer, stagingAllocation);
-	vmaCopyMemoryToAllocation(context.getAllocator(), textureData.pixels.data(), stagingAllocation, 0, imageSize);
+	createStagingBuffer(context, textureData.pixels.data(), imageSize, stagingBuffer, stagingAllocation);
 
 	SwapChainImage swapChainImage{};
 	VulkanSwapchain::createImage(

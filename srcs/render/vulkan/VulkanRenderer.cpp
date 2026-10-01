@@ -106,7 +106,7 @@ void VulkanRenderer::updateCamera(const ecs::component::Camera& camera) {
 	frameUbo.proj = camera.projection;
 	frameUbo.proj[1][1] *= -1;
 
-	memcpy(m_frameData->getCurrentMappedFrameUBO(), &frameUbo, sizeof(frameUbo));
+	m_frameData->writeCurrentFrameUBO(*m_context, frameUbo);
 }
 
 void VulkanRenderer::recordCommandBuffer(ecs::SystemManager& systemManager, const uint32_t imageIndex) {

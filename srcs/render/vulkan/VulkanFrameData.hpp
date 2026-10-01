@@ -4,6 +4,7 @@
 #include <vk_mem_alloc.h>
 
 #include "assets/Resources.hpp"
+#include "render/GpuTypes.hpp"
 
 namespace render::vulkan {
 	class VulkanContext;
@@ -50,9 +51,9 @@ namespace render::vulkan {
 		[[nodiscard]] VkCommandBuffer       getCurrentCommandBuffer() const;
 		void                                incrementCurrentFrame();
 		void submitCommandBuffer(const VulkanContext& context, VkSemaphore renderFinishedSemaphore) const;
-		[[nodiscard]] uint32_t    getCurrentFrame() const;
-		VkDescriptorSet*          getDescriptorSet(uint32_t frameIndex);
-		[[nodiscard]] void*       getCurrentMappedFrameUBO() const;
+		[[nodiscard]] uint32_t getCurrentFrame() const;
+		VkDescriptorSet*       getDescriptorSet(uint32_t frameIndex);
+		void writeCurrentFrameUBO(const VulkanContext& context, const render::FrameUBO& frameUbo) const;
 		[[nodiscard]] VkSemaphore getCurrentImageAvailableSemaphore() const;
 		void                      cleanup(const VulkanContext& context) const;
 
