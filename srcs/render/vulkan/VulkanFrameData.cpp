@@ -193,10 +193,8 @@ void VulkanFrameData::createVertexBuffer(VulkanContext& context, VulkanResourceM
 
 	VkBuffer      stagingBuffer     = nullptr;
 	VmaAllocation stagingAllocation = nullptr;
-	VulkanResourceManager::createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-										VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, stagingBuffer,
-										stagingAllocation);
-	vmaCopyMemoryToAllocation(context.getAllocator(), meshData.vertices.data(), stagingAllocation, 0, bufferSize);
+	VulkanResourceManager::createStagingBuffer(context, meshData.vertices.data(), bufferSize, stagingBuffer,
+											   stagingAllocation);
 
 	VulkanResourceManager::createBuffer(context, bufferSize,
 										VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 0,
@@ -213,10 +211,8 @@ void VulkanFrameData::createIndexBuffer(VulkanContext& context, VulkanResourceMa
 
 	VkBuffer      stagingBuffer     = nullptr;
 	VmaAllocation stagingAllocation = nullptr;
-	VulkanResourceManager::createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-										VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, stagingBuffer,
-										stagingAllocation);
-	vmaCopyMemoryToAllocation(context.getAllocator(), meshData.indices.data(), stagingAllocation, 0, bufferSize);
+	VulkanResourceManager::createStagingBuffer(context, meshData.indices.data(), bufferSize, stagingBuffer,
+											   stagingAllocation);
 
 	VulkanResourceManager::createBuffer(context, bufferSize,
 										VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 0,
@@ -279,8 +275,13 @@ VkDescriptorSet* VulkanFrameData::getDescriptorSet(const uint32_t frameIndex) {
 	return &m_frameDescriptorSets[frameIndex];
 }
 
-void* VulkanFrameData::getCurrentMappedFrameUBO() const {
-	return m_frameUBOsMapped[m_currentFrame];
+void VulkanFrameData::writeCurrentFrameUBO(const VulkanContext& context, const FrameUBO& frameUbo) const {
+	memcpy(m_frameUBOsMapped[m_currentFrame], &frameUbo, sizeof(FrameUBO));
+	if (const VkResult result =
+			vmaFlushAllocation(context.getAllocator(), m_frameUBOsAllocations[m_currentFrame], 0, sizeof(FrameUBO));
+		result != VK_SUCCESS) {
+		throw VulkanError("failed to update the frame uniform buffer", result);
+	}
 }
 
 VkSemaphore VulkanFrameData::getCurrentImageAvailableSemaphore() const {

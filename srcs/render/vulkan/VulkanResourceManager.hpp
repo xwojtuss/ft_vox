@@ -44,6 +44,8 @@ namespace render::vulkan {
 		static void createBuffer(const VulkanContext& context, VkDeviceSize size, VkBufferUsageFlags usage,
 								 VmaAllocationCreateFlags allocationFlags, VkBuffer& buffer, VmaAllocation& allocation,
 								 VmaAllocationInfo* allocationInfo = nullptr);
+		static void createStagingBuffer(const VulkanContext& context, const void* data, VkDeviceSize size,
+										VkBuffer& buffer, VmaAllocation& allocation);
 
 	private:
 		VkCommandPool                            m_commandPool{};
