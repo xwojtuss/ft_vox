@@ -1,5 +1,7 @@
 #include "render/vulkan/VulkanRenderer.hpp"
+#include <algorithm>
 #include <cstring>
+#include <functional>
 #include "render/vulkan/VulkanValidationLayers.hpp"
 #include "render/vulkan/VulkanVertexUtils.hpp"
 #include "render/vulkan/pipeline/TexturePipeline.hpp"
@@ -22,14 +24,11 @@ VulkanRenderer::VulkanRenderer(platform::window::IWindow& window) {
 }
 
 assets::MeshHandle VulkanRenderer::createMesh(const assets::MeshData& meshData) {
-	GpuMesh mesh{};
+	return m_resourceManager->createMesh(*m_context, meshData);
+}
 
-	VulkanFrameData::createVertexBuffer(*m_context, *m_resourceManager, meshData, mesh);
-	VulkanFrameData::createIndexBuffer(*m_context, *m_resourceManager, meshData, mesh);
-
-	const assets::MeshHandle handle = m_resourceManager->addMesh(mesh);
-
-	return handle;
+void VulkanRenderer::destroyMesh(const assets::MeshHandle handle) {
+	m_resourceManager->destroyMesh(handle);
 }
 
 assets::TextureHandle VulkanRenderer::createTexture(const assets::TextureData& textureData) {
@@ -70,33 +69,106 @@ void VulkanRenderer::cleanupRenderFinishedSemaphores() {
 
 void VulkanRenderer::drawMesh(const ecs::component::Mesh& mesh, const ecs::component::Texture* texture,
 							  const ecs::component::Transform& transform) {
-	const APipeline& pipeline = *m_pipelineHandles.at(mesh.pipelineType);
-	const GpuMesh&   gpuMesh  = m_resourceManager->getMesh(mesh.mesh);
-	vkCmdSetViewport(m_frameData->getCurrentCommandBuffer(), 0, 1, &pipeline.getViewport());
-	vkCmdSetScissor(m_frameData->getCurrentCommandBuffer(), 0, 1, &pipeline.getScissor());
-	vkCmdBindPipeline(m_frameData->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getPipeline());
-	vkCmdBindDescriptorSets(m_frameData->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,
-							pipeline.getPipelineLayout(), 0, 1,
-							m_frameData->getDescriptorSet(m_frameData->getCurrentFrame()), 0, nullptr);
+	const GpuMesh& gpuMesh = m_resourceManager->getMesh(mesh.mesh);
 
-	VkBuffer               vertexBuffer = gpuMesh.vertexBuffer;
-	constexpr VkDeviceSize offset       = 0;
-	vkCmdBindVertexBuffers(m_frameData->getCurrentCommandBuffer(), 0, 1, &vertexBuffer, &offset);
+	m_drawItems.push_back(
+		DrawItem{.pipelineType = mesh.pipelineType,
+				 .texture      = texture != nullptr ? &m_resourceManager->getTexture(texture->texture) : nullptr,
+				 .arena        = gpuMesh.arena,
+				 .indexCount   = gpuMesh.indexCount,
+				 .firstIndex   = gpuMesh.firstIndex,
+				 .vertexOffset = gpuMesh.vertexOffset,
+				 .model        = transform.toModelMatrix()});
+}
 
-	vkCmdBindIndexBuffer(m_frameData->getCurrentCommandBuffer(), gpuMesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-	if (texture != nullptr) {
-		const GpuTexture& gpuTexture = m_resourceManager->getTexture(texture->texture);
-		vkCmdBindDescriptorSets(m_frameData->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,
-								pipeline.getPipelineLayout(), 1, 1, &gpuTexture.descriptorSet, 0, nullptr);
+namespace {
+	bool batchesBefore(const DrawItem& a, const DrawItem& b) {
+		if (a.pipelineType != b.pipelineType)
+			return a.pipelineType < b.pipelineType;
+		if (a.texture != b.texture)
+			return std::less<const GpuTexture*>{}(a.texture, b.texture);
+		return a.arena < b.arena;
 	}
 
-	ObjectUBO objectUbo{};
-	objectUbo.model = transform.toModelMatrix();
-	vkCmdPushConstants(m_frameData->getCurrentCommandBuffer(), pipeline.getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT,
-					   0, sizeof(ObjectUBO), &objectUbo);
+	bool sameBatch(const DrawItem& a, const DrawItem& b) {
+		return !batchesBefore(a, b) && !batchesBefore(b, a);
+	}
+}
 
-	vkCmdDrawIndexed(m_frameData->getCurrentCommandBuffer(), gpuMesh.indexCount, 1, 0, 0, 0);
+void VulkanRenderer::drawBatch(const APipeline* pipeline, const size_t first, const size_t count) const {
+	VkCommandBuffer          commandBuffer = m_frameData->getCurrentCommandBuffer();
+	const DrawItem&          item          = m_drawItems[first];
+	const VulkanMeshStorage& storage       = m_resourceManager->getMeshStorage();
+
+	if (item.texture != nullptr)
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(), 1, 1,
+								&item.texture->descriptorSet, 0, nullptr);
+
+	VkBuffer               vertexBuffer = storage.vertexBuffer(item.arena);
+	constexpr VkDeviceSize offset       = 0;
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
+	vkCmdBindIndexBuffer(commandBuffer, storage.indexBuffer(item.arena), 0, VK_INDEX_TYPE_UINT32);
+
+	if (!m_context->isIndirectDrawEnabled()) {
+		for (size_t i = first; i < first + count; ++i) {
+			const VkDrawIndexedIndirectCommand& command = m_commands[i];
+			vkCmdDrawIndexed(commandBuffer, command.indexCount, 1, command.firstIndex, command.vertexOffset,
+							 command.firstInstance);
+		}
+		return;
+	}
+
+	const size_t maxCount = m_context->getMaxDrawIndirectCount();
+	for (size_t drawn = 0; drawn < count; drawn += maxCount) {
+		const auto batchCount = static_cast<uint32_t>(std::min(maxCount, count - drawn));
+		vkCmdDrawIndexedIndirect(commandBuffer, m_frameData->getCurrentIndirectBuffer(),
+								 (first + drawn) * sizeof(VkDrawIndexedIndirectCommand), batchCount,
+								 sizeof(VkDrawIndexedIndirectCommand));
+	}
+}
+
+void VulkanRenderer::flushDraws() {
+	if (m_drawItems.empty())
+		return;
+
+	std::ranges::sort(m_drawItems, batchesBefore);
+
+	m_objects.resize(m_drawItems.size());
+	m_commands.resize(m_drawItems.size());
+	for (size_t i = 0; i < m_drawItems.size(); ++i) {
+		const DrawItem& item = m_drawItems[i];
+		m_objects[i].model   = item.model;
+		m_commands[i]        = VkDrawIndexedIndirectCommand{.indexCount    = item.indexCount,
+															.instanceCount = 1,
+															.firstIndex    = item.firstIndex,
+															.vertexOffset  = item.vertexOffset,
+															.firstInstance = static_cast<uint32_t>(i)};
+	}
+	m_frameData->uploadDraws(*m_context, m_objects, m_commands);
+
+	VkCommandBuffer      commandBuffer = m_frameData->getCurrentCommandBuffer();
+	const APipeline*     pipeline      = nullptr;
+	assets::PipelineType boundType{};
+	size_t               first = 0;
+	while (first < m_drawItems.size()) {
+		size_t end = first + 1;
+		while (end < m_drawItems.size() && sameBatch(m_drawItems[first], m_drawItems[end]))
+			++end;
+
+		if (pipeline == nullptr || boundType != m_drawItems[first].pipelineType) {
+			boundType = m_drawItems[first].pipelineType;
+			pipeline  = m_pipelineHandles.at(boundType).get();
+			vkCmdSetViewport(commandBuffer, 0, 1, &pipeline->getViewport());
+			vkCmdSetScissor(commandBuffer, 0, 1, &pipeline->getScissor());
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipeline());
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(), 0, 1,
+									m_frameData->getDescriptorSet(m_frameData->getCurrentFrame()), 0, nullptr);
+		}
+
+		drawBatch(pipeline, first, end - first);
+		first = end;
+	}
+	m_drawItems.clear();
 }
 
 void VulkanRenderer::updateCamera(const ecs::component::Camera& camera) {
@@ -133,6 +205,7 @@ void VulkanRenderer::recordCommandBuffer(ecs::SystemManager& systemManager, cons
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	systemManager.onRendererDraw(*this);
+	flushDraws();
 	systemManager.onRendererFrame(*this);
 
 	vkCmdEndRenderPass(commandBuffer);
@@ -174,6 +247,8 @@ void VulkanRenderer::render(ecs::SystemManager& systemManager) {
 	const std::optional<uint32_t> imageIndex = acquireImage();
 	if (!imageIndex)
 		return;
+
+	m_resourceManager->releaseDestroyedMeshes();
 
 	// Only reset the fence if we are submitting work
 	m_frameData->resetFences(*m_context, m_frameData->getCurrentFrame());

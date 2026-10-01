@@ -6,15 +6,4 @@ namespace render::vulkan {
 			vkDestroyShaderModule(device, shaderStages[i].module, nullptr);
 		}
 	}
-
-	template<typename UBO>
-	VkPushConstantRange APipeline::createPushConstantRange() {
-		VkPushConstantRange pushConstantRange{};
-
-		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		pushConstantRange.offset     = 0;
-		pushConstantRange.size       = sizeof(UBO);
-
-		return pushConstantRange;
-	}
 }

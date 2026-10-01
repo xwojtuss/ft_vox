@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <vector>
 #include <vk_mem_alloc.h>
 
@@ -9,9 +10,19 @@
 namespace render::vulkan {
 	class VulkanContext;
 	class VulkanResourceManager;
-	struct GpuMesh;
 
-	constexpr unsigned int maxFramesInFlight = 2;
+	constexpr unsigned int maxFramesInFlight   = 2;
+	constexpr uint32_t     initialDrawCapacity = 4096;
+
+	struct DrawBuffers {
+		VkBuffer      objectBuffer{};
+		VmaAllocation objectAllocation{};
+		void*         objectMapped{};
+		VkBuffer      indirectBuffer{};
+		VmaAllocation indirectAllocation{};
+		void*         indirectMapped{};
+		uint32_t      capacity{};
+	};
 
 	class VulkanFrameData {
 	private:
@@ -22,12 +33,15 @@ namespace render::vulkan {
 		std::vector<VmaAllocation>   m_frameUBOsAllocations;
 		std::vector<void*>           m_frameUBOsMapped;
 		VkDescriptorPool             m_descriptorPool{};
+		std::vector<DrawBuffers>     m_drawBuffers;
 		std::vector<VkDescriptorSet> m_frameDescriptorSets;
 		VkDescriptorSetLayout        m_frameSetLayout{};
 		VkDescriptorSetLayout        m_textureSetLayout{};
 		uint32_t                     m_currentFrame{0};
 
 		void createFrameUBOs(VulkanContext&);
+		void createDrawBuffers(const VulkanContext&, size_t frame, uint32_t capacity);
+		void destroyDrawBuffers(const VulkanContext&, size_t frame);
 		void createCommandBuffers(const VulkanContext&, const VulkanResourceManager& resourceManager);
 		void createSyncObjects(const VulkanContext&);
 		void createFrameDescriptorSets(const VulkanContext&);
@@ -41,19 +55,18 @@ namespace render::vulkan {
 		[[nodiscard]] VkDescriptorSetLayout getFrameDescriptorSetLayout() const;
 		[[nodiscard]] VkDescriptorSetLayout getTextureDescriptorSetLayout() const;
 		[[nodiscard]] VkDescriptorSet       createTextureDescriptorSet(const VulkanContext& context) const;
-		static void                         createVertexBuffer(VulkanContext&, VulkanResourceManager& resourceManager,
-															   const assets::MeshData& meshData, GpuMesh& mesh);
-		static void                         createIndexBuffer(VulkanContext&, VulkanResourceManager& resourceManager,
-															  const assets::MeshData& meshData, GpuMesh& mesh);
 		[[nodiscard]] VkResult              waitForFences(const VulkanContext& context, uint32_t currentFrame) const;
 		void                                resetFences(const VulkanContext& context, uint32_t currentFrame) const;
 		[[nodiscard]] VkCommandBuffer       getCommandBuffer(uint32_t index) const;
 		[[nodiscard]] VkCommandBuffer       getCurrentCommandBuffer() const;
 		void                                incrementCurrentFrame();
 		void submitCommandBuffer(const VulkanContext& context, VkSemaphore renderFinishedSemaphore) const;
-		[[nodiscard]] uint32_t getCurrentFrame() const;
-		VkDescriptorSet*       getDescriptorSet(uint32_t frameIndex);
-		void writeCurrentFrameUBO(const VulkanContext& context, const render::FrameUBO& frameUbo) const;
+		[[nodiscard]] uint32_t    getCurrentFrame() const;
+		VkDescriptorSet*          getDescriptorSet(uint32_t frameIndex);
+		void                      writeCurrentFrameUBO(const VulkanContext& context, const FrameUBO& frameUbo) const;
+		void                      uploadDraws(const VulkanContext& context, std::span<const ObjectData> objects,
+											  std::span<const VkDrawIndexedIndirectCommand> commands);
+		[[nodiscard]] VkBuffer    getCurrentIndirectBuffer() const;
 		[[nodiscard]] VkSemaphore getCurrentImageAvailableSemaphore() const;
 		void                      cleanup(const VulkanContext& context) const;
 

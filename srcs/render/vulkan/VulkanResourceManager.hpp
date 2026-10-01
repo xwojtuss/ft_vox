@@ -3,20 +3,13 @@
 #include <unordered_map>
 #include <vk_mem_alloc.h>
 
+#include "render/vulkan/VulkanMeshStorage.hpp"
 #include "render/vulkan/VulkanSwapchain.hpp"
 #include "assets/Resources.hpp"
 
 namespace render::vulkan {
 	class VulkanContext;
 	class VulkanFrameData;
-
-	struct GpuMesh {
-		VkBuffer      vertexBuffer;
-		VmaAllocation vertexAllocation;
-		VkBuffer      indexBuffer;
-		VmaAllocation indexAllocation;
-		uint32_t      indexCount;
-	};
 
 	struct GpuTexture {
 		SwapChainImage  image;
@@ -27,14 +20,21 @@ namespace render::vulkan {
 
 	constexpr uint32_t textureLimit = 10;
 
+	struct DestroyedMesh {
+		GpuMesh  mesh;
+		unsigned framesLeft;
+	};
+
 	class VulkanResourceManager {
 	public:
 		explicit VulkanResourceManager(const VulkanContext&);
 		~VulkanResourceManager();
 
 		[[nodiscard]] VkCommandPool getCommandPool() const;
-		void copyBuffer(const VulkanContext& context, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const;
-		assets::MeshHandle           addMesh(const GpuMesh& meshData);
+		assets::MeshHandle          createMesh(const VulkanContext& context, const assets::MeshData& meshData);
+		void                        destroyMesh(assets::MeshHandle handle);
+		void                        releaseDestroyedMeshes();
+		[[nodiscard]] const VulkanMeshStorage& getMeshStorage() const;
 		assets::TextureHandle        createTexture(const assets::TextureData&, VulkanContext&, const VulkanFrameData&);
 		[[nodiscard]] const GpuMesh& getMesh(assets::MeshHandle handle) const;
 		[[nodiscard]] const GpuTexture& getTexture(assets::TextureHandle handle) const;
@@ -49,7 +49,9 @@ namespace render::vulkan {
 
 	private:
 		VkCommandPool                            m_commandPool{};
+		VulkanMeshStorage                        m_meshStorage;
 		std::unordered_map<uint64_t, GpuMesh>    m_meshes;
+		std::vector<DestroyedMesh>               m_destroyedMeshes;
 		std::unordered_map<uint64_t, GpuTexture> m_textures;
 
 		void createCommandPool(const VulkanContext&);

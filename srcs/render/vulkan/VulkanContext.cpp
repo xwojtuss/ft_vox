@@ -252,8 +252,22 @@ void VulkanContext::createLogicalDevice() {
 		logging::get(error::Domain::Render)
 			.warn("Anisotropic filtering is not supported, textures will look blurrier at an angle");
 
+	m_indirectDrawEnabled =
+		supportedFeatures.multiDrawIndirect == VK_TRUE && supportedFeatures.drawIndirectFirstInstance == VK_TRUE;
+	if (!m_indirectDrawEnabled)
+		logging::get(error::Domain::Render)
+			.warn("Multi-draw indirect is not supported, every mesh is drawn with its own draw call");
+
+	VkPhysicalDeviceProperties deviceProperties{};
+	vkGetPhysicalDeviceProperties(m_physicalDevice, &deviceProperties);
+	m_maxDrawIndirectCount = deviceProperties.limits.maxDrawIndirectCount;
+
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
+	if (m_indirectDrawEnabled) {
+		deviceFeatures.multiDrawIndirect         = VK_TRUE;
+		deviceFeatures.drawIndirectFirstInstance = VK_TRUE;
+	}
 
 	DeviceExtensions enabledExtensions(deviceExtensions.begin(), deviceExtensions.end());
 	if (hasExtension(availableDeviceExtensions(m_physicalDevice), portabilitySubsetExtension))
@@ -368,6 +382,14 @@ const VkDevice& VulkanContext::getLogicalDevice() const {
 
 const VkPhysicalDevice& VulkanContext::getPhysicalDevice() const {
 	return m_physicalDevice;
+}
+
+uint32_t VulkanContext::getMaxDrawIndirectCount() const {
+	return m_maxDrawIndirectCount;
+}
+
+bool VulkanContext::isIndirectDrawEnabled() const {
+	return m_indirectDrawEnabled;
 }
 
 VmaAllocator VulkanContext::getAllocator() const {

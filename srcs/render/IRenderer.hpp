@@ -20,6 +20,7 @@ namespace render {
 		virtual ~IRenderer() = default;
 
 		virtual assets::MeshHandle    createMesh(const assets::MeshData&)                  = 0;
+		virtual void                  destroyMesh(assets::MeshHandle)                      = 0;
 		virtual assets::TextureHandle createTexture(const assets::TextureData&)            = 0;
 		virtual void                  render(ecs::SystemManager& systemManager)            = 0;
 		virtual void                  render(gui::IGui& gui)                               = 0;

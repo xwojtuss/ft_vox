@@ -17,6 +17,7 @@ namespace test {
 	public:
 		std::vector<size_t>                     createdMeshTriangleCounts;
 		std::vector<assets::MeshHandle>         createdMeshes;
+		std::vector<assets::MeshHandle>         destroyedMeshes;
 		std::vector<std::vector<unsigned char>> createdTexturePixels;
 		std::vector<assets::TextureHandle>      createdTextures;
 		std::vector<DrawnMesh>                  drawnMeshes;
@@ -27,6 +28,10 @@ namespace test {
 			createdMeshTriangleCounts.push_back(meshData.indices.size() / 3);
 			createdMeshes.emplace_back();
 			return createdMeshes.back();
+		}
+
+		void destroyMesh(assets::MeshHandle mesh) override {
+			destroyedMeshes.push_back(mesh);
 		}
 
 		assets::TextureHandle createTexture(const assets::TextureData& textureData) override {

@@ -50,7 +50,7 @@ void Application::init() const {
 	m_registry->getSystemManager().onRegistryReady();
 
 	EntityHandle player = m_registry->createEntity();
-	player.add(component::Transform{});
+	player.add(component::Transform{.position = glm::vec3(0.0f, 100.0f, 0.0f)});
 	player.add(component::Velocity{.maxSpeed = 10.0f, .acceleration = 4.5f, .deceleration = 10.0f});
 	player.add(component::Camera{.fov = 90.0f});
 	player.add(component::Input{.mouseSensitivity = 0.002f});

@@ -1,5 +1,4 @@
 #include "render/vulkan/pipeline/VertexColorPipeline.hpp"
-#include "render/GpuTypes.hpp"
 #include "render/vulkan/VulkanVertexUtils.hpp"
 #include "render/vulkan/VulkanError.hpp"
 
@@ -18,8 +17,7 @@ VertexColorPipeline::VertexColorPipeline(VulkanContext& context, const VkExtent2
 	const std::vector dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	createViewportState(viewportState, dynamicState, dynamicStates);
 
-	const VkPushConstantRange pushConstantRange  = createPushConstantRange<ObjectUBO>();
-	auto                      pipelineLayoutInfo = createPipelineLayoutInfo(descriptorSetLayouts, pushConstantRange);
+	auto pipelineLayoutInfo = createPipelineLayoutInfo(descriptorSetLayouts);
 
 	if (const VkResult result =
 			vkCreatePipelineLayout(context.getLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout);

@@ -167,14 +167,12 @@ VkPipelineDepthStencilStateCreateInfo APipeline::createDepthStencilState() {
 }
 
 VkPipelineLayoutCreateInfo APipeline::createPipelineLayoutInfo(
-	const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts, const VkPushConstantRange& pushConstantRange) {
+	const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts) {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 
-	pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount         = static_cast<unsigned int>(descriptorSetLayouts.size());
-	pipelineLayoutInfo.pSetLayouts            = descriptorSetLayouts.data();
-	pipelineLayoutInfo.pushConstantRangeCount = 1;
-	pipelineLayoutInfo.pPushConstantRanges    = &pushConstantRange;
+	pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = static_cast<unsigned int>(descriptorSetLayouts.size());
+	pipelineLayoutInfo.pSetLayouts    = descriptorSetLayouts.data();
 
 	return pipelineLayoutInfo;
 }

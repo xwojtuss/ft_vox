@@ -104,8 +104,7 @@ SCENARIO("Starting a planet loads every chunk around spawn", "[chunk-manager]") 
 	}
 }
 
-// TODO: make pass
-SCENARIO("Loading a chunk makes it visible", "[chunk-manager][!mayfail]") {
+SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 	GIVEN("a planet with its spawn area loaded") {
 		SpawnedPlanet& env          = sharedSpawnedPlanet();
 		const size_t   meshesBefore = env.meshCount();
@@ -150,8 +149,7 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager][!mayfail]") {
 	}
 }
 
-// TODO: make pass
-SCENARIO("Unloading a chunk forgets it", "[chunk-manager][!mayfail]") {
+SCENARIO("Unloading a chunk forgets it", "[chunk-manager]") {
 	GIVEN("a planet with its spawn area loaded") {
 		SpawnedPlanet& env = sharedSpawnedPlanet();
 
@@ -167,7 +165,8 @@ SCENARIO("Unloading a chunk forgets it", "[chunk-manager][!mayfail]") {
 		}
 
 		WHEN("a visible chunk is unloaded") {
-			const size_t meshIndex = env.meshCount();
+			const size_t meshIndex       = env.meshCount();
+			const size_t destroyedBefore = env.renderer.destroyedMeshes.size();
 			env.manager->loadChunk(65, -1, 65);
 			ecs::EntityHandle const chunkEntity = env.entityOfMesh(meshIndex);
 			REQUIRE(chunkEntity.has<ecs::component::Mesh>());
@@ -179,6 +178,10 @@ SCENARIO("Unloading a chunk forgets it", "[chunk-manager][!mayfail]") {
 
 				REQUIRE_FALSE(renderSystem->processes(chunkEntity.id()));
 				REQUIRE_FALSE(chunkEntity.has<ecs::component::Mesh>());
+			}
+			AND_THEN("its mesh is handed back to the renderer so the GPU memory can be reused") {
+				REQUIRE(env.renderer.destroyedMeshes.size() == destroyedBefore + 1);
+				REQUIRE(env.renderer.destroyedMeshes.back().id == env.renderer.createdMeshes.at(meshIndex).id);
 			}
 		}
 
