@@ -3,6 +3,7 @@
 #include <array>
 #include <ranges>
 
+#include "error/Assert.hpp"
 #include "render/IRenderer.hpp"
 #include "ecs/component/Components.hpp"
 
@@ -28,7 +29,7 @@ void ChunkManager::makeChunkRenderable(ecs::Registry& registry, render::IRendere
 	if (it->second->isEmpty() || isBuried(chunkPosition))
 		return;
 
-	const assets::ChunkMeshData meshData = m_chunkMesher.toMeshData(*it->second);
+	const assets::ChunkMeshData meshData = m_chunkMesher.toMeshData(*it->second, neighboursOf(chunkPosition));
 	if (meshData.vertices.empty() || meshData.indices.empty())
 		return;
 
@@ -88,17 +89,41 @@ void ChunkManager::storeChunk(const glm::ivec3 chunkPosition) {
 	m_chunks[chunkPosition] = m_chunkLoader.loadChunk(chunkPosition);
 }
 
-void ChunkManager::makeRangeRenderable(const glm::ivec3 start, const glm::ivec3 end) {
-	for (int x = start.x; x <= end.x; ++x)
-		for (int y = start.y; y <= end.y; ++y)
-			for (int z = start.z; z <= end.z; ++z)
-				makeChunkRenderable(m_registry, m_renderer, {x, y, z});
+ChunkMesher::Neighbours ChunkManager::neighboursOf(const glm::ivec3 chunkPosition) const {
+	ChunkMesher::Neighbours neighbours{};
+
+	for (std::size_t face = 0; face < neighbours.size(); ++face) {
+		if (const auto neighbour = m_chunks.find(chunkPosition + ChunkMesher::faceOffsets[face]);
+			neighbour != m_chunks.end())
+			neighbours[face] = neighbour->second.get();
+	}
+	return neighbours;
+}
+
+void ChunkManager::refreshMesh(const glm::ivec3 chunkPosition) {
+	removeChunkEntity(chunkPosition);
+	makeChunkRenderable(m_registry, m_renderer, chunkPosition);
+}
+
+void ChunkManager::refreshMeshesAround(const glm::ivec3 start, const glm::ivec3 end) {
+	for (int x = start.x - 1; x <= end.x + 1; ++x) {
+		for (int y = start.y - 1; y <= end.y + 1; ++y) {
+			for (int z = start.z - 1; z <= end.z + 1; ++z) {
+				const int axesOutside = static_cast<int>(x < start.x || x > end.x) +
+										static_cast<int>(y < start.y || y > end.y) +
+										static_cast<int>(z < start.z || z > end.z);
+				if (axesOutside <= 1 && m_chunks.contains({x, y, z}))
+					refreshMesh({x, y, z});
+			}
+		}
+	}
 }
 
 void ChunkManager::unloadChunk(glm::ivec3 chunkPosition) {
 	removeChunkEntity(chunkPosition);
 	m_chunks.erase(chunkPosition);
 	refreshStats();
+	refreshMeshesAround(chunkPosition, chunkPosition);
 }
 
 void ChunkManager::unloadChunk(int x, int y, int z) {
@@ -115,6 +140,7 @@ void ChunkManager::unloadRange(const glm::ivec3 start, const glm::ivec3 end) {
 		}
 	}
 	refreshStats();
+	refreshMeshesAround(start, end);
 }
 
 void ChunkManager::loadRange(const glm::ivec3 start, const glm::ivec3 end) {
@@ -126,14 +152,39 @@ void ChunkManager::loadRange(const glm::ivec3 start, const glm::ivec3 end) {
 		}
 	}
 	refreshStats();
-	makeRangeRenderable(start, end);
+	refreshMeshesAround(start, end);
 }
 
 void ChunkManager::loadChunk(const glm::ivec3 chunkPosition) {
 	storeChunk(chunkPosition);
 	refreshStats();
+	refreshMeshesAround(chunkPosition, chunkPosition);
+}
 
-	makeChunkRenderable(m_registry, m_renderer, chunkPosition);
+void ChunkManager::setBlock(const glm::ivec3 chunkPosition, const glm::ivec3 blockPosition, const Block& block) {
+	const auto chunk = m_chunks.find(chunkPosition);
+	DEBUG_ASSERT(chunk != m_chunks.end(), "block set in a chunk that is not loaded", chunkPosition.x, chunkPosition.y,
+				 chunkPosition.z);
+
+	chunk->second->setBlock(blockPosition.x, blockPosition.y, blockPosition.z, block);
+	refreshStats();
+
+	refreshMesh(chunkPosition);
+	constexpr std::array sizes = {chunkXSize, chunkYSize, chunkZSize};
+	for (glm::length_t axis = 0; axis < 3; ++axis) {
+		if (blockPosition[axis] == 0) {
+			glm::ivec3 neighbour = chunkPosition;
+			--neighbour[axis];
+			if (m_chunks.contains(neighbour))
+				refreshMesh(neighbour);
+		}
+		if (blockPosition[axis] == sizes[static_cast<std::size_t>(axis)] - 1) {
+			glm::ivec3 neighbour = chunkPosition;
+			++neighbour[axis];
+			if (m_chunks.contains(neighbour))
+				refreshMesh(neighbour);
+		}
+	}
 }
 
 void ChunkManager::loadChunk(int x, int y, int z) {
