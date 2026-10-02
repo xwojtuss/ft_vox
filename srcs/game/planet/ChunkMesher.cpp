@@ -16,18 +16,13 @@ using namespace game::planet;
 namespace {
 	constexpr float boundaryTolerance = 1e-5f;
 
-	namespace planetinfo = scene::planetinfo;
-
 	using Face = ChunkMesher::Face;
 
 	static_assert(ChunkMesher::faceCount == render::chunkvertex::faceCount);
 
 	static_assert(magic_enum::enum_count<Face>() == ChunkMesher::faceCount);
 
-	constexpr std::array faceOffsets = {
-		glm::ivec3(planetinfo::right), glm::ivec3(planetinfo::left),     glm::ivec3(planetinfo::up),
-		glm::ivec3(planetinfo::down),  glm::ivec3(planetinfo::backward), glm::ivec3(planetinfo::forward),
-	};
+	constexpr game::BlockId undrawableBlock = 1;
 
 	Face dominantFace(const glm::vec3& normal) {
 		const glm::vec3 absNormal = glm::abs(normal);
@@ -50,7 +45,7 @@ ChunkMesher::ChunkMesher(block::BlockDatas& blockDatas) : m_blockDatas(blockData
 }
 
 // TODO: refactor
-assets::ChunkMeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
+assets::ChunkMeshData ChunkMesher::toMeshData(const Chunk& chunk, const Neighbours& neighbours) const {
 	FT_PROFILE_FUNCTION();
 	assets::ChunkMeshData meshData;
 	if (chunk.isEmpty())
@@ -72,7 +67,7 @@ assets::ChunkMeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
 				if (triangles.empty())
 					continue;
 
-				const FaceOcclusion occluded = occludedFaces(chunk, x, y, z);
+				const FaceOcclusion occluded = occludedFaces(chunk, neighbours, x, y, z);
 				const bool          enclosed = std::ranges::all_of(occluded, [](const bool face) { return face; });
 				if (enclosed && everyTriangleCullable)
 					continue;
@@ -126,21 +121,45 @@ std::optional<ChunkMesher::Face> ChunkMesher::boundaryFaceOf(const std::array<re
 	return std::nullopt;
 }
 
-ChunkMesher::FaceOcclusion ChunkMesher::occludedFaces(const Chunk& chunk, const int x, const int y, const int z) {
+ChunkMesher::FaceOcclusion ChunkMesher::occludedFaces(const Chunk& chunk, const Neighbours& neighbours, const int x,
+													  const int y, const int z) {
 	FaceOcclusion occluded{};
 
 	for (const Face face: magic_enum::enum_values<Face>()) {
 		const std::size_t index  = std::to_underlying(face);
 		const glm::ivec3& offset = faceOffsets[index];
-		occluded[index]          = neighbourAt(chunk, x + offset.x, y + offset.y, z + offset.z) != 0;
+		occluded[index]          = neighbourAt(chunk, neighbours, x + offset.x, y + offset.y, z + offset.z) != 0;
 	}
 	return occluded;
 }
 
-game::BlockId ChunkMesher::neighbourAt(const Chunk& chunk, const int x, const int y, const int z) {
-	if (!Chunk::contains(x, y, z))
+game::BlockId ChunkMesher::neighbourAt(const Chunk& chunk, const Neighbours& neighbours, const int x, const int y,
+									   const int z) {
+	if (Chunk::contains(x, y, z))
+		return chunk.getBlock(x, y, z).id;
+
+	constexpr std::array sizes = {chunkXSize, chunkYSize, chunkZSize};
+	glm::ivec3           position(x, y, z);
+	std::size_t          face        = 0;
+	int                  axesOutside = 0;
+
+	for (std::size_t axis = 0; axis < sizes.size(); ++axis) {
+		const auto axisIndex = static_cast<glm::length_t>(axis);
+		if (position[axisIndex] >= 0 && position[axisIndex] < sizes[axis])
+			continue;
+
+		++axesOutside;
+		face = (axis * 2) + ((position[axisIndex] < 0) ? 1 : 0);
+		position[axisIndex] += (position[axisIndex] < 0) ? sizes[axis] : -sizes[axis];
+	}
+
+	if (axesOutside != 1)
 		return 0;
-	return chunk.getBlock(x, y, z).id;
+
+	const Chunk* neighbour = neighbours[face];
+	if (neighbour == nullptr)
+		return face == std::to_underlying(Face::PositiveY) ? 0 : undrawableBlock;
+	return neighbour->getBlock(position.x, position.y, position.z).id;
 }
 
 void ChunkMesher::appendTriangle(assets::ChunkMeshData& meshData, const ModelTriangle& triangle,

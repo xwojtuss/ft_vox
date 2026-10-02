@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint> // for std::uint32_t
 #include <vector>
 #include <volk.h>
 

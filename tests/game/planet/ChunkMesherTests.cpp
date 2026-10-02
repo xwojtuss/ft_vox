@@ -3,6 +3,7 @@
 
 #include "assets/TinyObjLoader.hpp"
 #include "error/Exception.hpp"
+#include <magic_enum/magic_enum.hpp>
 #include "game/planet/ChunkMesher.hpp"
 #include "support/Blocks.hpp"
 
@@ -138,12 +139,15 @@ SCENARIO("Only the surface of a solid shape is drawn", "[mesher]") {
 		}
 	}
 
-	GIVEN("a chunk completely filled with dirt") {
+	GIVEN("a chunk completely filled with dirt and air in all six neighbouring chunks") {
 		Chunk chunk;
 		fill(chunk, {0, 0, 0}, {chunkXSize - 1, chunkYSize - 1, chunkZSize - 1}, test::dirt);
+		const Chunk             air;
+		ChunkMesher::Neighbours neighbours{};
+		neighbours.fill(&air);
 
-		THEN("the chunk's borders count as air, so its whole outer shell is drawn") {
-			REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 6uz * chunkXSize * chunkZSize * 2);
+		THEN("its whole outer shell is drawn") {
+			REQUIRE(triangleCount(mesher.toMeshData(chunk, neighbours)) == 6uz * chunkXSize * chunkZSize * 2);
 		}
 	}
 }
@@ -265,6 +269,120 @@ SCENARIO("Blocks with a model on the finer grid are meshed exactly", "[mesher]")
 
 		THEN("meshing it fails with an asset error") {
 			REQUIRE_THROWS_AS(mesher.toMeshData(chunk), error::AssetError);
+		}
+	}
+}
+
+SCENARIO("Faces on a chunk border are hidden by the neighbouring chunk", "[mesher][border]") {
+	game::block::BlockDatas blockDatas = test::makeBlockDatas();
+	const ChunkMesher       mesher(blockDatas);
+
+	constexpr size_t trianglesOnOneSide = 2uz * chunkYSize * chunkZSize;
+	constexpr size_t shellTriangles     = 6 * trianglesOnOneSide;
+
+	Chunk solid;
+	fill(solid, {0, 0, 0}, {chunkXSize - 1, chunkYSize - 1, chunkZSize - 1}, test::dirt);
+	const Chunk empty;
+
+	ChunkMesher::Neighbours airAround{};
+	airAround.fill(&empty);
+
+	GIVEN("a solid chunk with a solid chunk on its positive x side and air on the others") {
+		Chunk neighbour;
+		fill(neighbour, {0, 0, 0}, {chunkXSize - 1, chunkYSize - 1, chunkZSize - 1}, test::dirt);
+		ChunkMesher::Neighbours neighbours                           = airAround;
+		neighbours[std::to_underlying(ChunkMesher::Face::PositiveX)] = &neighbour;
+
+		THEN("the side that touches the neighbour is not drawn") {
+			REQUIRE(triangleCount(mesher.toMeshData(solid, neighbours)) == shellTriangles - trianglesOnOneSide);
+		}
+	}
+
+	GIVEN("a solid chunk surrounded by air") {
+		THEN("every side is drawn, since air hides nothing") {
+			REQUIRE(triangleCount(mesher.toMeshData(solid, airAround)) == shellTriangles);
+		}
+	}
+
+	GIVEN("a neighbour with a single block next to the middle of the negative z side") {
+		Chunk neighbour;
+		neighbour.setBlock(5, 7, chunkZSize - 1, Block(test::dirt));
+		ChunkMesher::Neighbours neighbours                           = airAround;
+		neighbours[std::to_underlying(ChunkMesher::Face::NegativeZ)] = &neighbour;
+
+		THEN("only the one face that block covers is hidden") {
+			REQUIRE(triangleCount(mesher.toMeshData(solid, neighbours)) == shellTriangles - 2);
+		}
+	}
+
+	GIVEN("a neighbour whose only block is at its far end, away from the chunk") {
+		Chunk neighbour;
+		neighbour.setBlock(0, 0, 0, Block(test::dirt));
+		ChunkMesher::Neighbours neighbours                           = airAround;
+		neighbours[std::to_underlying(ChunkMesher::Face::NegativeX)] = &neighbour;
+
+		THEN("it hides nothing") {
+			REQUIRE(triangleCount(mesher.toMeshData(solid, neighbours)) == shellTriangles);
+		}
+	}
+}
+
+SCENARIO("Sides facing chunks that are not loaded are not drawn, except the top", "[mesher][border]") {
+	game::block::BlockDatas blockDatas = test::makeBlockDatas();
+	const ChunkMesher       mesher(blockDatas);
+
+	constexpr size_t trianglesOnOneSide = 2uz * chunkXSize * chunkZSize;
+
+	Chunk solid;
+	fill(solid, {0, 0, 0}, {chunkXSize - 1, chunkYSize - 1, chunkZSize - 1}, test::dirt);
+
+	GIVEN("a solid chunk without any loaded neighbour") {
+		const assets::ChunkMeshData mesh = mesher.toMeshData(solid);
+
+		THEN("only its top is drawn") {
+			REQUIRE(triangleCount(mesh) == trianglesOnOneSide);
+		}
+		AND_THEN("the drawn faces lie on the top of the chunk") {
+			for (const render::ChunkVertex& vertex: mesh.vertices) {
+				REQUIRE(render::chunkVertexPosition(vertex).y == static_cast<float>(chunkYSize));
+				REQUIRE(render::chunkVertexDirection(vertex) == std::to_underlying(ChunkMesher::Face::PositiveY));
+			}
+		}
+	}
+
+	GIVEN("a solid chunk whose neighbours are loaded on every side but one") {
+		const Chunk             air;
+		ChunkMesher::Neighbours neighbours{};
+		neighbours.fill(&air);
+
+		const ChunkMesher::Face missing =
+			GENERATE(ChunkMesher::Face::PositiveX, ChunkMesher::Face::NegativeX, ChunkMesher::Face::PositiveY,
+					 ChunkMesher::Face::NegativeY, ChunkMesher::Face::PositiveZ, ChunkMesher::Face::NegativeZ);
+		neighbours[std::to_underlying(missing)] = nullptr;
+
+		THEN("the side facing the missing neighbour is drawn only when it is the top") {
+			const size_t expected =
+				missing == ChunkMesher::Face::PositiveY ? 6 * trianglesOnOneSide : 5 * trianglesOnOneSide;
+			CAPTURE(magic_enum::enum_name(missing));
+			REQUIRE(triangleCount(mesher.toMeshData(solid, neighbours)) == expected);
+		}
+	}
+
+	GIVEN("a block in the middle of a chunk without loaded neighbours") {
+		Chunk chunk;
+		chunk.setBlock(8, 8, 8, Block(test::dirt));
+
+		THEN("all its six faces are still drawn, since only the chunk's own borders are affected") {
+			REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 12);
+		}
+	}
+
+	GIVEN("a single block on the bottom of a chunk without loaded neighbours") {
+		Chunk chunk;
+		chunk.setBlock(8, 0, 8, Block(test::dirt));
+
+		THEN("the face towards the missing chunk below is not drawn") {
+			REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 10);
 		}
 	}
 }

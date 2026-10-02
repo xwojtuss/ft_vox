@@ -21,7 +21,7 @@ namespace {
 
 	constexpr int chunksAroundSpawn = (spawnRenderDistance.x + 1) * (spawnRenderDistance.z + 1) * spawnRenderDistance.y;
 
-	constexpr size_t trianglesInSolidChunk = 6uz * chunkXSize * chunkZSize * 2;
+	constexpr size_t trianglesOnTop = 2uz * chunkXSize * chunkZSize;
 
 	struct SpawnedPlanet {
 		std::vector<unsigned char>    dirtPixels = {10, 20, 30, 255};
@@ -39,6 +39,15 @@ namespace {
 
 		[[nodiscard]] size_t meshCount() const {
 			return renderer.createdMeshes.size();
+		}
+
+		[[nodiscard]] size_t drawnChunkCount() {
+			size_t count = 0;
+			for (auto&& drawn: registry.query<const ecs::component::Mesh>()) {
+				static_cast<void>(drawn);
+				++count;
+			}
+			return count;
 		}
 
 		ecs::EntityHandle entityOfMesh(const size_t meshIndex) {
@@ -113,9 +122,9 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 		WHEN("an underground chunk (y = -1) is loaded") {
 			env.manager->loadChunk(glm::ivec3(40, -1, -40));
 
-			THEN("it gets exactly one new mesh: the outer shell of a solid chunk") {
+			THEN("it gets exactly one new mesh: only the top of a solid chunk, as no neighbour is loaded") {
 				REQUIRE(env.meshCount() == meshesBefore + 1);
-				REQUIRE(env.renderer.createdMeshTriangleCounts.back() == trianglesInSolidChunk);
+				REQUIRE(env.renderer.createdMeshTriangleCounts.back() == trianglesOnTop);
 			}
 			AND_THEN("its entity is placed at that chunk's position on the planet") {
 				const glm::vec3 position = env.entityOfMesh(meshesBefore).get<ecs::component::Transform>().position;
@@ -124,7 +133,7 @@ SCENARIO("Loading a chunk makes it visible", "[chunk-manager]") {
 		}
 
 		WHEN("a chunk above the maximum terrain height is loaded") {
-			env.manager->loadChunk(0, planetinfo::terrainMaxHeightBlocks / chunkYSize, 0);
+			env.manager->loadChunk(0, (planetinfo::terrainMaxHeightBlocks / chunkYSize) + 5, 0);
 
 			THEN("it is empty, so no mesh or entity is created") {
 				REQUIRE(env.meshCount() == meshesBefore);
@@ -275,23 +284,101 @@ SCENARIO("A chunk buried inside solid terrain is not drawn", "[chunk-manager][sk
 
 	GIVEN("a planet with its spawn area loaded") {
 		SpawnedPlanet env;
-		const size_t  meshesBefore = env.meshCount();
+		const size_t  drawnBefore = env.drawnChunkCount();
 
 		WHEN("a 3 x 3 x 3 block of underground chunks is loaded together") {
 			env.manager->loadRange(center - 1, center + 1);
 
-			THEN("every chunk except the one in the middle is drawn, since the outside of the block is exposed") {
-				REQUIRE(env.meshCount() == meshesBefore + 26);
+			THEN("only the nine chunks on top are drawn, with the tops that have no chunk above them") {
+				REQUIRE(env.drawnChunkCount() == drawnBefore + 9);
 			}
 		}
 
 		WHEN("the same chunks are loaded but the one above the middle chunk is missing") {
 			env.manager->loadRange(center - 1, center + 1);
 			env.manager->unloadChunk(center + glm::ivec3(0, 1, 0));
-			env.manager->loadChunk(center);
 
-			THEN("the middle chunk is drawn too, because one of its sides is exposed") {
-				REQUIRE(env.meshCount() == meshesBefore + 27);
+			THEN("the middle chunk is drawn, because its top is exposed") {
+				REQUIRE(env.drawnChunkCount() == drawnBefore + 8 + 1);
+			}
+		}
+	}
+}
+
+SCENARIO("Loading and unloading chunks updates the faces on their borders", "[chunk-manager][border]") {
+	constexpr glm::ivec3 lower(300, -3, 300);
+	constexpr glm::ivec3 upper = lower + glm::ivec3(0, 1, 0);
+
+	GIVEN("a planet with its spawn area loaded") {
+		SpawnedPlanet env;
+		const size_t  drawnBefore = env.drawnChunkCount();
+
+		WHEN("a solid chunk is loaded without neighbours") {
+			env.manager->loadChunk(lower);
+
+			THEN("only its top is drawn") {
+				REQUIRE(env.renderer.createdMeshTriangleCounts.back() == trianglesOnTop);
+				REQUIRE(env.drawnChunkCount() == drawnBefore + 1);
+			}
+
+			AND_WHEN("a solid chunk is loaded on top of it") {
+				env.manager->loadChunk(upper);
+
+				THEN("the lower chunk is meshed again: its top is covered, so nothing of it is drawn") {
+					REQUIRE(env.drawnChunkCount() == drawnBefore + 1);
+				}
+				AND_THEN("the upper chunk draws its own top") {
+					REQUIRE(env.renderer.createdMeshTriangleCounts.back() == trianglesOnTop);
+				}
+
+				AND_WHEN("the upper chunk is unloaded again") {
+					env.manager->unloadChunk(upper);
+
+					THEN("the lower chunk shows its top again") {
+						REQUIRE(env.drawnChunkCount() == drawnBefore + 1);
+						REQUIRE(env.renderer.createdMeshTriangleCounts.back() == trianglesOnTop);
+					}
+				}
+			}
+		}
+
+		WHEN("two solid chunks side by side are loaded together") {
+			env.manager->loadRange(lower, lower + glm::ivec3(1, 0, 0));
+
+			THEN("each draws only its top: the sides facing each other are hidden and the others have no neighbour") {
+				const auto& counts = env.renderer.createdMeshTriangleCounts;
+				REQUIRE(counts[counts.size() - 1] == trianglesOnTop);
+				REQUIRE(counts[counts.size() - 2] == trianglesOnTop);
+			}
+		}
+	}
+}
+
+SCENARIO("A chunk is meshed again when a block next to its border changes", "[chunk-manager][border]") {
+	constexpr glm::ivec3 left(310, -1, 310);
+	constexpr glm::ivec3 right = left + glm::ivec3(1, 0, 0);
+
+	GIVEN("two solid chunks side by side") {
+		SpawnedPlanet env;
+		env.manager->loadRange(left, right);
+		const size_t meshesBefore = env.meshCount();
+
+		WHEN("a block on the border of the right chunk is removed") {
+			env.manager->setBlock(right, {0, 5, 5}, game::Block());
+
+			THEN("both chunks are meshed again") {
+				REQUIRE(env.meshCount() == meshesBefore + 2);
+			}
+			AND_THEN("the left chunk now shows the one face that is no longer covered, next to its top") {
+				REQUIRE(env.renderer.createdMeshTriangleCounts.back() == trianglesOnTop + 2);
+			}
+		}
+
+		WHEN("a block in the middle of the right chunk is removed") {
+			env.manager->setBlock(right, {8, 8, 8}, game::Block());
+
+			THEN("only the right chunk is meshed again") {
+				REQUIRE(env.meshCount() == meshesBefore + 1);
 			}
 		}
 	}
