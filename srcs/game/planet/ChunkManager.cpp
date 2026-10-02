@@ -29,14 +29,14 @@ void ChunkManager::makeChunkRenderable(ecs::Registry& registry, render::IRendere
 	if (it == m_chunks.end() || m_chunkEntities.contains(chunkPosition))
 		return;
 
-	const assets::MeshData meshData = m_chunkMesher.toMeshData(*it->second);
+	const assets::ChunkMeshData meshData = m_chunkMesher.toMeshData(*it->second);
 	if (meshData.vertices.empty() || meshData.indices.empty())
 		return;
 
 	ecs::EntityHandle chunkEntity = registry.createEntity();
 
 	chunkEntity.add(
-		ecs::component::Mesh{.mesh = renderer.createMesh(meshData), .pipelineType = assets::PipelineType::Textured});
+		ecs::component::Mesh{.mesh = renderer.createMesh(meshData), .pipelineType = assets::PipelineType::Chunk});
 	chunkEntity.add(ecs::component::Texture{.texture = m_chunkTexture});
 	chunkEntity.add(ecs::component::Transform{
 		.position = glm::vec3(chunkPosition * glm::ivec3(chunkXSize, chunkYSize, chunkZSize))});

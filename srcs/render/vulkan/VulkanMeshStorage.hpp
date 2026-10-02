@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstddef>
 #include <optional>
+#include <span>
 #include <vector>
-#include <volk.h>
 #include <vk_mem_alloc.h>
 
 #include "assets/Resources.hpp"
@@ -23,9 +24,18 @@ namespace render::vulkan {
 	constexpr VkDeviceSize defaultVertexArenaBytes = 64ULL * 1024 * 1024;
 	constexpr VkDeviceSize defaultIndexArenaBytes  = 16ULL * 1024 * 1024;
 
+	enum class VertexKind : uint8_t { Model, Chunk };
+
+	struct MeshBytes {
+		VertexKind                 kind;
+		std::span<const std::byte> vertices;
+		std::span<const uint32_t>  indices;
+	};
+
 	class VulkanMeshStorage {
 	private:
 		struct Arena {
+			VertexKind     kind;
 			VkBuffer       vertexBuffer;
 			VmaAllocation  vertexMemory;
 			VkBuffer       indexBuffer;
@@ -36,12 +46,13 @@ namespace render::vulkan {
 
 		std::vector<Arena> m_arenas;
 
-		void addArena(const VulkanContext& context, VkDeviceSize vertexBytes, VkDeviceSize indexBytes);
-		[[nodiscard]] std::optional<GpuMesh> allocate(VkDeviceSize vertexBytes, VkDeviceSize indexBytes) const;
+		void addArena(const VulkanContext& context, VertexKind kind, VkDeviceSize vertexBytes, VkDeviceSize indexBytes);
+		[[nodiscard]] std::optional<GpuMesh> allocate(VertexKind kind, VkDeviceSize vertexBytes,
+													  VkDeviceSize indexBytes) const;
 
 	public:
-		[[nodiscard]] GpuMesh create(const VulkanContext& context, VkCommandPool commandPool,
-									 const assets::MeshData& meshData);
+		[[nodiscard]] static VkDeviceSize vertexStride(VertexKind kind);
+		[[nodiscard]] GpuMesh create(const VulkanContext& context, VkCommandPool commandPool, const MeshBytes& mesh);
 		void                  destroy(const GpuMesh& mesh) const;
 		void                  cleanup(const VulkanContext& context);
 		void                  logStatistics() const;

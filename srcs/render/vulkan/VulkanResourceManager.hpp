@@ -32,6 +32,7 @@ namespace render::vulkan {
 
 		[[nodiscard]] VkCommandPool getCommandPool() const;
 		assets::MeshHandle          createMesh(const VulkanContext& context, const assets::MeshData& meshData);
+		assets::MeshHandle          createMesh(const VulkanContext& context, const assets::ChunkMeshData& meshData);
 		void                        destroyMesh(assets::MeshHandle handle);
 		void                        releaseDestroyedMeshes();
 		[[nodiscard]] const VulkanMeshStorage& getMeshStorage() const;

@@ -3,6 +3,7 @@
 #include <cstdint> // for std::uint32_t
 #include <vector>
 
+#include "render/ChunkVertex.hpp"
 #include "render/GpuTypes.hpp"
 
 namespace assets {
@@ -13,6 +14,11 @@ namespace assets {
 		void scaleTextureCoordinates(float scale);
 	};
 
+	struct ChunkMeshData {
+		std::vector<render::ChunkVertex> vertices;
+		std::vector<std::uint32_t>       indices;
+	};
+
 	struct TextureData {
 		uint32_t                   width{};
 		uint32_t                   height{};
@@ -21,7 +27,7 @@ namespace assets {
 		bool                       pixelPerfect = false;
 	};
 
-	enum class PipelineType { Textured, VertexColor };
+	enum class PipelineType { Textured, VertexColor, Chunk };
 
 	struct MeshHandle {
 		static uint64_t nextId;

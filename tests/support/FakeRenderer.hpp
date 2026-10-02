@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <vector>
 
 #include "ecs/component/Components.hpp"
@@ -25,6 +24,12 @@ namespace test {
 		int                                     guiRenders = 0;
 
 		assets::MeshHandle createMesh(const assets::MeshData& meshData) override {
+			createdMeshTriangleCounts.push_back(meshData.indices.size() / 3);
+			createdMeshes.emplace_back();
+			return createdMeshes.back();
+		}
+
+		assets::MeshHandle createMesh(const assets::ChunkMeshData& meshData) override {
 			createdMeshTriangleCounts.push_back(meshData.indices.size() / 3);
 			createdMeshes.emplace_back();
 			return createdMeshes.back();

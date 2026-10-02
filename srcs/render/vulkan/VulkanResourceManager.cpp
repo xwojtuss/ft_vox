@@ -1,5 +1,4 @@
 #include "render/vulkan/VulkanResourceManager.hpp"
-#include <cstring>
 #include "render/GpuTypes.hpp"
 #include "render/vulkan/VulkanError.hpp"
 #include "log/Log.hpp"
@@ -357,7 +356,20 @@ assets::TextureHandle VulkanResourceManager::createTexture(const assets::Texture
 
 assets::MeshHandle VulkanResourceManager::createMesh(const VulkanContext& context, const assets::MeshData& meshData) {
 	const assets::MeshHandle handle;
-	m_meshes[handle.id] = m_meshStorage.create(context, m_commandPool, meshData);
+	m_meshes[handle.id] = m_meshStorage.create(context, m_commandPool,
+											   {.kind     = VertexKind::Model,
+												.vertices = std::as_bytes(std::span(meshData.vertices)),
+												.indices  = meshData.indices});
+	return handle;
+}
+
+assets::MeshHandle VulkanResourceManager::createMesh(const VulkanContext&         context,
+													 const assets::ChunkMeshData& meshData) {
+	const assets::MeshHandle handle;
+	m_meshes[handle.id] = m_meshStorage.create(context, m_commandPool,
+											   {.kind     = VertexKind::Chunk,
+												.vertices = std::as_bytes(std::span(meshData.vertices)),
+												.indices  = meshData.indices});
 	return handle;
 }
 

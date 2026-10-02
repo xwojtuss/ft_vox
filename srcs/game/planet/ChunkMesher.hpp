@@ -2,7 +2,6 @@
 
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -37,12 +36,12 @@ namespace game::planet {
 		[[nodiscard]] static std::optional<Face> boundaryFaceOf(const std::array<render::Vertex, 3>& triangle);
 		[[nodiscard]] static FaceOcclusion       occludedFaces(const Chunk& chunk, int x, int y, int z);
 		[[nodiscard]] static BlockId             neighbourAt(const Chunk& chunk, int x, int y, int z);
-		static void appendTriangle(assets::MeshData& meshData, const ModelTriangle& triangle,
+		static void appendTriangle(assets::ChunkMeshData& meshData, const ModelTriangle& triangle,
 								   const glm::vec3& blockPosition);
 
 	public:
 		explicit ChunkMesher(block::BlockDatas& blockDatas);
 
-		[[nodiscard]] assets::MeshData toMeshData(const Chunk& chunk) const;
+		[[nodiscard]] assets::ChunkMeshData toMeshData(const Chunk& chunk) const;
 	};
 }

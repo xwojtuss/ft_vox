@@ -2,16 +2,11 @@
 
 #include <array>
 #include <cstddef>
-#include <glm/vec3.hpp>
 
 #include "game/block/Block.hpp"
+#include "game/planet/ChunkSize.hpp"
 
 namespace game::planet {
-	constexpr int    chunkXSize  = 16;
-	constexpr int    chunkYSize  = 16;
-	constexpr int    chunkZSize  = 16;
-	constexpr size_t chunkVolume = static_cast<size_t>(chunkXSize) * chunkYSize * chunkZSize;
-
 	class Chunk {
 	private:
 		std::array<Block, chunkVolume> m_blocks;
