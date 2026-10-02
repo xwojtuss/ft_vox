@@ -1,6 +1,5 @@
 #pragma once
 
-#include <volk.h>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -13,7 +12,6 @@
 #include "render/IRenderer.hpp"
 #include "platform/window/IWindow.hpp"
 #include "profiling/Profiler.hpp"
-#include "ecs/system/SystemManager.hpp"
 
 namespace render::vulkan {
 	struct DrawBatchKey {
@@ -79,6 +77,7 @@ namespace render::vulkan {
 		void setStats(profiling::ClientStats& stats) override;
 
 		assets::MeshHandle           createMesh(const assets::MeshData&) override;
+		assets::MeshHandle           createMesh(const assets::ChunkMeshData&) override;
 		void                         destroyMesh(assets::MeshHandle) override;
 		assets::TextureHandle        createTexture(const assets::TextureData&) override;
 		void                         render(ecs::SystemManager& systemManager) override;

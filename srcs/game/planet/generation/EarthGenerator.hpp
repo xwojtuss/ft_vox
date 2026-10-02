@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/vec3.hpp>
+
 #include "game/planet/generation/Perlin2DMap.hpp"
 #include "game/planet/Chunk.hpp"
 

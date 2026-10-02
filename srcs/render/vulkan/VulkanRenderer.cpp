@@ -1,11 +1,13 @@
 #include "render/vulkan/VulkanRenderer.hpp"
 #include <algorithm>
 #include "render/vulkan/VulkanValidationLayers.hpp"
+#include "render/vulkan/pipeline/ChunkPipeline.hpp"
 #include "render/vulkan/pipeline/TexturePipeline.hpp"
 #include "render/vulkan/pipeline/VertexColorPipeline.hpp"
 #include "platform/filesystem/readFile.hpp"
 #include "render/vulkan/VulkanError.hpp"
 #include "ecs/component/Components.hpp"
+#include "ecs/system/SystemManager.hpp"
 #include "profiling/Profiler.hpp"
 
 #include <ranges>
@@ -27,6 +29,10 @@ assets::MeshHandle VulkanRenderer::createMesh(const assets::MeshData& meshData) 
 	return m_resourceManager->createMesh(*m_context, meshData);
 }
 
+assets::MeshHandle VulkanRenderer::createMesh(const assets::ChunkMeshData& meshData) {
+	return m_resourceManager->createMesh(*m_context, meshData);
+}
+
 void VulkanRenderer::destroyMesh(const assets::MeshHandle handle) {
 	m_resourceManager->destroyMesh(handle);
 }
@@ -39,6 +45,8 @@ void VulkanRenderer::createPipelines() {
 	const std::vector descriptorSetLayouts            = {m_frameData->getFrameDescriptorSetLayout(),
 														 m_frameData->getTextureDescriptorSetLayout()};
 	m_pipelineHandles[assets::PipelineType::Textured] = std::make_unique<TexturePipeline>(
+		*m_context, m_swapchain->getExtent(), m_swapchain->getRenderPass(), descriptorSetLayouts);
+	m_pipelineHandles[assets::PipelineType::Chunk] = std::make_unique<ChunkPipeline>(
 		*m_context, m_swapchain->getExtent(), m_swapchain->getRenderPass(), descriptorSetLayouts);
 	m_pipelineHandles[assets::PipelineType::VertexColor] = std::make_unique<VertexColorPipeline>(
 		*m_context, m_swapchain->getExtent(), m_swapchain->getRenderPass(), descriptorSetLayouts);

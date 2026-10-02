@@ -2,6 +2,7 @@
 #include <catch2/generators/catch_generators.hpp>
 
 #include "assets/TinyObjLoader.hpp"
+#include "error/Exception.hpp"
 #include "game/planet/ChunkMesher.hpp"
 #include "support/Blocks.hpp"
 
@@ -13,7 +14,7 @@ using game::planet::chunkYSize;
 using game::planet::chunkZSize;
 
 namespace {
-	size_t triangleCount(const assets::MeshData& mesh) {
+	size_t triangleCount(const assets::ChunkMeshData& mesh) {
 		return mesh.indices.size() / 3;
 	}
 
@@ -33,7 +34,7 @@ SCENARIO("An empty chunk produces no geometry", "[mesher]") {
 		const Chunk             chunk;
 
 		WHEN("it is meshed") {
-			const assets::MeshData mesh = mesher.toMeshData(chunk);
+			const assets::ChunkMeshData mesh = mesher.toMeshData(chunk);
 
 			THEN("there is nothing to draw") {
 				REQUIRE(mesh.vertices.empty());
@@ -51,30 +52,43 @@ SCENARIO("A lone block shows all six faces at its own position", "[mesher]") {
 		chunk.setBlock(8, 8, 8, Block(test::dirt));
 
 		WHEN("it is meshed") {
-			const assets::MeshData mesh = mesher.toMeshData(chunk);
+			const assets::ChunkMeshData mesh = mesher.toMeshData(chunk);
 
 			THEN("the whole cube is drawn: 6 faces, 12 triangles") {
 				REQUIRE(triangleCount(mesh) == 12);
 				REQUIRE(mesh.vertices.size() == 36);
 			}
 			AND_THEN("every vertex is moved to the block's position inside the chunk") {
-				for (const render::Vertex& vertex: mesh.vertices) {
-					REQUIRE(vertex.pos.x >= 8.0f);
-					REQUIRE(vertex.pos.x <= 9.0f);
-					REQUIRE(vertex.pos.y >= 8.0f);
-					REQUIRE(vertex.pos.y <= 9.0f);
-					REQUIRE(vertex.pos.z >= 8.0f);
-					REQUIRE(vertex.pos.z <= 9.0f);
+				for (const render::ChunkVertex& vertex: mesh.vertices) {
+					const glm::vec3 position = render::chunkVertexPosition(vertex);
+					REQUIRE(position.x >= 8.0f);
+					REQUIRE(position.x <= 9.0f);
+					REQUIRE(position.y >= 8.0f);
+					REQUIRE(position.y <= 9.0f);
+					REQUIRE(position.z >= 8.0f);
+					REQUIRE(position.z <= 9.0f);
 				}
 			}
-			AND_THEN("colors and texture coordinates come from the block model") {
-				for (const render::Vertex& vertex: mesh.vertices) {
-					REQUIRE(vertex.color == test::cubeColor);
-					REQUIRE(vertex.texCoord.x >= 0.0f);
-					REQUIRE(vertex.texCoord.x <= 1.0f);
-					REQUIRE(vertex.texCoord.y >= 0.0f);
-					REQUIRE(vertex.texCoord.y <= 1.0f);
+			AND_THEN("texture coordinates come from the block model") {
+				for (const render::ChunkVertex& vertex: mesh.vertices) {
+					const glm::vec2 texCoord = render::chunkVertexUv(vertex);
+					REQUIRE(texCoord.x >= 0.0f);
+					REQUIRE(texCoord.x <= 1.0f);
+					REQUIRE(texCoord.y >= 0.0f);
+					REQUIRE(texCoord.y <= 1.0f);
 				}
+			}
+			AND_THEN("every triangle carries the direction of the side it lies on") {
+				for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+					const uint32_t direction = render::chunkVertexDirection(mesh.vertices[mesh.indices[i]]);
+					REQUIRE(direction < ChunkMesher::faceCount);
+					REQUIRE(render::chunkVertexDirection(mesh.vertices[mesh.indices[i + 1]]) == direction);
+					REQUIRE(render::chunkVertexDirection(mesh.vertices[mesh.indices[i + 2]]) == direction);
+				}
+			}
+			AND_THEN("the texture layer is the first one until blocks can pick their own") {
+				for (const render::ChunkVertex& vertex: mesh.vertices)
+					REQUIRE(render::chunkVertexLayer(vertex) == 0);
 			}
 			AND_THEN("every index points at a vertex of this mesh") {
 				for (uint32_t const index: mesh.indices)
@@ -93,16 +107,17 @@ SCENARIO("Faces between two touching blocks are hidden", "[mesher]") {
 		chunk.setBlock(9, 8, 8, Block(test::dirt));
 
 		WHEN("they are meshed") {
-			const assets::MeshData mesh = mesher.toMeshData(chunk);
+			const assets::ChunkMeshData mesh = mesher.toMeshData(chunk);
 
 			THEN("only the 10 outer faces are drawn") {
 				REQUIRE(triangleCount(mesh) == 10uz * 2);
 			}
 			AND_THEN("no triangle lies on the shared face at x = 9") {
 				for (size_t i = 0; i < mesh.indices.size(); i += 3) {
-					const bool onSharedFace = mesh.vertices[mesh.indices[i]].pos.x == 9.0f &&
-											  mesh.vertices[mesh.indices[i + 1]].pos.x == 9.0f &&
-											  mesh.vertices[mesh.indices[i + 2]].pos.x == 9.0f;
+					const bool onSharedFace =
+						render::chunkVertexPosition(mesh.vertices[mesh.indices[i]]).x == 9.0f &&
+						render::chunkVertexPosition(mesh.vertices[mesh.indices[i + 1]]).x == 9.0f &&
+						render::chunkVertexPosition(mesh.vertices[mesh.indices[i + 2]]).x == 9.0f;
 					REQUIRE_FALSE(onSharedFace);
 				}
 			}
@@ -214,6 +229,42 @@ SCENARIO("The game's block model fills exactly its own cell", "[mesher][assets]"
 			THEN("the faces between them are hidden and only the 10 outer faces are drawn") {
 				REQUIRE(triangleCount(mesher.toMeshData(chunk)) == 10uz * 2);
 			}
+		}
+	}
+}
+
+SCENARIO("Blocks with a model on the finer grid are meshed exactly", "[mesher]") {
+	game::block::BlockDatas blockDatas = test::makeBlockDatas();
+	const ChunkMesher       mesher(blockDatas);
+	Chunk                   chunk;
+	assets::MeshData&       dirtModel = blockDatas.getBlockData(test::dirt).meshData;
+	chunk.setBlock(8, 8, 8, Block(test::dirt));
+
+	GIVEN("a slab: the cube model squashed to half a block high") {
+		for (render::Vertex& vertex: dirtModel.vertices)
+			vertex.pos.y *= 0.5f;
+
+		WHEN("it is meshed") {
+			const assets::ChunkMeshData mesh = mesher.toMeshData(chunk);
+
+			THEN("its top is half a block above its bottom") {
+				float highest = 0.0f;
+				for (const render::ChunkVertex& vertex: mesh.vertices)
+					highest = std::max(highest, render::chunkVertexPosition(vertex).y);
+				REQUIRE(highest == 8.5f);
+			}
+			AND_THEN("all its faces are drawn, since a slab does not fill its cell") {
+				REQUIRE(triangleCount(mesh) == 12);
+			}
+		}
+	}
+
+	GIVEN("a model whose corners do not lie on the grid") {
+		for (render::Vertex& vertex: dirtModel.vertices)
+			vertex.pos.y *= 0.3f;
+
+		THEN("meshing it fails with an asset error") {
+			REQUIRE_THROWS_AS(mesher.toMeshData(chunk), error::AssetError);
 		}
 	}
 }

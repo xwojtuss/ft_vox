@@ -81,7 +81,7 @@ SCENARIO("Starting a planet loads every chunk around spawn", "[chunk-manager]") 
 
 				REQUIRE(mesh != nullptr);
 				REQUIRE(mesh->mesh.id == env.renderer.createdMeshes[i].id);
-				REQUIRE(mesh->pipelineType == assets::PipelineType::Textured);
+				REQUIRE(mesh->pipelineType == assets::PipelineType::Chunk);
 				REQUIRE(entity.get<ecs::component::Texture>().texture.id == env.renderer.createdTextures.front().id);
 				REQUIRE(entity.has<ecs::component::Transform>());
 				REQUIRE(renderSystem->processes(entity.id()));

@@ -20,6 +20,8 @@ namespace {
 
 	using Face = ChunkMesher::Face;
 
+	static_assert(ChunkMesher::faceCount == render::chunkvertex::faceCount);
+
 	static_assert(magic_enum::enum_count<Face>() == ChunkMesher::faceCount);
 
 	constexpr std::array faceOffsets = {
@@ -48,9 +50,9 @@ ChunkMesher::ChunkMesher(block::BlockDatas& blockDatas) : m_blockDatas(blockData
 }
 
 // TODO: refactor
-assets::MeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
+assets::ChunkMeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
 	FT_PROFILE_FUNCTION();
-	assets::MeshData                           meshData;
+	assets::ChunkMeshData                      meshData;
 	std::unordered_map<BlockId, PreparedModel> preparedModels;
 
 	for (int x = 0; x < chunkXSize; ++x) {
@@ -139,10 +141,11 @@ game::BlockId ChunkMesher::neighbourAt(const Chunk& chunk, const int x, const in
 	return chunk.getBlock(x, y, z).id;
 }
 
-void ChunkMesher::appendTriangle(assets::MeshData& meshData, const ModelTriangle& triangle,
+void ChunkMesher::appendTriangle(assets::ChunkMeshData& meshData, const ModelTriangle& triangle,
 								 const glm::vec3& blockPosition) {
 	for (const auto& [pos, color, texCoord]: triangle.vertices) {
-		meshData.vertices.push_back({.pos = pos + blockPosition, .color = color, .texCoord = texCoord});
+		meshData.vertices.push_back(
+			render::packChunkVertex(pos + blockPosition, texCoord, 0, std::to_underlying(triangle.face)));
 		meshData.indices.push_back(static_cast<uint32_t>(meshData.vertices.size()) - 1);
 	}
 }
