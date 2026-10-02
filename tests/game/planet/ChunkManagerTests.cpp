@@ -28,12 +28,13 @@ namespace {
 		game::block::BlockDatas       blockDatas = test::makeBlockDatas(dirtPixels);
 		ecs::Registry                 registry{blockDatas};
 		test::FakeRenderer            renderer;
+		profiling::ServerStats        stats;
 		std::unique_ptr<ChunkManager> manager       = createManager();
 		size_t                        meshesAtSpawn = renderer.createdMeshes.size();
 
 		std::unique_ptr<ChunkManager> createManager() {
 			registry.createSystem<ecs::RenderSystem>();
-			return std::make_unique<ChunkManager>(blockDatas, registry, renderer, spawnRenderDistance);
+			return std::make_unique<ChunkManager>(blockDatas, registry, renderer, stats, spawnRenderDistance);
 		}
 
 		[[nodiscard]] size_t meshCount() const {
@@ -204,6 +205,39 @@ SCENARIO("Unloading a chunk forgets it", "[chunk-manager]") {
 			THEN("nothing happens") {
 				REQUIRE_NOTHROW(env.manager->unloadChunk(glm::ivec3(999, 999, 999)));
 				REQUIRE(env.meshCount() == meshesBefore);
+			}
+		}
+	}
+}
+
+SCENARIO("The chunk manager reports how many chunks are loaded", "[chunk-manager][stats]") {
+	GIVEN("a planet with its spawn area loaded") {
+		SpawnedPlanet env;
+
+		THEN("the loaded chunk count matches the spawn area") {
+			REQUIRE(env.stats.loadedChunks == static_cast<size_t>(chunksAroundSpawn));
+		}
+		AND_THEN("the chunk data size is the number of chunks times one chunk's size") {
+			REQUIRE(env.stats.chunkDataBytes == env.stats.loadedChunks * sizeof(game::planet::Chunk));
+		}
+		AND_THEN("nothing is waiting to be generated, because generation is immediate") {
+			REQUIRE(env.stats.pendingGeneration == 0);
+		}
+
+		WHEN("another chunk is loaded") {
+			const size_t chunksBefore = env.stats.loadedChunks;
+			env.manager->loadChunk(glm::ivec3(60, -1, 60));
+
+			THEN("the count grows by one") {
+				REQUIRE(env.stats.loadedChunks == chunksBefore + 1);
+			}
+
+			AND_WHEN("it is unloaded again") {
+				env.manager->unloadChunk(glm::ivec3(60, -1, 60));
+
+				THEN("the count drops back") {
+					REQUIRE(env.stats.loadedChunks == chunksBefore);
+				}
 			}
 		}
 	}

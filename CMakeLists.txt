@@ -148,7 +148,7 @@ if (FT_VOX_PROFILER)
   FetchContent_Declare(
           Tracy
           GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-          GIT_TAG 05cceee0df3b8d7c6fa87e9638af311dbabc63cb # v0.13.1
+          GIT_TAG v0.13.1
           GIT_SHALLOW TRUE
           SYSTEM
   )

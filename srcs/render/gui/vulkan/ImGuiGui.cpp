@@ -128,6 +128,11 @@ void ImGuiGui::separator() {
 	ImGui::Separator();
 }
 
+void ImGuiGui::plotLines(const std::string& label, const std::span<const float> values, const float scaleMax) {
+	ImGui::PlotLines(label.c_str(), values.data(), static_cast<int>(values.size()), 0, nullptr, 0.0f, scaleMax,
+					 ImVec2(240.0f, 60.0f));
+}
+
 void ImGuiGui::render(VkCommandBuffer commandBuffer) {
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }

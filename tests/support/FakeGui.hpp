@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <string>
 #include <vector>
 
@@ -46,6 +47,9 @@ namespace test {
 		}
 
 		void separator() override {
+		}
+
+		void plotLines(const std::string&, std::span<const float>, float) override {
 		}
 
 		void render(VkCommandBuffer) override {

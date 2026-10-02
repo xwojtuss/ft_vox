@@ -16,6 +16,8 @@ namespace input = render::input;
 namespace {
 	constexpr const char* playerPanel = "Player Components";
 	constexpr const char* eventsPanel = "EventsRuntime";
+	constexpr const char* clientPanel = "Client Performance";
+	constexpr const char* serverPanel = "Server Performance";
 
 	struct SlowSystem {
 		std::chrono::milliseconds delay{20};
@@ -26,13 +28,15 @@ namespace {
 	};
 
 	struct GuiRegistry {
-		test::TestRegistry testRegistry;
-		test::FakeGui      gui;
-		test::FakeRenderer renderer;
-		ecs::EntityHandle  player = test::createPlayer(testRegistry);
+		test::TestRegistry     testRegistry;
+		test::FakeGui          gui;
+		test::FakeRenderer     renderer;
+		ecs::EntityHandle      player = test::createPlayer(testRegistry);
+		profiling::ClientStats clientStats;
+		profiling::ServerStats serverStats;
 
 		GuiRegistry() {
-			testRegistry.addSystem<ecs::GuiSystem>(gui);
+			testRegistry.addSystem<ecs::GuiSystem>(gui, clientStats, serverStats);
 		}
 
 		void registryReady() {
@@ -167,6 +171,68 @@ SCENARIO("Event runtimes are shown in milliseconds", "[ecs][gui]") {
 				const std::string line              = env.textContaining("SimulateEvent Runtime: ");
 				const float       shownMilliseconds = std::stof(line.substr(line.find(": ") + 2));
 				REQUIRE(shownMilliseconds >= 20.0f);
+			}
+		}
+	}
+}
+
+SCENARIO("The client performance panel is toggled with its own key", "[ecs][gui][stats]") {
+	GIVEN("a ready registry whose client has drawn a frame") {
+		GuiRegistry env;
+		env.clientStats.frameTimes.record(1.0, 0.010f);
+		env.clientStats.frameTimes.record(1.1, 0.030f);
+		env.clientStats.drawnMeshes = 12;
+		env.clientStats.drawCalls   = 2;
+		env.clientStats.triangles   = 3456;
+		env.registryReady();
+
+		WHEN("the player presses the client performance toggle") {
+			env.press(input::InputEvent::ClientPerformanceToggle);
+			env.renderFrame();
+
+			THEN("only the client panel is shown") {
+				REQUIRE(env.isShown(clientPanel));
+				REQUIRE_FALSE(env.isShown(serverPanel));
+			}
+			AND_THEN("it shows the average and the worst frame time") {
+				REQUIRE_THAT(env.textContaining("Frame time avg"), ContainsSubstring("20.00 ms"));
+				REQUIRE_THAT(env.textContaining("Frame time worst"), ContainsSubstring("30.00 ms"));
+			}
+			AND_THEN("it shows what was drawn") {
+				REQUIRE_THAT(env.textContaining("Drawn meshes"), ContainsSubstring("12"));
+				REQUIRE_THAT(env.textContaining("Draw calls"), ContainsSubstring("2"));
+				REQUIRE_THAT(env.textContaining("Triangles"), ContainsSubstring("3456"));
+			}
+		}
+
+		WHEN("the player has not pressed the toggle") {
+			env.renderFrame();
+
+			THEN("the panel is hidden") {
+				REQUIRE_FALSE(env.isShown(clientPanel));
+			}
+		}
+	}
+}
+
+SCENARIO("The server performance panel is toggled with its own key", "[ecs][gui][stats]") {
+	GIVEN("a ready registry whose server has loaded chunks") {
+		GuiRegistry env;
+		env.serverStats.loadedChunks      = 125;
+		env.serverStats.pendingGeneration = 7;
+		env.registryReady();
+
+		WHEN("the player presses the server performance toggle") {
+			env.press(input::InputEvent::ServerPerformanceToggle);
+			env.renderFrame();
+
+			THEN("only the server panel is shown") {
+				REQUIRE(env.isShown(serverPanel));
+				REQUIRE_FALSE(env.isShown(clientPanel));
+			}
+			AND_THEN("it shows the chunk counts") {
+				REQUIRE_THAT(env.textContaining("Loaded chunks"), ContainsSubstring("125"));
+				REQUIRE_THAT(env.textContaining("waiting to be generated"), ContainsSubstring("7"));
 			}
 		}
 	}

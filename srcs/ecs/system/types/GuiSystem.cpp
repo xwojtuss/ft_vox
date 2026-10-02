@@ -3,10 +3,14 @@
 #include "ecs/Registry.hpp"
 #include "render/gui/PlayerComponentsPanel.hpp"
 #include "render/gui/EventsRuntimePanel.hpp"
+#include "render/gui/ClientPerformancePanel.hpp"
+#include "render/gui/ServerPerformancePanel.hpp"
 
 using namespace ecs;
 
-GuiSystem::GuiSystem(render::gui::IGui& gui) : m_gui(gui) {
+GuiSystem::GuiSystem(render::gui::IGui& gui, const profiling::ClientStats& clientStats,
+					 const profiling::ServerStats& serverStats) :
+	m_gui(gui), m_clientStats(clientStats), m_serverStats(serverStats) {
 }
 
 void GuiSystem::onRegistryReady([[maybe_unused]] const RegistryReadyEvent& event) {
@@ -14,6 +18,10 @@ void GuiSystem::onRegistryReady([[maybe_unused]] const RegistryReadyEvent& event
 	registerPanel(render::input::InputEvent::PlayerComponentsMenuToggle, playerComponentsPanel);
 	render::gui::EventsRuntimePanel eventsRuntimePanel(m_gui, m_registry->getSystemManager().getDispatcher());
 	registerPanel(render::input::InputEvent::EventRuntimesMenuToggle, eventsRuntimePanel);
+	render::gui::ClientPerformancePanel clientPerformancePanel(m_gui, m_clientStats);
+	registerPanel(render::input::InputEvent::ClientPerformanceToggle, clientPerformancePanel);
+	render::gui::ServerPerformancePanel serverPerformancePanel(m_gui, m_serverStats);
+	registerPanel(render::input::InputEvent::ServerPerformanceToggle, serverPerformancePanel);
 }
 
 void GuiSystem::onInput(const InputEvent& event) {

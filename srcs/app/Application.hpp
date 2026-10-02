@@ -8,10 +8,14 @@
 #include "assets/IModelLoader.hpp"
 #include "assets/ITextureLoader.hpp"
 #include "ecs/Registry.hpp"
+#include "profiling/ClientStats.hpp"
+#include "profiling/ServerStats.hpp"
 
 namespace app {
 	class Application {
 	private:
+		profiling::ClientStats                     m_clientStats;
+		profiling::ServerStats                     m_serverStats;
 		std::unique_ptr<platform::window::IWindow> m_window;
 		std::unique_ptr<render::IRenderer>         m_renderer;
 		std::unique_ptr<render::gui::IGui>         m_gui;
@@ -19,8 +23,9 @@ namespace app {
 		std::unique_ptr<assets::ITextureLoader>    m_textureLoader;
 		std::unique_ptr<ecs::Registry>             m_registry;
 		double                                     m_lastSimulateTime = 0.0;
+		double                                     m_lastFrameTime    = 0.0;
 
-		void init() const;
+		void init();
 
 		/**
 		 * Runs once per render frame
@@ -32,6 +37,7 @@ namespace app {
 		 */
 		void simulate();
 		void render() const;
+		void recordFrameTime();
 
 	public:
 		Application();

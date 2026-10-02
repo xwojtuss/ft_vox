@@ -8,6 +8,7 @@
 #include "game/planet/ChunkMesher.hpp"
 #include "game/planet/ChunkLoader.hpp"
 #include "ecs/Registry.hpp"
+#include "profiling/ServerStats.hpp"
 #include "scene/PlanetInfo.hpp"
 
 namespace game::planet {
@@ -19,14 +20,17 @@ namespace game::planet {
 		ChunkLoader                                            m_chunkLoader;
 		block::BlockDatas&                                     m_blockDatas;
 		ecs::Registry&                                         m_registry;
+		profiling::ServerStats&                                m_stats;
 		render::IRenderer&                                     m_renderer;
 		assets::TextureHandle                                  m_chunkTexture;
 		glm::vec<3, unsigned short>                            m_renderDistance;
 
 		void removeChunkEntity(glm::ivec3 chunkPosition);
+		void refreshStats() const;
 
 	public:
 		ChunkManager(block::BlockDatas& blockDatas, ecs::Registry& registry, render::IRenderer& renderer,
+					 profiling::ServerStats&     stats,
 					 glm::vec<3, unsigned short> renderDistance = scene::planetinfo::renderDistance);
 
 		void makeChunkRenderable(ecs::Registry& registry, render::IRenderer& renderer, glm::ivec3 chunkPosition);
