@@ -12,6 +12,7 @@
 #include "render/vulkan/pipeline/APipeline.hpp"
 #include "render/IRenderer.hpp"
 #include "platform/window/IWindow.hpp"
+#include "profiling/Profiler.hpp"
 #include "ecs/system/SystemManager.hpp"
 
 namespace render::vulkan {
@@ -42,6 +43,7 @@ namespace render::vulkan {
 		std::unique_ptr<VulkanSwapchain>                                     m_swapchain;
 		std::unique_ptr<VulkanResourceManager>                               m_resourceManager;
 		std::unique_ptr<VulkanFrameData>                                     m_frameData;
+		profiling::GpuProfiler                                               m_gpuProfiler;
 		std::array<VkClearValue, 2>                                          m_clearValues{};
 		std::unordered_map<assets::PipelineType, std::unique_ptr<APipeline>> m_pipelineHandles;
 		std::vector<VkSemaphore>                                             m_renderFinishedSemaphores;
