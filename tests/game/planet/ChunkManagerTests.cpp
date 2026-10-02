@@ -217,8 +217,12 @@ SCENARIO("The chunk manager reports how many chunks are loaded", "[chunk-manager
 		THEN("the loaded chunk count matches the spawn area") {
 			REQUIRE(env.stats.loadedChunks == static_cast<size_t>(chunksAroundSpawn));
 		}
-		AND_THEN("the chunk data size is the number of chunks times one chunk's size") {
-			REQUIRE(env.stats.chunkDataBytes == env.stats.loadedChunks * sizeof(game::planet::Chunk));
+		AND_THEN("the chunk data is made of whole chunks, and chunks of only air take none") {
+			constexpr size_t bytesPerChunk = game::planet::chunkVolume * sizeof(game::Block);
+
+			REQUIRE(env.stats.chunkDataBytes > 0);
+			REQUIRE(env.stats.chunkDataBytes % bytesPerChunk == 0);
+			REQUIRE(env.stats.chunkDataBytes < env.stats.loadedChunks * bytesPerChunk);
 		}
 		AND_THEN("nothing is waiting to be generated, because generation is immediate") {
 			REQUIRE(env.stats.pendingGeneration == 0);
@@ -238,6 +242,56 @@ SCENARIO("The chunk manager reports how many chunks are loaded", "[chunk-manager
 				THEN("the count drops back") {
 					REQUIRE(env.stats.loadedChunks == chunksBefore);
 				}
+			}
+		}
+	}
+}
+
+SCENARIO("Chunks that hold only air are never meshed and store no blocks", "[chunk-manager][skip]") {
+	GIVEN("a planet with its spawn area loaded") {
+		const SpawnedPlanet env;
+		const size_t        meshesBefore = env.meshCount();
+		const size_t        bytesBefore  = env.stats.chunkDataBytes;
+		const size_t        chunksBefore = env.stats.loadedChunks;
+
+		WHEN("a chunk high above the terrain is loaded") {
+			env.manager->loadChunk(glm::ivec3(0, 10, 0));
+
+			THEN("it counts as loaded") {
+				REQUIRE(env.stats.loadedChunks == chunksBefore + 1);
+			}
+			AND_THEN("it stores no block data") {
+				REQUIRE(env.stats.chunkDataBytes == bytesBefore);
+			}
+			AND_THEN("no mesh is made for it") {
+				REQUIRE(env.meshCount() == meshesBefore);
+			}
+		}
+	}
+}
+
+SCENARIO("A chunk buried inside solid terrain is not drawn", "[chunk-manager][skip]") {
+	constexpr glm::ivec3 center(100, -2, 100);
+
+	GIVEN("a planet with its spawn area loaded") {
+		SpawnedPlanet env;
+		const size_t  meshesBefore = env.meshCount();
+
+		WHEN("a 3 x 3 x 3 block of underground chunks is loaded together") {
+			env.manager->loadRange(center - 1, center + 1);
+
+			THEN("every chunk except the one in the middle is drawn, since the outside of the block is exposed") {
+				REQUIRE(env.meshCount() == meshesBefore + 26);
+			}
+		}
+
+		WHEN("the same chunks are loaded but the one above the middle chunk is missing") {
+			env.manager->loadRange(center - 1, center + 1);
+			env.manager->unloadChunk(center + glm::ivec3(0, 1, 0));
+			env.manager->loadChunk(center);
+
+			THEN("the middle chunk is drawn too, because one of its sides is exposed") {
+				REQUIRE(env.meshCount() == meshesBefore + 27);
 			}
 		}
 	}

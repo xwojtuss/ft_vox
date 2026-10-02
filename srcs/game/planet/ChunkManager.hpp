@@ -25,8 +25,11 @@ namespace game::planet {
 		assets::TextureHandle                                  m_chunkTexture;
 		glm::vec<3, unsigned short>                            m_renderDistance;
 
-		void removeChunkEntity(glm::ivec3 chunkPosition);
-		void refreshStats() const;
+		void               removeChunkEntity(glm::ivec3 chunkPosition);
+		void               storeChunk(glm::ivec3 chunkPosition);
+		void               makeRangeRenderable(glm::ivec3 start, glm::ivec3 end);
+		void               refreshStats() const;
+		[[nodiscard]] bool isBuried(glm::ivec3 chunkPosition) const;
 
 	public:
 		ChunkManager(block::BlockDatas& blockDatas, ecs::Registry& registry, render::IRenderer& renderer,
