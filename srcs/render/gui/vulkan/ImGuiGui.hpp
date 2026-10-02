@@ -45,6 +45,7 @@ namespace render::gui::vulkan {
 		void               text(const std::string& value) override;
 		bool               button(const std::string& label) override;
 		void               separator() override;
+		void               plotLines(const std::string& label, std::span<const float> values, float scaleMax) override;
 		void               render(VkCommandBuffer commandBuffer) override;
 		[[nodiscard]] bool wantsMouseCapture() const override;
 		[[nodiscard]] bool wantsKeyboardCapture() const override;

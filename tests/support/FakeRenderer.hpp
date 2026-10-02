@@ -64,5 +64,8 @@ namespace test {
 
 		void cleanup() override {
 		}
+
+		void setStats(profiling::ClientStats&) override {
+		}
 	};
 }

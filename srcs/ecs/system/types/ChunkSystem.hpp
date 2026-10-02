@@ -12,7 +12,7 @@ namespace ecs {
 		game::planet::ChunkManager m_chunkManager;
 
 	public:
-		ChunkSystem(Registry& registry, render::IRenderer& renderer,
+		ChunkSystem(Registry& registry, render::IRenderer& renderer, profiling::ServerStats& stats,
 					glm::vec<3, unsigned short> renderDistance = scene::planetinfo::renderDistance);
 
 		void bindEvents(Dispatcher& dispatcher) override;

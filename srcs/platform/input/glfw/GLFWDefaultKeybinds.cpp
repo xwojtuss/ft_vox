@@ -15,6 +15,8 @@ void GLFWDefaultKeybinds::init() {
 	addBinding(GLFW_KEY_ESCAPE, render::input::InputMod::None, render::input::InputEvent::ToggleCursor);
 	addBinding(GLFW_KEY_F3, render::input::InputMod::None, render::input::InputEvent::PlayerComponentsMenuToggle);
 	addBinding(GLFW_KEY_F3, render::input::InputMod::None, render::input::InputEvent::EventRuntimesMenuToggle);
+	addBinding(GLFW_KEY_F4, render::input::InputMod::None, render::input::InputEvent::ClientPerformanceToggle);
+	addBinding(GLFW_KEY_F5, render::input::InputMod::None, render::input::InputEvent::ServerPerformanceToggle);
 
 	addMouseBinding(render::input::MouseButton::LeftButton, render::input::InputMod::None,
 					render::input::InputEvent::SecondaryButton);

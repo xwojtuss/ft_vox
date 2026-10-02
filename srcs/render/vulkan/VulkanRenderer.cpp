@@ -94,7 +94,7 @@ void VulkanRenderer::drawMesh(const ecs::component::Mesh& mesh, const ecs::compo
 								  .model        = transform.toModelMatrix()});
 }
 
-void VulkanRenderer::drawBatch(const APipeline* pipeline, const DrawBatch& batch) const {
+size_t VulkanRenderer::drawBatch(const APipeline* pipeline, const DrawBatch& batch) const {
 	VkCommandBuffer          commandBuffer = m_frameData->getCurrentCommandBuffer();
 	const VulkanMeshStorage& storage       = m_resourceManager->getMeshStorage();
 	const size_t             first         = batch.firstCommand;
@@ -115,24 +115,36 @@ void VulkanRenderer::drawBatch(const APipeline* pipeline, const DrawBatch& batch
 			vkCmdDrawIndexed(commandBuffer, command.indexCount, 1, command.firstIndex, command.vertexOffset,
 							 command.firstInstance);
 		}
-		return;
+		return count;
 	}
 
 	const size_t maxCount = m_context->getMaxDrawIndirectCount();
+	size_t       calls    = 0;
 	for (size_t drawn = 0; drawn < count; drawn += maxCount) {
+		++calls;
 		const auto batchCount = static_cast<uint32_t>(std::min(maxCount, count - drawn));
 		vkCmdDrawIndexedIndirect(commandBuffer, m_frameData->getCurrentIndirectBuffer(),
 								 (first + drawn) * sizeof(VkDrawIndexedIndirectCommand), batchCount,
 								 sizeof(VkDrawIndexedIndirectCommand));
 	}
+	return calls;
 }
 
 void VulkanRenderer::flushDraws() {
 	FT_PROFILE_FUNCTION();
-	size_t total = 0;
+	size_t   total     = 0;
+	uint64_t triangles = 0;
 	for (DrawBatch& batch: m_batches) {
 		batch.firstCommand = total;
 		total += batch.items.size();
+		if (m_stats != nullptr)
+			for (const DrawItem& item: batch.items)
+				triangles += item.indexCount / 3;
+	}
+	if (m_stats != nullptr) {
+		m_stats->drawnMeshes = total;
+		m_stats->triangles   = triangles;
+		m_stats->drawCalls   = 0;
 	}
 	if (total == 0)
 		return;
@@ -171,7 +183,9 @@ void VulkanRenderer::flushDraws() {
 									m_frameData->getDescriptorSet(m_frameData->getCurrentFrame()), 0, nullptr);
 		}
 
-		drawBatch(pipeline, batch);
+		const size_t drawCalls = drawBatch(pipeline, batch);
+		if (m_stats != nullptr)
+			m_stats->drawCalls += drawCalls;
 		batch.items.clear();
 	}
 }
@@ -260,6 +274,7 @@ void VulkanRenderer::render(ecs::SystemManager& systemManager) {
 
 	// Only reset the fence if we are submitting work
 	m_frameData->resetFences(*m_context, m_frameData->getCurrentFrame());
+	refreshMemoryStats();
 
 	vkResetCommandBuffer(m_frameData->getCurrentCommandBuffer(), 0);
 	recordCommandBuffer(systemManager, *imageIndex);
@@ -319,6 +334,35 @@ void VulkanRenderer::cleanupPipelines() {
 		pipeline->cleanup(m_context->getLogicalDevice());
 	}
 	m_pipelineHandles.clear();
+}
+
+void VulkanRenderer::setStats(profiling::ClientStats& stats) {
+	m_stats = &stats;
+}
+
+void VulkanRenderer::refreshMemoryStats() {
+	constexpr uint32_t refreshIntervalFrames = 30;
+	if (m_stats == nullptr || ++m_framesSinceMemoryRefresh < refreshIntervalFrames)
+		return;
+	m_framesSinceMemoryRefresh = 0;
+
+	std::array<VmaBudget, VK_MAX_MEMORY_HEAPS> budgets{};
+	vmaGetHeapBudgets(m_context->getAllocator(), budgets.data());
+	const VkPhysicalDeviceMemoryProperties* memoryProperties = nullptr;
+	vmaGetMemoryProperties(m_context->getAllocator(), &memoryProperties);
+
+	m_stats->gpuMemoryUsedBytes     = 0;
+	m_stats->gpuMemoryReservedBytes = 0;
+	for (uint32_t heap = 0; heap < memoryProperties->memoryHeapCount; ++heap) {
+		m_stats->gpuMemoryUsedBytes += budgets[heap].statistics.allocationBytes;
+		m_stats->gpuMemoryReservedBytes += budgets[heap].statistics.blockBytes;
+	}
+
+	size_t drawListBytes =
+		(m_objects.capacity() * sizeof(ObjectData)) + (m_commands.capacity() * sizeof(VkDrawIndexedIndirectCommand));
+	for (const DrawBatch& batch: m_batches)
+		drawListBytes += batch.items.capacity() * sizeof(DrawItem);
+	m_stats->cpuMemoryBytes = drawListBytes;
 }
 
 void VulkanRenderer::cleanup() {

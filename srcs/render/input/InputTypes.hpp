@@ -30,6 +30,8 @@ namespace render::input {
 		AnyMouseButton             = ActionButton | SecondaryButton,
 		PlayerComponentsMenuToggle = 1U << 9U,
 		EventRuntimesMenuToggle    = 1U << 10U,
+		ClientPerformanceToggle    = 1U << 11U,
+		ServerPerformanceToggle    = 1U << 12U,
 		All                        = 1U << 31U
 	};
 

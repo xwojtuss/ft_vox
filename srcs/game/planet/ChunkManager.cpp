@@ -6,8 +6,8 @@
 using namespace game::planet;
 
 ChunkManager::ChunkManager(block::BlockDatas& blockDatas, ecs::Registry& registry, render::IRenderer& renderer,
-						   const glm::vec<3, unsigned short> renderDistance) :
-	m_chunkMesher(blockDatas), m_blockDatas(blockDatas), m_registry(registry), m_renderer(renderer),
+						   profiling::ServerStats& stats, const glm::vec<3, unsigned short> renderDistance) :
+	m_chunkMesher(blockDatas), m_blockDatas(blockDatas), m_registry(registry), m_stats(stats), m_renderer(renderer),
 	m_renderDistance(renderDistance) {
 	m_chunkTexture = renderer.createTexture(m_blockDatas.getBlockData(1).textureData);
 
@@ -55,9 +55,15 @@ void ChunkManager::removeChunkEntity(const glm::ivec3 chunkPosition) {
 	m_chunkEntities.erase(it);
 }
 
+void ChunkManager::refreshStats() const {
+	m_stats.loadedChunks   = m_chunks.size();
+	m_stats.chunkDataBytes = m_chunks.size() * sizeof(Chunk);
+}
+
 void ChunkManager::unloadChunk(glm::ivec3 chunkPosition) {
 	removeChunkEntity(chunkPosition);
 	m_chunks.erase(chunkPosition);
+	refreshStats();
 }
 
 void ChunkManager::unloadChunk(int x, int y, int z) {
@@ -87,6 +93,7 @@ void ChunkManager::loadRange(const glm::ivec3 start, const glm::ivec3 end) {
 void ChunkManager::loadChunk(const glm::ivec3 chunkPosition) {
 	removeChunkEntity(chunkPosition);
 	m_chunks[chunkPosition] = m_chunkLoader.loadChunk(chunkPosition);
+	refreshStats();
 
 	makeChunkRenderable(m_registry, m_renderer, chunkPosition);
 }

@@ -11,9 +11,10 @@ namespace {
 		game::block::BlockDatas blockDatas = test::makeBlockDatas();
 		ecs::Registry           registry{blockDatas};
 		test::FakeRenderer      renderer;
+		profiling::ServerStats  stats;
 
 		ChunkSystemPlanet() {
-			registry.createSystem<ecs::ChunkSystem>(registry, renderer, glm::vec<3, unsigned short>{2, 4, 2});
+			registry.createSystem<ecs::ChunkSystem>(registry, renderer, stats, glm::vec<3, unsigned short>{2, 4, 2});
 		}
 
 		[[nodiscard]] size_t meshCount() const {

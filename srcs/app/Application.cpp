@@ -40,14 +40,14 @@ Application::Application() {
 	init();
 }
 
-void Application::init() const {
+void Application::init() {
 	m_registry->createSystem<CameraSystem>();
 	m_registry->createSystem<MovementSystem>();
 	m_registry->createSystem<RenderSystem>();
 	m_registry->createSystem<WindowControlSystem>(*m_window, *m_gui);
 	m_registry->createSystem<PlayerInputSystem>(m_window->getInputManager());
-	m_registry->createSystem<GuiSystem>(*m_gui);
-	m_registry->createSystem<ChunkSystem>(*m_registry, *m_renderer);
+	m_registry->createSystem<GuiSystem>(*m_gui, m_clientStats, m_serverStats);
+	m_registry->createSystem<ChunkSystem>(*m_registry, *m_renderer, m_serverStats);
 	m_registry->getSystemManager().onRegistryReady();
 
 	EntityHandle player = m_registry->createEntity();
@@ -56,11 +56,13 @@ void Application::init() const {
 	player.add(component::Camera{.fov = 90.0f});
 	player.add(component::Input{.mouseSensitivity = 0.002f});
 
+	m_renderer->setStats(m_clientStats);
 	m_renderer->setClearColor(0x0a2882);
 }
 
 void Application::run() {
 	FT_PROFILE_THREAD("Main");
+	m_lastFrameTime = m_window->getTime();
 	while (!m_window->shouldClose()) {
 		{
 			FT_PROFILE_ZONE("Input");
@@ -69,6 +71,7 @@ void Application::run() {
 		simulate();
 		update();
 		render();
+		recordFrameTime();
 		FT_PROFILE_FRAME();
 	}
 }
@@ -89,6 +92,12 @@ void Application::simulate() {
 
 	FT_PROFILE_ZONE("Simulate");
 	m_registry->getSystemManager().onSimulate(static_cast<float>(dt), static_cast<float>(time));
+}
+
+void Application::recordFrameTime() {
+	const double time = m_window->getTime();
+	m_clientStats.frameTimes.record(time, static_cast<float>(time - m_lastFrameTime));
+	m_lastFrameTime = time;
 }
 
 void Application::render() const {

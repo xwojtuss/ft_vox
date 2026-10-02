@@ -49,6 +49,8 @@ namespace render::vulkan {
 		std::vector<VkSemaphore>                                             m_renderFinishedSemaphores;
 		std::vector<DrawBatch>                                               m_batches;
 		size_t                                                               m_currentBatch{};
+		profiling::ClientStats*                                              m_stats{};
+		uint32_t                                                             m_framesSinceMemoryRefresh{};
 		std::vector<ObjectData>                                              m_objects;
 		std::vector<VkDrawIndexedIndirectCommand>                            m_commands;
 
@@ -58,7 +60,8 @@ namespace render::vulkan {
 		void                     recordCommandBuffer(ecs::SystemManager& systemManager, uint32_t imageIndex);
 		void                     flushDraws();
 		[[nodiscard]] DrawBatch& batchFor(const DrawBatchKey& key);
-		void                     drawBatch(const APipeline* pipeline, const DrawBatch& batch) const;
+		[[nodiscard]] size_t     drawBatch(const APipeline* pipeline, const DrawBatch& batch) const;
+		void                     refreshMemoryStats();
 		void                     cleanupPipelines();
 		void                     recreateSwapchain();
 		[[nodiscard]] std::optional<uint32_t> acquireImage();
@@ -73,6 +76,7 @@ namespace render::vulkan {
 		~VulkanRenderer() override;
 
 		void cleanup() override;
+		void setStats(profiling::ClientStats& stats) override;
 
 		assets::MeshHandle           createMesh(const assets::MeshData&) override;
 		void                         destroyMesh(assets::MeshHandle) override;
