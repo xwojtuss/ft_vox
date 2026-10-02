@@ -1,5 +1,8 @@
 #include "game/planet/ChunkManager.hpp"
 
+#include <array>
+#include <ranges>
+
 #include "render/IRenderer.hpp"
 #include "ecs/component/Components.hpp"
 
@@ -15,18 +18,14 @@ ChunkManager::ChunkManager(block::BlockDatas& blockDatas, ecs::Registry& registr
 	const int halfDepth = m_renderDistance.z / 2;
 	const int height    = m_renderDistance.y;
 
-	for (int x = -halfWidth; x <= halfWidth; ++x) {
-		for (int z = -halfDepth; z <= halfDepth; ++z) {
-			for (int y = 0; y < height; ++y) {
-				loadChunk({x, y, z});
-			}
-		}
-	}
+	loadRange({-halfWidth, 0, -halfDepth}, {halfWidth, height - 1, halfDepth});
 }
 
 void ChunkManager::makeChunkRenderable(ecs::Registry& registry, render::IRenderer& renderer, glm::ivec3 chunkPosition) {
 	const auto it = m_chunks.find(chunkPosition);
 	if (it == m_chunks.end() || m_chunkEntities.contains(chunkPosition))
+		return;
+	if (it->second->isEmpty() || isBuried(chunkPosition))
 		return;
 
 	const assets::ChunkMeshData meshData = m_chunkMesher.toMeshData(*it->second);
@@ -57,7 +56,43 @@ void ChunkManager::removeChunkEntity(const glm::ivec3 chunkPosition) {
 
 void ChunkManager::refreshStats() const {
 	m_stats.loadedChunks   = m_chunks.size();
-	m_stats.chunkDataBytes = m_chunks.size() * sizeof(Chunk);
+	m_stats.chunkDataBytes = 0;
+	for (const auto& chunk: m_chunks | std::views::values)
+		m_stats.chunkDataBytes += chunk->dataBytes();
+}
+
+bool ChunkManager::isBuried(const glm::ivec3 chunkPosition) const {
+	if (!m_chunks.at(chunkPosition)->isFull())
+		return false;
+
+	constexpr std::array axisSizes = {chunkXSize, chunkYSize, chunkZSize};
+	for (int axis = 0; axis < 3; ++axis) {
+		for (const int direction: {-1, 1}) {
+			glm::ivec3 neighbourPosition = chunkPosition;
+			neighbourPosition[axis] += direction;
+
+			const auto neighbour = m_chunks.find(neighbourPosition);
+			if (neighbour == m_chunks.end())
+				return false;
+
+			if (const int touchingLayer = (direction > 0) ? 0 : axisSizes[static_cast<std::size_t>(axis)] - 1;
+				!neighbour->second->isLayerSolid(axis, touchingLayer))
+				return false;
+		}
+	}
+	return true;
+}
+
+void ChunkManager::storeChunk(const glm::ivec3 chunkPosition) {
+	removeChunkEntity(chunkPosition);
+	m_chunks[chunkPosition] = m_chunkLoader.loadChunk(chunkPosition);
+}
+
+void ChunkManager::makeRangeRenderable(const glm::ivec3 start, const glm::ivec3 end) {
+	for (int x = start.x; x <= end.x; ++x)
+		for (int y = start.y; y <= end.y; ++y)
+			for (int z = start.z; z <= end.z; ++z)
+				makeChunkRenderable(m_registry, m_renderer, {x, y, z});
 }
 
 void ChunkManager::unloadChunk(glm::ivec3 chunkPosition) {
@@ -74,25 +109,28 @@ void ChunkManager::unloadRange(const glm::ivec3 start, const glm::ivec3 end) {
 	for (int x = start.x; x <= end.x; ++x) {
 		for (int y = start.y; y <= end.y; ++y) {
 			for (int z = start.z; z <= end.z; ++z) {
-				unloadChunk({x, y, z});
+				removeChunkEntity({x, y, z});
+				m_chunks.erase({x, y, z});
 			}
 		}
 	}
+	refreshStats();
 }
 
 void ChunkManager::loadRange(const glm::ivec3 start, const glm::ivec3 end) {
 	for (int x = start.x; x <= end.x; ++x) {
 		for (int y = start.y; y <= end.y; ++y) {
 			for (int z = start.z; z <= end.z; ++z) {
-				loadChunk({x, y, z});
+				storeChunk({x, y, z});
 			}
 		}
 	}
+	refreshStats();
+	makeRangeRenderable(start, end);
 }
 
 void ChunkManager::loadChunk(const glm::ivec3 chunkPosition) {
-	removeChunkEntity(chunkPosition);
-	m_chunks[chunkPosition] = m_chunkLoader.loadChunk(chunkPosition);
+	storeChunk(chunkPosition);
 	refreshStats();
 
 	makeChunkRenderable(m_registry, m_renderer, chunkPosition);

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <glm/vec3.hpp>
+#include <utility>
 
 #include "game/planet/Chunk.hpp"
 #include "support/Assertions.hpp"
@@ -100,16 +101,111 @@ SCENARIO("A removed block forgets its entity", "[chunk]") {
 	}
 }
 
-SCENARIO("Blocks can be edited in place", "[chunk]") {
-	GIVEN("a chunk") {
+SCENARIO("A chunk of only air stores no block data", "[chunk]") {
+	GIVEN("a freshly created chunk") {
 		Chunk chunk;
 
-		WHEN("a block is changed through the reference returned by getBlock") {
-			chunk.getBlock(15, 15, 15).id = test::dirt;
+		THEN("it is empty and takes no block data") {
+			REQUIRE(chunk.isEmpty());
+			REQUIRE_FALSE(chunk.isFull());
+			REQUIRE(chunk.dataBytes() == 0);
+		}
 
-			THEN("the chunk stores the change") {
-				REQUIRE(chunk.getBlock(15, 15, 15).id == test::dirt);
+		WHEN("air is placed into it") {
+			chunk.setBlock(1, 2, 3, Block(test::air));
+
+			THEN("it still takes no block data") {
+				REQUIRE(chunk.isEmpty());
+				REQUIRE(chunk.dataBytes() == 0);
 			}
+		}
+
+		WHEN("a block is placed into it") {
+			chunk.setBlock(1, 2, 3, Block(test::dirt));
+
+			THEN("the chunk is no longer empty and holds block data") {
+				REQUIRE_FALSE(chunk.isEmpty());
+				REQUIRE(chunk.dataBytes() > 0);
+				REQUIRE(chunk.getBlock(1, 2, 3).id == test::dirt);
+				REQUIRE(chunk.getBlock(0, 0, 0).id == test::air);
+			}
+
+			AND_WHEN("that block is removed again") {
+				chunk.removeBlock(1, 2, 3);
+
+				THEN("the block data is given back") {
+					REQUIRE(chunk.isEmpty());
+					REQUIRE(chunk.dataBytes() == 0);
+				}
+			}
+
+			AND_WHEN("it is replaced by another block") {
+				chunk.setBlock(1, 2, 3, Block(test::blockWithoutModel));
+
+				THEN("the chunk still counts one block") {
+					chunk.removeBlock(1, 2, 3);
+					REQUIRE(chunk.isEmpty());
+				}
+			}
+		}
+	}
+}
+
+SCENARIO("A chunk knows when it is completely filled", "[chunk]") {
+	GIVEN("a chunk filled with dirt except for one block") {
+		Chunk chunk;
+		for (int x = 0; x < chunkXSize; ++x)
+			for (int y = 0; y < chunkYSize; ++y)
+				for (int z = 0; z < chunkZSize; ++z)
+					chunk.setBlock(x, y, z, Block(test::dirt));
+		chunk.removeBlock(5, 5, 5);
+
+		THEN("it is not full") {
+			REQUIRE_FALSE(chunk.isFull());
+		}
+
+		WHEN("the missing block is placed") {
+			chunk.setBlock(5, 5, 5, Block(test::dirt));
+
+			THEN("it is full") {
+				REQUIRE(chunk.isFull());
+			}
+		}
+	}
+}
+
+SCENARIO("A chunk knows whether one of its layers is solid", "[chunk]") {
+	GIVEN("a chunk whose bottom layer (y = 0) is dirt") {
+		Chunk chunk;
+		for (int x = 0; x < chunkXSize; ++x)
+			for (int z = 0; z < chunkZSize; ++z)
+				chunk.setBlock(x, 0, z, Block(test::dirt));
+
+		THEN("that layer is solid and the one above is not") {
+			REQUIRE(chunk.isLayerSolid(1, 0));
+			REQUIRE_FALSE(chunk.isLayerSolid(1, 1));
+		}
+		AND_THEN("the layers across it are not solid, since they hold only one row of dirt each") {
+			REQUIRE_FALSE(chunk.isLayerSolid(0, 0));
+			REQUIRE_FALSE(chunk.isLayerSolid(2, 3));
+		}
+
+		WHEN("one block of the bottom layer is removed") {
+			chunk.removeBlock(7, 0, 9);
+
+			THEN("the layer is no longer solid") {
+				REQUIRE_FALSE(chunk.isLayerSolid(1, 0));
+			}
+		}
+	}
+
+	GIVEN("an empty chunk") {
+		const Chunk chunk;
+
+		THEN("no layer is solid") {
+			REQUIRE_FALSE(chunk.isLayerSolid(0, 0));
+			REQUIRE_FALSE(chunk.isLayerSolid(1, 5));
+			REQUIRE_FALSE(chunk.isLayerSolid(2, chunkZSize - 1));
 		}
 	}
 }
@@ -140,7 +236,8 @@ SCENARIO("A block outside the chunk cannot be read or written", "[chunk][bounds]
 		THEN("reading, writing or removing any of them is caught as a bug") {
 			for (const glm::ivec3& position: outside) {
 				CAPTURE(position.x, position.y, position.z);
-				REQUIRE_THROWS_AS(chunk.getBlock(position.x, position.y, position.z), test::AssertionFailed);
+				REQUIRE_THROWS_AS(std::as_const(chunk).getBlock(position.x, position.y, position.z),
+								  test::AssertionFailed);
 				REQUIRE_THROWS_AS(chunk.setBlock(position.x, position.y, position.z, Block(test::dirt)),
 								  test::AssertionFailed);
 				REQUIRE_THROWS_AS(chunk.removeBlock(position.x, position.y, position.z), test::AssertionFailed);

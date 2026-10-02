@@ -1,5 +1,4 @@
 #include "game/planet/generation/EarthGenerator.hpp"
-#include <random>
 #include "scene/PlanetInfo.hpp"
 
 #include <algorithm>
@@ -14,10 +13,13 @@ void EarthGenerator::generateChunk(Chunk* chunk, const glm::ivec3 chunkPosition)
 	const int     planetChunkBaseY = static_cast<int>(chunkPosition.y) * chunkYSize;
 	constexpr int maxTerrainHeight = std::min<int>(scene::planetinfo::terrainMaxHeightBlocks,
 												   chunkYSize * scene::planetinfo::maxVerticalRenderDistance);
-	int           planetX          = 0;
-	int           planetY          = 0;
-	int           planetZ          = 0;
-	int           terrainHeight    = 0;
+	if (planetChunkBaseY >= maxTerrainHeight)
+		return;
+
+	int planetX       = 0;
+	int planetY       = 0;
+	int planetZ       = 0;
+	int terrainHeight = 0;
 
 	for (int blockX = 0; blockX < chunkXSize; ++blockX) {
 		for (int blockZ = 0; blockZ < chunkZSize; ++blockZ) {

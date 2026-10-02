@@ -52,7 +52,9 @@ ChunkMesher::ChunkMesher(block::BlockDatas& blockDatas) : m_blockDatas(blockData
 // TODO: refactor
 assets::ChunkMeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
 	FT_PROFILE_FUNCTION();
-	assets::ChunkMeshData                      meshData;
+	assets::ChunkMeshData meshData;
+	if (chunk.isEmpty())
+		return meshData;
 	std::unordered_map<BlockId, PreparedModel> preparedModels;
 
 	for (int x = 0; x < chunkXSize; ++x) {
