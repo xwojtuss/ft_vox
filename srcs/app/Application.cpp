@@ -14,6 +14,7 @@
 #include "ecs/system/types/PlayerInputSystem.hpp"
 #include "ecs/system/types/WindowControlSystem.hpp"
 #include "platform/window/glfw/GLFWWindow.hpp"
+#include "profiling/Profiler.hpp"
 #include "render/gui/vulkan/ImGuiGui.hpp"
 #include "render/vulkan/VulkanRenderer.hpp"
 
@@ -59,15 +60,21 @@ void Application::init() const {
 }
 
 void Application::run() {
+	FT_PROFILE_THREAD("Main");
 	while (!m_window->shouldClose()) {
-		m_window->pollEvents();
+		{
+			FT_PROFILE_ZONE("Input");
+			m_window->pollEvents();
+		}
 		simulate();
 		update();
 		render();
+		FT_PROFILE_FRAME();
 	}
 }
 
 void Application::update() const {
+	FT_PROFILE_FUNCTION();
 	m_registry->getSystemManager().onRender(m_window->getAspectRatio(), m_window->getTime());
 }
 
@@ -80,6 +87,7 @@ void Application::simulate() {
 	}
 	m_lastSimulateTime = time;
 
+	FT_PROFILE_ZONE("Simulate");
 	m_registry->getSystemManager().onSimulate(static_cast<float>(dt), static_cast<float>(time));
 }
 

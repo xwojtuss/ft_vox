@@ -8,6 +8,7 @@
 #include <glm/geometric.hpp>
 #include <magic_enum/magic_enum.hpp>
 
+#include "profiling/Profiler.hpp"
 #include "scene/PlanetInfo.hpp"
 
 using namespace game::planet;
@@ -48,6 +49,7 @@ ChunkMesher::ChunkMesher(block::BlockDatas& blockDatas) : m_blockDatas(blockData
 
 // TODO: refactor
 assets::MeshData ChunkMesher::toMeshData(const Chunk& chunk) const {
+	FT_PROFILE_FUNCTION();
 	assets::MeshData                           meshData;
 	std::unordered_map<BlockId, PreparedModel> preparedModels;
 

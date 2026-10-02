@@ -90,6 +90,22 @@
       }
     },
     {
+      "name": "dev-profile",
+      "displayName": "Development with Tracy profiler (Clang)",
+      "inherits": "dev-clang",
+      "cacheVariables": {
+        "FT_VOX_PROFILER": "ON"
+      }
+    },
+    {
+      "name": "profile",
+      "displayName": "Release with Tracy profiler (Clang)",
+      "inherits": "release-clang",
+      "cacheVariables": {
+        "FT_VOX_PROFILER": "ON"
+      }
+    },
+    {
       "name": "release42",
       "displayName": "Release (GCC) - 42 Workstations",
       "inherits": "base",
@@ -155,6 +171,18 @@
       "name": "release-clang",
       "displayName": "Build Release (Clang)",
       "configurePreset": "release-clang",
+      "jobs": 0
+    },
+    {
+      "name": "dev-profile",
+      "displayName": "Build Debug with Tracy profiler (Clang)",
+      "configurePreset": "dev-profile",
+      "jobs": 0
+    },
+    {
+      "name": "profile",
+      "displayName": "Build Release with Tracy profiler (Clang)",
+      "configurePreset": "profile",
       "jobs": 0
     },
     {

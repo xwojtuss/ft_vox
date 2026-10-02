@@ -6,6 +6,7 @@
 #include "platform/filesystem/readFile.hpp"
 #include "render/vulkan/VulkanError.hpp"
 #include "ecs/component/Components.hpp"
+#include "profiling/Profiler.hpp"
 
 #include <ranges>
 
@@ -16,6 +17,8 @@ VulkanRenderer::VulkanRenderer(platform::window::IWindow& window) {
 	m_swapchain       = std::make_unique<VulkanSwapchain>(*m_context);
 	m_resourceManager = std::make_unique<VulkanResourceManager>(*m_context);
 	m_frameData       = std::make_unique<VulkanFrameData>(*m_context, *m_resourceManager);
+	m_gpuProfiler.init(m_context->getPhysicalDevice(), m_context->getLogicalDevice(), m_context->getGraphicsQueue(),
+					   m_frameData->getCommandBuffer(0));
 	createPipelines();
 	createRenderFinishedSemaphores();
 }
@@ -125,6 +128,7 @@ void VulkanRenderer::drawBatch(const APipeline* pipeline, const DrawBatch& batch
 }
 
 void VulkanRenderer::flushDraws() {
+	FT_PROFILE_FUNCTION();
 	size_t total = 0;
 	for (DrawBatch& batch: m_batches) {
 		batch.firstCommand = total;
@@ -149,8 +153,9 @@ void VulkanRenderer::flushDraws() {
 	}
 	m_frameData->uploadDraws(*m_context, m_objects, m_commands);
 
-	VkCommandBuffer      commandBuffer = m_frameData->getCurrentCommandBuffer();
-	const APipeline*     pipeline      = nullptr;
+	VkCommandBuffer commandBuffer = m_frameData->getCurrentCommandBuffer();
+	FT_PROFILE_GPU_ZONE(m_gpuProfiler, commandBuffer, "Draw chunks");
+	const APipeline*     pipeline = nullptr;
 	assets::PipelineType boundType{};
 	for (DrawBatch& batch: m_batches) {
 		if (batch.items.empty())
@@ -209,6 +214,7 @@ void VulkanRenderer::recordCommandBuffer(ecs::SystemManager& systemManager, cons
 	systemManager.onRendererFrame(*this);
 
 	vkCmdEndRenderPass(commandBuffer);
+	m_gpuProfiler.collect(commandBuffer);
 	if (const VkResult result = vkEndCommandBuffer(commandBuffer); result != VK_SUCCESS) {
 		throw VulkanError("failed to record command buffer", result);
 	}
@@ -224,6 +230,7 @@ void VulkanRenderer::recreateSwapchain() {
 }
 
 std::optional<uint32_t> VulkanRenderer::acquireImage() {
+	FT_PROFILE_FUNCTION();
 	if (const VkResult result = m_frameData->waitForFences(*m_context, m_frameData->getCurrentFrame());
 		result != VK_SUCCESS)
 		throw VulkanError("failed to wait for the previous frame", result);
@@ -244,6 +251,7 @@ std::optional<uint32_t> VulkanRenderer::acquireImage() {
 }
 
 void VulkanRenderer::render(ecs::SystemManager& systemManager) {
+	FT_PROFILE_FUNCTION();
 	const std::optional<uint32_t> imageIndex = acquireImage();
 	if (!imageIndex)
 		return;
@@ -255,7 +263,10 @@ void VulkanRenderer::render(ecs::SystemManager& systemManager) {
 
 	vkResetCommandBuffer(m_frameData->getCurrentCommandBuffer(), 0);
 	recordCommandBuffer(systemManager, *imageIndex);
-	m_frameData->submitCommandBuffer(*m_context, m_renderFinishedSemaphores[*imageIndex]);
+	{
+		FT_PROFILE_ZONE("Submit");
+		m_frameData->submitCommandBuffer(*m_context, m_renderFinishedSemaphores[*imageIndex]);
+	}
 
 	present(*imageIndex);
 }
@@ -265,6 +276,7 @@ void VulkanRenderer::render(render::gui::IGui& gui) {
 }
 
 void VulkanRenderer::present(const uint32_t imageIndex) {
+	FT_PROFILE_FUNCTION();
 	VkSemaphore signalSemaphore = m_renderFinishedSemaphores[imageIndex];
 
 	VkPresentInfoKHR presentInfo{};

@@ -32,6 +32,7 @@ else()
 endif()
 option(FT_VOX_VALIDATION "Enable the Vulkan validation layers (on by default, except in Release builds)" ${FT_VOX_VALIDATION_DEFAULT})
 option(FT_VOX_LTO "Link-time optimization in Release builds" ON)
+option(FT_VOX_PROFILER "Build with the Tracy frame profiler; every profiling macro compiles to nothing when OFF" OFF)
 option(FT_VOX_CLANG_TIDY "Run clang-tidy on our sources while compiling; any finding fails the build" OFF)
 
 find_program(PRE_COMMIT_PROGRAM pre-commit)
@@ -143,6 +144,20 @@ FetchContent_Declare(
   SYSTEM
 )
 
+if (FT_VOX_PROFILER)
+  FetchContent_Declare(
+          Tracy
+          GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+          GIT_TAG 05cceee0df3b8d7c6fa87e9638af311dbabc63cb # v0.13.1
+          GIT_SHALLOW TRUE
+          SYSTEM
+  )
+  set(TRACY_ENABLE ON CACHE BOOL "" FORCE)
+  set(TRACY_ON_DEMAND OFF CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(Tracy)
+  message(STATUS "Tracy profiler enabled (the viewer must be v0.13.1)")
+endif ()
+
 FetchContent_MakeAvailable(magic_enum)
 FetchContent_MakeAvailable(libassert)
 FetchContent_MakeAvailable(volk)
@@ -181,6 +196,11 @@ function(ft_vox_add_core target optimization)
     IMGUI_IMPL_VULKAN_USE_VOLK
     PROJECT_ROOT_DIR="${PROJECT_SOURCE_DIR}"
   )
+
+  if (FT_VOX_PROFILER)
+    target_compile_definitions(${target} PUBLIC FT_VOX_PROFILER)
+    target_link_libraries(${target} PUBLIC Tracy::TracyClient)
+  endif ()
 
   target_compile_options(${target} PUBLIC -Wall -Wextra -Werror ${optimization} $<$<NOT:$<CONFIG:Release>>:-g>)
 
