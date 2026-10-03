@@ -159,6 +159,13 @@ if (FT_VOX_PROFILER)
 endif ()
 
 FetchContent_Declare(
+  bs_thread_pool
+  GIT_REPOSITORY https://github.com/bshoshany/thread-pool.git
+  GIT_TAG   bd4533f1f70c2b975cbd5769a60d8eaaea1d2233 # v5.1.0
+  SYSTEM
+)
+
+FetchContent_Declare(
   FastNoise2
   GIT_REPOSITORY https://github.com/Auburn/FastNoise2.git
   GIT_TAG   903c1f2d2f9d53ddce94cd223f32727d9ab3aeaa # v1.1.1
@@ -172,6 +179,7 @@ set(FT_VOX_CXX_FLAGS_DEBUG_BACKUP "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O2")
 FetchContent_MakeAvailable(FastNoise2)
 set(CMAKE_CXX_FLAGS_DEBUG "${FT_VOX_CXX_FLAGS_DEBUG_BACKUP}")
+FetchContent_MakeAvailable(bs_thread_pool)
 FetchContent_MakeAvailable(magic_enum)
 FetchContent_MakeAvailable(libassert)
 FetchContent_MakeAvailable(volk)
@@ -230,6 +238,7 @@ function(ft_vox_add_core target optimization)
     "${imgui_SOURCE_DIR}/backends"
     "${magic_enum_SOURCE_DIR}/include"
   )
+  target_include_directories(${target} SYSTEM PRIVATE "${bs_thread_pool_SOURCE_DIR}/include")
 
   target_link_libraries(${target} PUBLIC
     Vulkan::Headers
@@ -246,29 +255,27 @@ function(ft_vox_add_core target optimization)
   )
 endfunction()
 
-file(GLOB_RECURSE FT_VOX_FILES_OUTSIDE_ECS CONFIGURE_DEPENDS
+file(GLOB_RECURSE FT_VOX_CODE_FILES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.tpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.hpp"
 )
-list(FILTER FT_VOX_FILES_OUTSIDE_ECS EXCLUDE REGEX "/srcs/ecs/")
-file(GLOB_RECURSE FT_VOX_FILES_OUTSIDE_NOISE CONFIGURE_DEPENDS
-  "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.tpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.hpp"
-)
-list(FILTER FT_VOX_FILES_OUTSIDE_NOISE EXCLUDE REGEX "/srcs/noise/")
-foreach(FILE IN LISTS FT_VOX_FILES_OUTSIDE_NOISE)
-  file(STRINGS "${FILE}" FASTNOISE_INCLUDES REGEX "#include [<\"]FastNoise/")
-  if(FASTNOISE_INCLUDES)
-    message(FATAL_ERROR "${FILE} includes FastNoise2 directly; only srcs/noise may, everything else uses noise::INoise2D")
-  endif()
-endforeach()
 
-foreach(FILE IN LISTS FT_VOX_FILES_OUTSIDE_ECS)
-  file(STRINGS "${FILE}" ENTT_INCLUDES REGEX "#include [<\"]entt/")
-  if(ENTT_INCLUDES)
-    message(FATAL_ERROR "${FILE} includes EnTT directly; only srcs/ecs may, everything else uses the ecs API")
-  endif()
-endforeach()
+function(ft_vox_restrict_include library include_regex allowed_folder hint)
+  foreach(FILE IN LISTS FT_VOX_CODE_FILES)
+    if(FILE MATCHES "/${allowed_folder}/")
+      continue()
+    endif()
+    file(STRINGS "${FILE}" FORBIDDEN_INCLUDES REGEX "${include_regex}")
+    if(FORBIDDEN_INCLUDES)
+      message(FATAL_ERROR "${FILE} includes ${library} directly; only ${allowed_folder} may, ${hint}")
+    endif()
+  endforeach()
+endfunction()
+
+ft_vox_restrict_include("EnTT" "#include [<\"]entt/" "srcs/ecs" "everything else uses the ecs API")
+ft_vox_restrict_include("FastNoise2" "#include [<\"]FastNoise/" "srcs/noise" "everything else uses noise::INoise2D")
+ft_vox_restrict_include("BS::thread_pool" "#include [<\"]BS_thread_pool" "srcs/concurrency"
+  "everything else uses concurrency::IThreadPool")
 
 ft_vox_add_core(ft_vox_core $<IF:$<CONFIG:Release>,-O3,-O2>)
 ft_vox_enable_clang_tidy(ft_vox_core)

@@ -10,6 +10,7 @@
 
 using game::Block;
 using game::planet::Chunk;
+using game::planet::ChunkFace;
 using game::planet::chunkXSize;
 using game::planet::chunkYSize;
 using game::planet::chunkZSize;
@@ -174,74 +175,166 @@ SCENARIO("A chunk knows when it is completely filled", "[chunk]") {
 	}
 }
 
-SCENARIO("A chunk knows whether one of its layers is solid", "[chunk]") {
+SCENARIO("A chunk knows whether one of its sides is solid", "[chunk]") {
 	GIVEN("a chunk whose bottom layer (y = 0) is dirt") {
 		Chunk chunk;
 		for (int x = 0; x < chunkXSize; ++x)
 			for (int z = 0; z < chunkZSize; ++z)
 				chunk.setBlock(x, 0, z, Block(test::dirt));
 
-		THEN("that layer is solid and the one above is not") {
-			REQUIRE(chunk.isLayerSolid(1, 0));
-			REQUIRE_FALSE(chunk.isLayerSolid(1, 1));
+		THEN("its bottom side is solid and its top side is not") {
+			REQUIRE(chunk.isFaceSolid(ChunkFace::NegativeY));
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::PositiveY));
 		}
-		AND_THEN("the layers across it are not solid, since they hold only one row of dirt each") {
-			REQUIRE_FALSE(chunk.isLayerSolid(0, 0));
-			REQUIRE_FALSE(chunk.isLayerSolid(2, 3));
+		AND_THEN("its other sides are not solid, since they hold only one row of dirt each") {
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::NegativeX));
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::PositiveX));
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::NegativeZ));
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::PositiveZ));
 		}
 
 		WHEN("one block of the bottom layer is removed") {
 			chunk.removeBlock(7, 0, 9);
 
-			THEN("the layer is no longer solid") {
-				REQUIRE_FALSE(chunk.isLayerSolid(1, 0));
+			THEN("the bottom side is no longer solid") {
+				REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::NegativeY));
 			}
+		}
+	}
+
+	GIVEN("a chunk with a wall of dirt at its largest x") {
+		Chunk chunk;
+		for (int y = 0; y < chunkYSize; ++y)
+			for (int z = 0; z < chunkZSize; ++z)
+				chunk.setBlock(chunkXSize - 1, y, z, Block(test::dirt));
+
+		THEN("its positive x side is solid and its negative x side is not") {
+			REQUIRE(chunk.isFaceSolid(ChunkFace::PositiveX));
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::NegativeX));
 		}
 	}
 
 	GIVEN("an empty chunk") {
 		const Chunk chunk;
 
-		THEN("no layer is solid") {
-			REQUIRE_FALSE(chunk.isLayerSolid(0, 0));
-			REQUIRE_FALSE(chunk.isLayerSolid(1, 5));
-			REQUIRE_FALSE(chunk.isLayerSolid(2, chunkZSize - 1));
+		THEN("no side is solid") {
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::NegativeX));
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::PositiveY));
+			REQUIRE_FALSE(chunk.isFaceSolid(ChunkFace::PositiveZ));
+		}
+	}
+
+	GIVEN("opposite sides") {
+		THEN("each face is the opposite of its opposite") {
+			REQUIRE(opposite(ChunkFace::PositiveX) == ChunkFace::NegativeX);
+			REQUIRE(opposite(ChunkFace::NegativeY) == ChunkFace::PositiveY);
+			REQUIRE(opposite(opposite(ChunkFace::PositiveZ)) == ChunkFace::PositiveZ);
 		}
 	}
 }
 
-SCENARIO("A chunk knows which positions are inside it", "[chunk][bounds]") {
-	THEN("its corners are inside") {
-		STATIC_REQUIRE(Chunk::contains(0, 0, 0));
-		STATIC_REQUIRE(Chunk::contains(chunkXSize - 1, chunkYSize - 1, chunkZSize - 1));
+SCENARIO("A copy of a chunk is a snapshot that later edits do not change", "[chunk]") {
+	GIVEN("a chunk with one dirt block and a copy of it") {
+		Chunk chunk;
+		chunk.setBlock(1, 2, 3, Block(test::dirt));
+		const Chunk snapshot = chunk;
+
+		WHEN("the original is edited") {
+			chunk.setBlock(1, 2, 3, Block(test::air));
+			chunk.setBlock(4, 5, 6, Block(test::dirt));
+
+			THEN("the copy still holds the blocks it had when it was taken") {
+				REQUIRE(snapshot.getBlock(1, 2, 3).id == test::dirt);
+				REQUIRE(snapshot.getBlock(4, 5, 6).id == test::air);
+			}
+			AND_THEN("the original holds the new blocks") {
+				REQUIRE(chunk.getBlock(1, 2, 3).id == test::air);
+				REQUIRE(chunk.getBlock(4, 5, 6).id == test::dirt);
+			}
+		}
+
+		WHEN("the copy is edited") {
+			Chunk edited = snapshot;
+			edited.setBlock(7, 7, 7, Block(test::dirt));
+
+			THEN("the original is untouched") {
+				REQUIRE(chunk.getBlock(7, 7, 7).id == test::air);
+			}
+		}
 	}
-	AND_THEN("one step past any face is outside") {
-		STATIC_REQUIRE_FALSE(Chunk::contains(-1, 0, 0));
-		STATIC_REQUIRE_FALSE(Chunk::contains(chunkXSize, 0, 0));
-		STATIC_REQUIRE_FALSE(Chunk::contains(0, -1, 0));
-		STATIC_REQUIRE_FALSE(Chunk::contains(0, chunkYSize, 0));
-		STATIC_REQUIRE_FALSE(Chunk::contains(0, 0, -1));
-		STATIC_REQUIRE_FALSE(Chunk::contains(0, 0, chunkZSize));
+
+	GIVEN("a chunk that was copied while empty") {
+		Chunk       chunk;
+		const Chunk snapshot = chunk;
+
+		WHEN("the original is edited") {
+			chunk.setBlock(0, 0, 0, Block(test::dirt));
+
+			THEN("the copy stays empty") {
+				REQUIRE(snapshot.isEmpty());
+			}
+		}
 	}
 }
 
-SCENARIO("A block outside the chunk cannot be read or written", "[chunk][bounds][assert]") {
-	GIVEN("a chunk and positions one step outside each of its faces") {
-		Chunk            chunk;
-		const std::array outside = {
-			glm::ivec3(-1, 0, 0),         glm::ivec3(chunkXSize, 0, 0), glm::ivec3(0, -1, 0),
-			glm::ivec3(0, chunkYSize, 0), glm::ivec3(0, 0, -1),         glm::ivec3(0, 0, chunkZSize),
-		};
+SCENARIO("A block knows which faces of its chunk it touches", "[chunk]") {
+	using game::planet::chunkFaceCount;
+	using game::planet::chunkFaceOffsets;
+	using game::planet::isBlockOnChunkFace;
 
-		THEN("reading, writing or removing any of them is caught as a bug") {
-			for (const glm::ivec3& position: outside) {
-				CAPTURE(position.x, position.y, position.z);
-				REQUIRE_THROWS_AS(std::as_const(chunk).getBlock(position.x, position.y, position.z),
-								  test::AssertionFailed);
-				REQUIRE_THROWS_AS(chunk.setBlock(position.x, position.y, position.z, Block(test::dirt)),
-								  test::AssertionFailed);
-				REQUIRE_THROWS_AS(chunk.removeBlock(position.x, position.y, position.z), test::AssertionFailed);
+	GIVEN("the block in the corner at the origin") {
+		const glm::ivec3 block(0, 0, 0);
+
+		THEN("it touches the three negative faces and none of the positive ones") {
+			REQUIRE(isBlockOnChunkFace(block, ChunkFace::NegativeX));
+			REQUIRE(isBlockOnChunkFace(block, ChunkFace::NegativeY));
+			REQUIRE(isBlockOnChunkFace(block, ChunkFace::NegativeZ));
+			REQUIRE_FALSE(isBlockOnChunkFace(block, ChunkFace::PositiveX));
+			REQUIRE_FALSE(isBlockOnChunkFace(block, ChunkFace::PositiveY));
+			REQUIRE_FALSE(isBlockOnChunkFace(block, ChunkFace::PositiveZ));
+		}
+	}
+
+	GIVEN("the block in the opposite corner") {
+		const glm::ivec3 block(chunkXSize - 1, chunkYSize - 1, chunkZSize - 1);
+
+		THEN("it touches the three positive faces and none of the negative ones") {
+			REQUIRE(isBlockOnChunkFace(block, ChunkFace::PositiveX));
+			REQUIRE(isBlockOnChunkFace(block, ChunkFace::PositiveY));
+			REQUIRE(isBlockOnChunkFace(block, ChunkFace::PositiveZ));
+			REQUIRE_FALSE(isBlockOnChunkFace(block, ChunkFace::NegativeX));
+			REQUIRE_FALSE(isBlockOnChunkFace(block, ChunkFace::NegativeY));
+			REQUIRE_FALSE(isBlockOnChunkFace(block, ChunkFace::NegativeZ));
+		}
+	}
+
+	GIVEN("a block in the middle of the chunk") {
+		THEN("it touches no face") {
+			for (std::size_t face = 0; face < chunkFaceCount; ++face)
+				REQUIRE_FALSE(isBlockOnChunkFace({8, 8, 8}, static_cast<ChunkFace>(face)));
+		}
+	}
+}
+
+SCENARIO("The step to a neighbouring chunk matches the face", "[chunk]") {
+	using game::planet::chunkFaceCount;
+	using game::planet::chunkFaceOffsets;
+
+	GIVEN("the offsets of all six faces") {
+		THEN("each is a single step along one axis") {
+			for (const glm::ivec3& offset: chunkFaceOffsets)
+				REQUIRE(std::abs(offset.x) + std::abs(offset.y) + std::abs(offset.z) == 1);
+		}
+		AND_THEN("the offsets of two opposite faces cancel out") {
+			for (std::size_t face = 0; face < chunkFaceCount; ++face) {
+				const auto other = static_cast<std::size_t>(std::to_underlying(opposite(static_cast<ChunkFace>(face))));
+				REQUIRE(chunkFaceOffsets[face] + chunkFaceOffsets[other] == glm::ivec3(0));
 			}
+		}
+		AND_THEN("the positive faces step towards larger coordinates") {
+			REQUIRE(chunkFaceOffsets[std::to_underlying(ChunkFace::PositiveX)].x == 1);
+			REQUIRE(chunkFaceOffsets[std::to_underlying(ChunkFace::PositiveY)].y == 1);
+			REQUIRE(chunkFaceOffsets[std::to_underlying(ChunkFace::NegativeY)].y == -1);
 		}
 	}
 }

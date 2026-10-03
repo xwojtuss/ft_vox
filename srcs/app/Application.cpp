@@ -5,11 +5,11 @@
 #include "assets/StbTextureLoader.hpp"
 #include "assets/TinyObjLoader.hpp"
 #include "game/block/BlockData.hpp"
-#include "game/planet/ChunkManager.hpp"
 #include "log/Log.hpp"
 #include "ecs/entity/EntityHandle.hpp"
 #include "ecs/system/types/CameraSystem.hpp"
-#include "ecs/system/types/ChunkSystem.hpp"
+#include "ecs/system/types/ChunkRenderSystem.hpp"
+#include "ecs/system/types/ChunkStreamSystem.hpp"
 #include "ecs/system/types/GuiSystem.hpp"
 #include "ecs/system/types/MovementSystem.hpp"
 #include "ecs/system/types/PlayerInputSystem.hpp"
@@ -23,6 +23,7 @@ using namespace app;
 using namespace ecs;
 
 Application::Application() {
+	m_threadPool        = concurrency::createThreadPool(concurrency::defaultWorkerCount());
 	m_window            = std::make_unique<platform::window::glfw::GLFWWindow>();
 	auto vulkanRenderer = std::make_unique<render::vulkan::VulkanRenderer>(*m_window);
 	m_gui               = std::make_unique<render::gui::vulkan::ImGuiGui>(vulkanRenderer->getContext(),
@@ -51,7 +52,8 @@ void Application::init() {
 	m_registry->createSystem<WindowControlSystem>(*m_window, *m_gui);
 	m_registry->createSystem<PlayerInputSystem>(m_window->getInputManager());
 	m_registry->createSystem<GuiSystem>(*m_gui, m_clientStats, m_serverStats);
-	m_registry->createSystem<ChunkSystem>(*m_registry, *m_renderer, m_serverStats, seed);
+	m_registry->createSystem<ChunkStreamSystem>(*m_registry, *m_threadPool, m_serverStats, seed);
+	m_registry->createSystem<ChunkRenderSystem>(*m_registry, *m_renderer, *m_threadPool, m_clientStats);
 	m_registry->getSystemManager().onRegistryReady();
 
 	EntityHandle player = m_registry->createEntity();

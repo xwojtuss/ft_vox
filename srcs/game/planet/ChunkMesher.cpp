@@ -16,22 +16,22 @@ using namespace game::planet;
 namespace {
 	constexpr float boundaryTolerance = 1e-5f;
 
-	using Face = ChunkMesher::Face;
+	using ChunkFace = ChunkFace;
 
-	static_assert(ChunkMesher::faceCount == render::chunkvertex::faceCount);
+	static_assert(chunkFaceCount == render::chunkvertex::faceCount);
 
-	static_assert(magic_enum::enum_count<Face>() == ChunkMesher::faceCount);
+	static_assert(magic_enum::enum_count<ChunkFace>() == chunkFaceCount);
 
 	constexpr game::BlockId undrawableBlock = 1;
 
-	Face dominantFace(const glm::vec3& normal) {
+	ChunkFace dominantFace(const glm::vec3& normal) {
 		const glm::vec3 absNormal = glm::abs(normal);
 
 		if (absNormal.x >= absNormal.y && absNormal.x >= absNormal.z)
-			return normal.x > 0.0f ? Face::PositiveX : Face::NegativeX;
+			return normal.x > 0.0f ? ChunkFace::PositiveX : ChunkFace::NegativeX;
 		if (absNormal.y >= absNormal.z)
-			return normal.y > 0.0f ? Face::PositiveY : Face::NegativeY;
-		return normal.z > 0.0f ? Face::PositiveZ : Face::NegativeZ;
+			return normal.y > 0.0f ? ChunkFace::PositiveY : ChunkFace::NegativeY;
+		return normal.z > 0.0f ? ChunkFace::PositiveZ : ChunkFace::NegativeZ;
 	}
 
 	bool liesOnPlane(const std::array<render::Vertex, 3>& triangle, const int axis, const float plane) {
@@ -100,8 +100,8 @@ ChunkMesher::PreparedModel ChunkMesher::prepareModel(const assets::MeshData& mod
 		if (glm::length(normal) <= std::numeric_limits<float>::epsilon())
 			continue;
 
-		const Face face     = dominantFace(normal);
-		const bool cullable = boundaryFaceOf(triangle) == face;
+		const ChunkFace face     = dominantFace(normal);
+		const bool      cullable = boundaryFaceOf(triangle) == face;
 		if (!cullable)
 			prepared.everyTriangleCullable = false;
 
@@ -110,8 +110,8 @@ ChunkMesher::PreparedModel ChunkMesher::prepareModel(const assets::MeshData& mod
 	return prepared;
 }
 
-std::optional<ChunkMesher::Face> ChunkMesher::boundaryFaceOf(const std::array<render::Vertex, 3>& triangle) {
-	for (const Face face: magic_enum::enum_values<Face>()) {
+std::optional<ChunkFace> ChunkMesher::boundaryFaceOf(const std::array<render::Vertex, 3>& triangle) {
+	for (const ChunkFace face: magic_enum::enum_values<ChunkFace>()) {
 		const int index = std::to_underlying(face);
 		const int axis  = index / 2;
 
@@ -125,9 +125,9 @@ ChunkMesher::FaceOcclusion ChunkMesher::occludedFaces(const Chunk& chunk, const 
 													  const int y, const int z) {
 	FaceOcclusion occluded{};
 
-	for (const Face face: magic_enum::enum_values<Face>()) {
+	for (const ChunkFace face: magic_enum::enum_values<ChunkFace>()) {
 		const std::size_t index  = std::to_underlying(face);
-		const glm::ivec3& offset = faceOffsets[index];
+		const glm::ivec3& offset = chunkFaceOffsets[index];
 		occluded[index]          = neighbourAt(chunk, neighbours, x + offset.x, y + offset.y, z + offset.z) != 0;
 	}
 	return occluded;
@@ -138,19 +138,18 @@ game::BlockId ChunkMesher::neighbourAt(const Chunk& chunk, const Neighbours& nei
 	if (Chunk::contains(x, y, z))
 		return chunk.getBlock(x, y, z).id;
 
-	constexpr std::array sizes = {chunkXSize, chunkYSize, chunkZSize};
-	glm::ivec3           position(x, y, z);
-	std::size_t          face        = 0;
-	int                  axesOutside = 0;
+	glm::ivec3  position(x, y, z);
+	std::size_t face        = 0;
+	int         axesOutside = 0;
 
-	for (std::size_t axis = 0; axis < sizes.size(); ++axis) {
+	for (std::size_t axis = 0; axis < chunkSizes.size(); ++axis) {
 		const auto axisIndex = static_cast<glm::length_t>(axis);
-		if (position[axisIndex] >= 0 && position[axisIndex] < sizes[axis])
+		if (position[axisIndex] >= 0 && position[axisIndex] < chunkSizes[axis])
 			continue;
 
 		++axesOutside;
 		face = (axis * 2) + ((position[axisIndex] < 0) ? 1 : 0);
-		position[axisIndex] += (position[axisIndex] < 0) ? sizes[axis] : -sizes[axis];
+		position[axisIndex] += (position[axisIndex] < 0) ? chunkSizes[axis] : -chunkSizes[axis];
 	}
 
 	if (axesOutside != 1)
@@ -158,7 +157,7 @@ game::BlockId ChunkMesher::neighbourAt(const Chunk& chunk, const Neighbours& nei
 
 	const Chunk* neighbour = neighbours[face];
 	if (neighbour == nullptr)
-		return face == std::to_underlying(Face::PositiveY) ? 0 : undrawableBlock;
+		return face == std::to_underlying(ChunkFace::PositiveY) ? 0 : undrawableBlock;
 	return neighbour->getBlock(position.x, position.y, position.z).id;
 }
 
