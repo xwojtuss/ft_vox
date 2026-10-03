@@ -121,3 +121,25 @@ SCENARIO("A freed range is reused and the buffer does not fragment", "[render][r
 		}
 	}
 }
+
+SCENARIO("All ranges of a buffer can be released at once", "[render][range-allocator]") {
+	GIVEN("a 1 KiB buffer that is completely handed out") {
+		RangeAllocator allocator(1024);
+		const Range    whole = grant(allocator, 1024, 1);
+		REQUIRE(wasGranted(whole));
+		REQUIRE_FALSE(wasGranted(grant(allocator, 1, 1)));
+
+		WHEN("it is reset") {
+			allocator.reset();
+
+			THEN("the whole buffer can be handed out again") {
+				REQUIRE(wasGranted(grant(allocator, 1024, 1)));
+			}
+			AND_THEN("no range counts as allocated") {
+				allocator.reset();
+				REQUIRE(allocator.statistics().allocationCount == 0);
+				REQUIRE(allocator.statistics().freeBytes == 1024);
+			}
+		}
+	}
+}

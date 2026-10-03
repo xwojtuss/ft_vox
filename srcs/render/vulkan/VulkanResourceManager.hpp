@@ -5,6 +5,7 @@
 
 #include "render/vulkan/VulkanMeshStorage.hpp"
 #include "render/vulkan/VulkanSwapchain.hpp"
+#include "render/vulkan/VulkanUploadQueue.hpp"
 #include "assets/Resources.hpp"
 
 namespace render::vulkan {
@@ -31,8 +32,11 @@ namespace render::vulkan {
 		~VulkanResourceManager();
 
 		[[nodiscard]] VkCommandPool getCommandPool() const;
-		assets::MeshHandle          createMesh(const VulkanContext& context, const assets::MeshData& meshData);
-		assets::MeshHandle          createMesh(const VulkanContext& context, const assets::ChunkMeshData& meshData);
+		assets::MeshHandle          createMesh(const VulkanContext& context, const VulkanFrameData& frameData,
+											   const assets::MeshData& meshData);
+		assets::MeshHandle          createMesh(const VulkanContext& context, const VulkanFrameData& frameData,
+											   const assets::ChunkMeshData& meshData);
+		void                        recordMeshUploads(VkCommandBuffer commandBuffer, uint32_t frame);
 		void                        destroyMesh(assets::MeshHandle handle);
 		void                        releaseDestroyedMeshes();
 		[[nodiscard]] const VulkanMeshStorage& getMeshStorage() const;
@@ -51,6 +55,7 @@ namespace render::vulkan {
 	private:
 		VkCommandPool                            m_commandPool{};
 		VulkanMeshStorage                        m_meshStorage;
+		VulkanUploadQueue                        m_meshUploads;
 		std::unordered_map<uint64_t, GpuMesh>    m_meshes;
 		std::vector<DestroyedMesh>               m_destroyedMeshes;
 		std::unordered_map<uint64_t, GpuTexture> m_textures;
