@@ -20,7 +20,7 @@
 #include "profiling/ClientStats.hpp"
 
 namespace render::chunks {
-	constexpr std::size_t defaultMeshUploadsPerFrame = 8;
+	constexpr std::size_t defaultMeshUploadsPerFrame = 64;
 
 	struct ChunkRenderSettings {
 		std::size_t meshUploadsPerFrame = defaultMeshUploadsPerFrame;

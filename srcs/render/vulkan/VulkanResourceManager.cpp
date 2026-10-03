@@ -354,23 +354,28 @@ assets::TextureHandle VulkanResourceManager::createTexture(const assets::Texture
 	return handle;
 }
 
-assets::MeshHandle VulkanResourceManager::createMesh(const VulkanContext& context, const assets::MeshData& meshData) {
+assets::MeshHandle VulkanResourceManager::createMesh(const VulkanContext& context, const VulkanFrameData& frameData,
+													 const assets::MeshData& meshData) {
 	const assets::MeshHandle handle;
-	m_meshes[handle.id] = m_meshStorage.create(context, m_commandPool,
+	m_meshes[handle.id] = m_meshStorage.create(context, frameData, m_meshUploads,
 											   {.kind     = VertexKind::Model,
 												.vertices = std::as_bytes(std::span(meshData.vertices)),
 												.indices  = meshData.indices});
 	return handle;
 }
 
-assets::MeshHandle VulkanResourceManager::createMesh(const VulkanContext&         context,
+assets::MeshHandle VulkanResourceManager::createMesh(const VulkanContext& context, const VulkanFrameData& frameData,
 													 const assets::ChunkMeshData& meshData) {
 	const assets::MeshHandle handle;
-	m_meshes[handle.id] = m_meshStorage.create(context, m_commandPool,
+	m_meshes[handle.id] = m_meshStorage.create(context, frameData, m_meshUploads,
 											   {.kind     = VertexKind::Chunk,
 												.vertices = std::as_bytes(std::span(meshData.vertices)),
 												.indices  = meshData.indices});
 	return handle;
+}
+
+void VulkanResourceManager::recordMeshUploads(VkCommandBuffer commandBuffer, const uint32_t frame) {
+	m_meshUploads.record(commandBuffer, frame);
 }
 
 void VulkanResourceManager::destroyMesh(const assets::MeshHandle handle) {
@@ -407,6 +412,7 @@ size_t VulkanResourceManager::getTextureCount() const {
 void VulkanResourceManager::cleanup(const VulkanContext& context) {
 	m_meshes.clear();
 	m_destroyedMeshes.clear();
+	m_meshUploads.cleanup(context);
 	m_meshStorage.cleanup(context);
 
 	for (const auto& texture: m_textures | std::views::values) {

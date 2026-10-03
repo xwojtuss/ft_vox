@@ -26,11 +26,11 @@ VulkanRenderer::VulkanRenderer(platform::window::IWindow& window) {
 }
 
 assets::MeshHandle VulkanRenderer::createMesh(const assets::MeshData& meshData) {
-	return m_resourceManager->createMesh(*m_context, meshData);
+	return m_resourceManager->createMesh(*m_context, *m_frameData, meshData);
 }
 
 assets::MeshHandle VulkanRenderer::createMesh(const assets::ChunkMeshData& meshData) {
-	return m_resourceManager->createMesh(*m_context, meshData);
+	return m_resourceManager->createMesh(*m_context, *m_frameData, meshData);
 }
 
 void VulkanRenderer::destroyMesh(const assets::MeshHandle handle) {
@@ -229,6 +229,8 @@ void VulkanRenderer::recordCommandBuffer(ecs::SystemManager& systemManager, cons
 
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(m_clearValues.size());
 	renderPassInfo.pClearValues    = m_clearValues.data();
+
+	m_resourceManager->recordMeshUploads(commandBuffer, m_frameData->getCurrentFrame());
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	systemManager.onRendererDraw(*this);

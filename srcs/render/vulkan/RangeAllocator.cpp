@@ -49,6 +49,10 @@ void RangeAllocator::free(VmaVirtualAllocation allocation) const {
 	vmaVirtualFree(m_block, allocation);
 }
 
+void RangeAllocator::reset() const {
+	vmaClearVirtualBlock(m_block);
+}
+
 RangeStatistics RangeAllocator::statistics() const {
 	VmaStatistics statistics{};
 	vmaGetVirtualBlockStatistics(m_block, &statistics);

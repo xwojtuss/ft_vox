@@ -32,6 +32,7 @@ namespace render::vulkan {
 
 		[[nodiscard]] std::optional<Range> allocate(VkDeviceSize size, VkDeviceSize alignment) const;
 		void                               free(VmaVirtualAllocation allocation) const;
+		void                               reset() const;
 		[[nodiscard]] RangeStatistics      statistics() const;
 		[[nodiscard]] VkDeviceSize         size() const;
 	};

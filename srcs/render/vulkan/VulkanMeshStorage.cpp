@@ -6,6 +6,7 @@
 #include "render/vulkan/VulkanContext.hpp"
 #include "render/vulkan/VulkanError.hpp"
 #include "render/vulkan/VulkanFrameData.hpp"
+#include "render/vulkan/VulkanUploadQueue.hpp"
 #include "render/vulkan/VulkanResourceManager.hpp"
 
 using namespace render::vulkan;
@@ -15,40 +16,6 @@ namespace {
 	constexpr VkDeviceSize mebibyte    = 1024ULL * 1024;
 
 	constexpr VmaAllocationCreateFlags arenaFlags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
-
-	void upload(const VulkanContext& context, VkCommandPool commandPool, const MeshBytes& mesh, VkBuffer vertexBuffer,
-				const VkDeviceSize vertexOffset, VkBuffer indexBuffer, const VkDeviceSize indexOffset) {
-		const VkDeviceSize vertexBytes = mesh.vertices.size_bytes();
-		const VkDeviceSize indexBytes  = mesh.indices.size_bytes();
-
-		VkBuffer      stagingBuffer     = nullptr;
-		VmaAllocation stagingAllocation = nullptr;
-		VulkanResourceManager::createBuffer(context, vertexBytes + indexBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-											VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, stagingBuffer,
-											stagingAllocation);
-
-		VmaAllocator allocator = context.getAllocator();
-		VkResult result = vmaCopyMemoryToAllocation(allocator, mesh.vertices.data(), stagingAllocation, 0, vertexBytes);
-		if (result == VK_SUCCESS)
-			result =
-				vmaCopyMemoryToAllocation(allocator, mesh.indices.data(), stagingAllocation, vertexBytes, indexBytes);
-		if (result != VK_SUCCESS) {
-			vmaDestroyBuffer(allocator, stagingBuffer, stagingAllocation);
-			throw VulkanError("failed to fill staging buffer", result);
-		}
-
-		VkCommandBuffer commandBuffer =
-			VulkanFrameData::beginSingleTimeCommands(commandPool, context.getLogicalDevice());
-
-		const VkBufferCopy vertexCopy{.srcOffset = 0, .dstOffset = vertexOffset, .size = vertexBytes};
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer, vertexBuffer, 1, &vertexCopy);
-		const VkBufferCopy indexCopy{.srcOffset = vertexBytes, .dstOffset = indexOffset, .size = indexBytes};
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer, indexBuffer, 1, &indexCopy);
-
-		VulkanFrameData::endSingleTimeCommands(commandBuffer, commandPool, context.getGraphicsQueue(),
-											   context.getLogicalDevice());
-		vmaDestroyBuffer(allocator, stagingBuffer, stagingAllocation);
-	}
 }
 
 VkDeviceSize VulkanMeshStorage::vertexStride(const VertexKind kind) {
@@ -119,7 +86,8 @@ std::optional<GpuMesh> VulkanMeshStorage::allocate(const VertexKind kind, const 
 	return std::nullopt;
 }
 
-GpuMesh VulkanMeshStorage::create(const VulkanContext& context, VkCommandPool commandPool, const MeshBytes& meshBytes) {
+GpuMesh VulkanMeshStorage::create(const VulkanContext& context, const VulkanFrameData& frameData,
+								  VulkanUploadQueue& uploads, const MeshBytes& meshBytes) {
 	const VkDeviceSize vertexBytes = meshBytes.vertices.size_bytes();
 	const VkDeviceSize indexBytes  = meshBytes.indices.size_bytes();
 	const VkDeviceSize stride      = vertexStride(meshBytes.kind);
@@ -134,9 +102,10 @@ GpuMesh VulkanMeshStorage::create(const VulkanContext& context, VkCommandPool co
 
 	const Arena& arena = m_arenas[mesh->arena];
 	try {
-		upload(context, commandPool, meshBytes, arena.vertexBuffer,
-			   static_cast<VkDeviceSize>(mesh->vertexOffset) * stride, arena.indexBuffer,
-			   static_cast<VkDeviceSize>(mesh->firstIndex) * indexStride);
+		uploads.upload(context, frameData, meshBytes.vertices, arena.vertexBuffer,
+					   static_cast<VkDeviceSize>(mesh->vertexOffset) * stride);
+		uploads.upload(context, frameData, std::as_bytes(meshBytes.indices), arena.indexBuffer,
+					   static_cast<VkDeviceSize>(mesh->firstIndex) * indexStride);
 	} catch (...) {
 		destroy(*mesh);
 		throw;

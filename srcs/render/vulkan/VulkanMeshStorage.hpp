@@ -11,6 +11,8 @@
 
 namespace render::vulkan {
 	class VulkanContext;
+	class VulkanFrameData;
+	class VulkanUploadQueue;
 
 	struct GpuMesh {
 		uint32_t             arena;
@@ -52,10 +54,11 @@ namespace render::vulkan {
 
 	public:
 		[[nodiscard]] static VkDeviceSize vertexStride(VertexKind kind);
-		[[nodiscard]] GpuMesh create(const VulkanContext& context, VkCommandPool commandPool, const MeshBytes& mesh);
-		void                  destroy(const GpuMesh& mesh) const;
-		void                  cleanup(const VulkanContext& context);
-		void                  logStatistics() const;
+		[[nodiscard]] GpuMesh             create(const VulkanContext& context, const VulkanFrameData& frameData,
+												 VulkanUploadQueue& uploads, const MeshBytes& mesh);
+		void                              destroy(const GpuMesh& mesh) const;
+		void                              cleanup(const VulkanContext& context);
+		void                              logStatistics() const;
 
 		[[nodiscard]] VkBuffer vertexBuffer(uint32_t arena) const;
 		[[nodiscard]] VkBuffer indexBuffer(uint32_t arena) const;
