@@ -6,16 +6,18 @@
 
 #include "game/block/Block.hpp"
 #include "game/planet/ChunkSize.hpp"
+#include "game/planet/ChunkFace.hpp"
 
 namespace game::planet {
 	class Chunk {
 	private:
 		using Blocks = std::array<Block, chunkVolume>;
 
-		std::unique_ptr<Blocks> m_blocks;
+		std::shared_ptr<Blocks> m_blocks;
 		std::size_t             m_nonAirCount = 0;
 
 		[[nodiscard]] static std::size_t indexOf(int x, int y, int z);
+		void                             makeBlocksUnique();
 
 	public:
 		[[nodiscard]] static constexpr bool contains(const int x, const int y, const int z) {
@@ -30,7 +32,7 @@ namespace game::planet {
 		[[nodiscard]] bool        isFull() const;
 		[[nodiscard]] std::size_t dataBytes() const;
 
-		/** Whether every block of the one-block-thick layer at `index` on `axis` (0 = x, 1 = y, 2 = z) is not air. */
-		[[nodiscard]] bool isLayerSolid(int axis, int index) const;
+		/** Whether every block of the one-block-thick layer on that side of the chunk is not air. */
+		[[nodiscard]] bool isFaceSolid(ChunkFace face) const;
 	};
 }

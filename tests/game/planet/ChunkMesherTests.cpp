@@ -9,6 +9,8 @@
 
 using game::Block;
 using game::planet::Chunk;
+using game::planet::ChunkFace;
+using game::planet::chunkFaceCount;
 using game::planet::ChunkMesher;
 using game::planet::chunkXSize;
 using game::planet::chunkYSize;
@@ -82,7 +84,7 @@ SCENARIO("A lone block shows all six faces at its own position", "[mesher]") {
 			AND_THEN("every triangle carries the direction of the side it lies on") {
 				for (size_t i = 0; i < mesh.indices.size(); i += 3) {
 					const uint32_t direction = render::chunkVertexDirection(mesh.vertices[mesh.indices[i]]);
-					REQUIRE(direction < ChunkMesher::faceCount);
+					REQUIRE(direction < chunkFaceCount);
 					REQUIRE(render::chunkVertexDirection(mesh.vertices[mesh.indices[i + 1]]) == direction);
 					REQUIRE(render::chunkVertexDirection(mesh.vertices[mesh.indices[i + 2]]) == direction);
 				}
@@ -290,8 +292,8 @@ SCENARIO("Faces on a chunk border are hidden by the neighbouring chunk", "[meshe
 	GIVEN("a solid chunk with a solid chunk on its positive x side and air on the others") {
 		Chunk neighbour;
 		fill(neighbour, {0, 0, 0}, {chunkXSize - 1, chunkYSize - 1, chunkZSize - 1}, test::dirt);
-		ChunkMesher::Neighbours neighbours                           = airAround;
-		neighbours[std::to_underlying(ChunkMesher::Face::PositiveX)] = &neighbour;
+		ChunkMesher::Neighbours neighbours                   = airAround;
+		neighbours[std::to_underlying(ChunkFace::PositiveX)] = &neighbour;
 
 		THEN("the side that touches the neighbour is not drawn") {
 			REQUIRE(triangleCount(mesher.toMeshData(solid, neighbours)) == shellTriangles - trianglesOnOneSide);
@@ -307,8 +309,8 @@ SCENARIO("Faces on a chunk border are hidden by the neighbouring chunk", "[meshe
 	GIVEN("a neighbour with a single block next to the middle of the negative z side") {
 		Chunk neighbour;
 		neighbour.setBlock(5, 7, chunkZSize - 1, Block(test::dirt));
-		ChunkMesher::Neighbours neighbours                           = airAround;
-		neighbours[std::to_underlying(ChunkMesher::Face::NegativeZ)] = &neighbour;
+		ChunkMesher::Neighbours neighbours                   = airAround;
+		neighbours[std::to_underlying(ChunkFace::NegativeZ)] = &neighbour;
 
 		THEN("only the one face that block covers is hidden") {
 			REQUIRE(triangleCount(mesher.toMeshData(solid, neighbours)) == shellTriangles - 2);
@@ -318,8 +320,8 @@ SCENARIO("Faces on a chunk border are hidden by the neighbouring chunk", "[meshe
 	GIVEN("a neighbour whose only block is at its far end, away from the chunk") {
 		Chunk neighbour;
 		neighbour.setBlock(0, 0, 0, Block(test::dirt));
-		ChunkMesher::Neighbours neighbours                           = airAround;
-		neighbours[std::to_underlying(ChunkMesher::Face::NegativeX)] = &neighbour;
+		ChunkMesher::Neighbours neighbours                   = airAround;
+		neighbours[std::to_underlying(ChunkFace::NegativeX)] = &neighbour;
 
 		THEN("it hides nothing") {
 			REQUIRE(triangleCount(mesher.toMeshData(solid, neighbours)) == shellTriangles);
@@ -345,7 +347,7 @@ SCENARIO("Sides facing chunks that are not loaded are not drawn, except the top"
 		AND_THEN("the drawn faces lie on the top of the chunk") {
 			for (const render::ChunkVertex& vertex: mesh.vertices) {
 				REQUIRE(render::chunkVertexPosition(vertex).y == static_cast<float>(chunkYSize));
-				REQUIRE(render::chunkVertexDirection(vertex) == std::to_underlying(ChunkMesher::Face::PositiveY));
+				REQUIRE(render::chunkVertexDirection(vertex) == std::to_underlying(ChunkFace::PositiveY));
 			}
 		}
 	}
@@ -355,14 +357,12 @@ SCENARIO("Sides facing chunks that are not loaded are not drawn, except the top"
 		ChunkMesher::Neighbours neighbours{};
 		neighbours.fill(&air);
 
-		const ChunkMesher::Face missing =
-			GENERATE(ChunkMesher::Face::PositiveX, ChunkMesher::Face::NegativeX, ChunkMesher::Face::PositiveY,
-					 ChunkMesher::Face::NegativeY, ChunkMesher::Face::PositiveZ, ChunkMesher::Face::NegativeZ);
+		const ChunkFace missing = GENERATE(ChunkFace::PositiveX, ChunkFace::NegativeX, ChunkFace::PositiveY,
+										   ChunkFace::NegativeY, ChunkFace::PositiveZ, ChunkFace::NegativeZ);
 		neighbours[std::to_underlying(missing)] = nullptr;
 
 		THEN("the side facing the missing neighbour is drawn only when it is the top") {
-			const size_t expected =
-				missing == ChunkMesher::Face::PositiveY ? 6 * trianglesOnOneSide : 5 * trianglesOnOneSide;
+			const size_t expected = missing == ChunkFace::PositiveY ? 6 * trianglesOnOneSide : 5 * trianglesOnOneSide;
 			CAPTURE(magic_enum::enum_name(missing));
 			REQUIRE(triangleCount(mesher.toMeshData(solid, neighbours)) == expected);
 		}

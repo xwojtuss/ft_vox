@@ -1,6 +1,6 @@
 #include "game/planet/Chunk.hpp"
 
-#include <array>
+#include <utility>
 
 #include "error/Assert.hpp"
 
@@ -8,8 +8,6 @@ using namespace game::planet;
 
 namespace {
 	const game::Block airBlock;
-
-	constexpr std::array axisSizes = {chunkXSize, chunkYSize, chunkZSize};
 }
 
 std::size_t Chunk::indexOf(const int x, const int y, const int z) {
@@ -29,6 +27,7 @@ void Chunk::setBlock(const int x, const int y, const int z, const Block& block) 
 	if (block.id == 0) {
 		if (!m_blocks)
 			return;
+		makeBlocksUnique();
 		if ((*m_blocks)[index].id != 0)
 			--m_nonAirCount;
 		(*m_blocks)[index] = Block();
@@ -38,10 +37,16 @@ void Chunk::setBlock(const int x, const int y, const int z, const Block& block) 
 	}
 
 	if (!m_blocks)
-		m_blocks = std::make_unique<Blocks>();
+		m_blocks = std::make_shared<Blocks>();
+	makeBlocksUnique();
 	if ((*m_blocks)[index].id == 0)
 		++m_nonAirCount;
 	(*m_blocks)[index] = block;
+}
+
+void Chunk::makeBlocksUnique() {
+	if (m_blocks.use_count() > 1)
+		m_blocks = std::make_shared<Blocks>(*m_blocks);
 }
 
 void Chunk::removeBlock(const int x, const int y, const int z) {
@@ -60,25 +65,29 @@ std::size_t Chunk::dataBytes() const {
 	return m_blocks ? sizeof(Blocks) : 0;
 }
 
-bool Chunk::isLayerSolid(const int axis, const int index) const {
-	DEBUG_ASSERT(axis >= 0 && axis < 3 && index >= 0 && index < axisSizes[static_cast<std::size_t>(axis)],
-				 "layer outside the chunk", axis, index);
+bool Chunk::isFaceSolid(const ChunkFace face) const {
 	if (isFull())
 		return true;
 	if (isEmpty())
 		return false;
 
-	const int first  = axis == 0 ? 1 : 0;
-	const int second = axis == 2 ? 1 : 2;
-	for (int a = 0; a < axisSizes[static_cast<std::size_t>(first)]; ++a) {
-		for (int b = 0; b < axisSizes[static_cast<std::size_t>(second)]; ++b) {
-			std::array<int, 3> position{};
-			position[static_cast<std::size_t>(axis)]   = index;
-			position[static_cast<std::size_t>(first)]  = a;
-			position[static_cast<std::size_t>(second)] = b;
-			if (getBlock(position[0], position[1], position[2]).id == 0)
+	const auto index  = static_cast<std::size_t>(std::to_underlying(face));
+	const auto axis   = index / 2;
+	const int  layer  = (index % 2 == 0) ? chunkSizes[axis] - 1 : 0;
+	const auto first  = (axis == 0) ? 1uz : 0uz;
+	const auto second = (axis == 2) ? 1uz : 2uz;
+
+	const auto blockAt = [this, axis, layer](const int a, const int b) -> const Block& {
+		if (axis == 0)
+			return getBlock(layer, a, b);
+		if (axis == 1)
+			return getBlock(a, layer, b);
+		return getBlock(a, b, layer);
+	};
+
+	for (int a = 0; a < chunkSizes[first]; ++a)
+		for (int b = 0; b < chunkSizes[second]; ++b)
+			if (blockAt(a, b).id == 0)
 				return false;
-		}
-	}
 	return true;
 }

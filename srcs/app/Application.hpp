@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "concurrency/IThreadPool.hpp"
 #include "platform/window/IWindow.hpp"
 #include "render/IRenderer.hpp"
 #include "render/gui/IGui.hpp"
@@ -16,6 +17,7 @@ namespace app {
 	private:
 		profiling::ClientStats                     m_clientStats;
 		profiling::ServerStats                     m_serverStats;
+		std::unique_ptr<concurrency::IThreadPool>  m_threadPool;
 		std::unique_ptr<platform::window::IWindow> m_window;
 		std::unique_ptr<render::IRenderer>         m_renderer;
 		std::unique_ptr<render::gui::IGui>         m_gui;
