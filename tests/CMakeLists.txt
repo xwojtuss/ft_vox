@@ -17,9 +17,12 @@ add_executable(ft_vox_tests ${FT_VOX_TEST_SOURCES})
 
 target_include_directories(ft_vox_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
+find_package(Threads REQUIRED)
+
 target_link_libraries(ft_vox_tests PRIVATE
   ft_vox_core_tests
   Catch2::Catch2
+  Threads::Threads
 )
 ft_vox_enable_clang_tidy(ft_vox_tests)
 

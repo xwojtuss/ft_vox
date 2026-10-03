@@ -54,6 +54,7 @@ valgrind.log
 
 # CMake build directory
 build/
+cmake-build-debug/
 
 # Log files
 logs/
