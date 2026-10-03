@@ -158,6 +158,17 @@ if (FT_VOX_PROFILER)
   message(STATUS "Tracy profiler enabled (the viewer must be v0.13.1)")
 endif ()
 
+FetchContent_Declare(
+  FastNoise2
+  GIT_REPOSITORY https://github.com/Auburn/FastNoise2.git
+  GIT_TAG   903c1f2d2f9d53ddce94cd223f32727d9ab3aeaa # v1.1.1
+  SYSTEM
+)
+
+set(FASTNOISE2_TOOLS OFF CACHE BOOL "" FORCE)
+set(FASTNOISE2_TESTS OFF CACHE BOOL "" FORCE)
+set(FASTNOISE2_UTILITY OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(FastNoise2)
 FetchContent_MakeAvailable(magic_enum)
 FetchContent_MakeAvailable(libassert)
 FetchContent_MakeAvailable(volk)
@@ -228,6 +239,7 @@ function(ft_vox_add_core target optimization)
     spdlog::spdlog
     nlohmann_json::nlohmann_json
     libassert::assert
+    FastNoise2
   )
 endfunction()
 
@@ -236,6 +248,18 @@ file(GLOB_RECURSE FT_VOX_FILES_OUTSIDE_ECS CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.hpp"
 )
 list(FILTER FT_VOX_FILES_OUTSIDE_ECS EXCLUDE REGEX "/srcs/ecs/")
+file(GLOB_RECURSE FT_VOX_FILES_OUTSIDE_NOISE CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/srcs/*.tpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.hpp"
+)
+list(FILTER FT_VOX_FILES_OUTSIDE_NOISE EXCLUDE REGEX "/srcs/noise/")
+foreach(FILE IN LISTS FT_VOX_FILES_OUTSIDE_NOISE)
+  file(STRINGS "${FILE}" FASTNOISE_INCLUDES REGEX "#include [<\"]FastNoise/")
+  if(FASTNOISE_INCLUDES)
+    message(FATAL_ERROR "${FILE} includes FastNoise2 directly; only srcs/noise may, everything else uses noise::INoise2D")
+  endif()
+endforeach()
+
 foreach(FILE IN LISTS FT_VOX_FILES_OUTSIDE_ECS)
   file(STRINGS "${FILE}" ENTT_INCLUDES REGEX "#include [<\"]entt/")
   if(ENTT_INCLUDES)

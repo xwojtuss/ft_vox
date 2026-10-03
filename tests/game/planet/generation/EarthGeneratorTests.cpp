@@ -9,6 +9,7 @@
 #include "scene/PlanetInfo.hpp"
 #include "game/planet/generation/EarthGenerator.hpp"
 #include "support/Blocks.hpp"
+#include "support/TestSeed.hpp"
 
 using game::planet::Chunk;
 using game::planet::chunkXSize;
@@ -18,7 +19,7 @@ using game::planet::EarthGenerator;
 
 namespace {
 	Chunk generate(glm::ivec3 chunkPosition) {
-		const EarthGenerator generator;
+		const EarthGenerator generator(test::seed);
 		Chunk                chunk;
 
 		generator.generateChunk(&chunk, chunkPosition);
@@ -138,6 +139,46 @@ SCENARIO("Terrain continues smoothly across chunk borders", "[generation][regres
 		THEN("the surface steps by at most 2 blocks between the touching columns") {
 			for (int x = 0; x < chunkXSize; ++x)
 				REQUIRE(std::abs(surfaceHeight(north, x, chunkZSize - 1) - surfaceHeight(south, x, 0)) <= 2);
+		}
+	}
+}
+
+SCENARIO("The seed decides the terrain", "[generation][seed]") {
+	GIVEN("two generators with the same seed") {
+		const EarthGenerator first(game::Seed(77));
+		const EarthGenerator second(game::Seed(77));
+
+		THEN("they generate the same chunk") {
+			Chunk a;
+			Chunk b;
+			first.generateChunk(&a, {5, 0, -2});
+			second.generateChunk(&b, {5, 0, -2});
+
+			for (int x = 0; x < chunkXSize; ++x)
+				for (int y = 0; y < chunkYSize; ++y)
+					for (int z = 0; z < chunkZSize; ++z)
+						REQUIRE(a.getBlock(x, y, z).id == b.getBlock(x, y, z).id);
+		}
+	}
+
+	GIVEN("generators with different seeds") {
+		const EarthGenerator first(game::Seed(1));
+		const EarthGenerator second(game::Seed(2));
+
+		THEN("their terrain differs somewhere in the area around the origin") {
+			bool different = false;
+			for (int chunkX = -3; chunkX <= 3 && !different; ++chunkX) {
+				for (int chunkY = 0; chunkY <= 3 && !different; ++chunkY) {
+					for (int chunkZ = -3; chunkZ <= 3 && !different; ++chunkZ) {
+						Chunk a;
+						Chunk b;
+						first.generateChunk(&a, {chunkX, chunkY, chunkZ});
+						second.generateChunk(&b, {chunkX, chunkY, chunkZ});
+						different = countBlocks(a, test::dirt) != countBlocks(b, test::dirt);
+					}
+				}
+			}
+			REQUIRE(different);
 		}
 	}
 }

@@ -9,6 +9,7 @@
 #include "game/planet/ChunkManager.hpp"
 #include "support/Blocks.hpp"
 #include "support/FakeRenderer.hpp"
+#include "support/TestSeed.hpp"
 
 using game::planet::ChunkManager;
 using game::planet::chunkXSize;
@@ -34,7 +35,8 @@ namespace {
 
 		std::unique_ptr<ChunkManager> createManager() {
 			registry.createSystem<ecs::RenderSystem>();
-			return std::make_unique<ChunkManager>(blockDatas, registry, renderer, stats, spawnRenderDistance);
+			return std::make_unique<ChunkManager>(blockDatas, registry, renderer, stats, test::seed,
+												  spawnRenderDistance);
 		}
 
 		[[nodiscard]] size_t meshCount() const {

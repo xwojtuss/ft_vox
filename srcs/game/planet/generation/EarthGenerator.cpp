@@ -5,7 +5,17 @@
 
 using namespace game::planet;
 
-EarthGenerator::EarthGenerator() : m_heightMap(16, 16, 4, 0.01f) {
+namespace {
+	constexpr noise::FractalSettings heightNoiseSettings = {.frequency = 0.6f, .octaves = 4};
+}
+
+EarthGenerator::EarthGenerator(const Seed seed) :
+	m_heightNoise(noise::createFractalPerlin2D(seed.value(), heightNoiseSettings)) {
+}
+
+float EarthGenerator::normalizedHeightAt(const int planetX, const int planetZ) const {
+	const float value = m_heightNoise->sample(static_cast<float>(planetX), static_cast<float>(planetZ));
+	return std::clamp((value + 1.0f) * 0.5f, 0.0f, 1.0f);
 }
 
 // TODO: refactor to split this mess
@@ -26,7 +36,7 @@ void EarthGenerator::generateChunk(Chunk* chunk, const glm::ivec3 chunkPosition)
 			planetX = (static_cast<int>(chunkPosition.x) * chunkXSize) + blockX;
 			planetZ = (static_cast<int>(chunkPosition.z) * chunkZSize) + blockZ;
 
-			terrainHeight = static_cast<int>(m_heightMap.getNormalizedValue(planetX, planetZ) * maxTerrainHeight);
+			terrainHeight = static_cast<int>(normalizedHeightAt(planetX, planetZ) * maxTerrainHeight);
 
 			for (int blockY = 0; blockY < chunkYSize; ++blockY) {
 				planetY = planetChunkBaseY + blockY;

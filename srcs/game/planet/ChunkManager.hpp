@@ -35,7 +35,7 @@ namespace game::planet {
 
 	public:
 		ChunkManager(block::BlockDatas& blockDatas, ecs::Registry& registry, render::IRenderer& renderer,
-					 profiling::ServerStats&     stats,
+					 profiling::ServerStats& stats, Seed seed,
 					 glm::vec<3, unsigned short> renderDistance = scene::planetinfo::renderDistance);
 
 		void makeChunkRenderable(ecs::Registry& registry, render::IRenderer& renderer, glm::ivec3 chunkPosition);
