@@ -6,6 +6,7 @@
 #include "assets/TinyObjLoader.hpp"
 #include "game/block/BlockData.hpp"
 #include "game/planet/ChunkManager.hpp"
+#include "log/Log.hpp"
 #include "ecs/entity/EntityHandle.hpp"
 #include "ecs/system/types/CameraSystem.hpp"
 #include "ecs/system/types/ChunkSystem.hpp"
@@ -41,13 +42,16 @@ Application::Application() {
 }
 
 void Application::init() {
+	const game::Seed seed = game::Seed::random();
+	logging::app().info("World seed: {}", seed.value());
+
 	m_registry->createSystem<CameraSystem>();
 	m_registry->createSystem<MovementSystem>();
 	m_registry->createSystem<RenderSystem>();
 	m_registry->createSystem<WindowControlSystem>(*m_window, *m_gui);
 	m_registry->createSystem<PlayerInputSystem>(m_window->getInputManager());
 	m_registry->createSystem<GuiSystem>(*m_gui, m_clientStats, m_serverStats);
-	m_registry->createSystem<ChunkSystem>(*m_registry, *m_renderer, m_serverStats);
+	m_registry->createSystem<ChunkSystem>(*m_registry, *m_renderer, m_serverStats, seed);
 	m_registry->getSystemManager().onRegistryReady();
 
 	EntityHandle player = m_registry->createEntity();

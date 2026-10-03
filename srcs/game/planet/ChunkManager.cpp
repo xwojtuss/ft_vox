@@ -10,9 +10,10 @@
 using namespace game::planet;
 
 ChunkManager::ChunkManager(block::BlockDatas& blockDatas, ecs::Registry& registry, render::IRenderer& renderer,
-						   profiling::ServerStats& stats, const glm::vec<3, unsigned short> renderDistance) :
-	m_chunkMesher(blockDatas), m_blockDatas(blockDatas), m_registry(registry), m_stats(stats), m_renderer(renderer),
-	m_renderDistance(renderDistance) {
+						   profiling::ServerStats& stats, const Seed seed,
+						   const glm::vec<3, unsigned short> renderDistance) :
+	m_chunkMesher(blockDatas), m_chunkLoader(seed), m_blockDatas(blockDatas), m_registry(registry), m_stats(stats),
+	m_renderer(renderer), m_renderDistance(renderDistance) {
 	m_chunkTexture = renderer.createTexture(m_blockDatas.getBlockData(1).textureData);
 
 	const int halfWidth = m_renderDistance.x / 2;

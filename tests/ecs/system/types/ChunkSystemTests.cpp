@@ -3,6 +3,7 @@
 #include "ecs/system/types/ChunkSystem.hpp"
 #include "support/Blocks.hpp"
 #include "support/FakeRenderer.hpp"
+#include "support/TestSeed.hpp"
 
 using game::planet::chunkXSize;
 
@@ -14,7 +15,8 @@ namespace {
 		profiling::ServerStats  stats;
 
 		ChunkSystemPlanet() {
-			registry.createSystem<ecs::ChunkSystem>(registry, renderer, stats, glm::vec<3, unsigned short>{2, 4, 2});
+			registry.createSystem<ecs::ChunkSystem>(registry, renderer, stats, test::seed,
+													glm::vec<3, unsigned short>{2, 4, 2});
 		}
 
 		[[nodiscard]] size_t meshCount() const {

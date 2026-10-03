@@ -10,6 +10,8 @@ namespace game::planet {
 		EarthGenerator m_earthGenerator;
 
 	public:
+		explicit ChunkLoader(Seed seed);
+
 		[[nodiscard]] std::unique_ptr<Chunk> loadChunk(glm::ivec3 chunkPosition) const;
 	};
 }

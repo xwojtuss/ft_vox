@@ -2,6 +2,7 @@
 
 #include "game/planet/ChunkLoader.hpp"
 #include "support/Blocks.hpp"
+#include "support/TestSeed.hpp"
 
 using game::planet::Chunk;
 using game::planet::ChunkLoader;
@@ -12,7 +13,7 @@ using game::planet::EarthGenerator;
 
 SCENARIO("Loading a chunk generates its terrain", "[chunk-loader]") {
 	GIVEN("a chunk loader") {
-		const ChunkLoader loader;
+		const ChunkLoader loader(test::seed);
 
 		WHEN("the chunk at (-2, 0, 5) is loaded") {
 			const std::unique_ptr<Chunk> loaded = loader.loadChunk({-2, 0, 5});
@@ -21,7 +22,7 @@ SCENARIO("Loading a chunk generates its terrain", "[chunk-loader]") {
 				REQUIRE(loaded != nullptr);
 			}
 			AND_THEN("it holds the same terrain the terrain generator produces for that position") {
-				const EarthGenerator generator;
+				const EarthGenerator generator(test::seed);
 				Chunk                expected;
 				generator.generateChunk(&expected, {-2, 0, 5});
 
