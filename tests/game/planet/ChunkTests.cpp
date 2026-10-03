@@ -279,7 +279,6 @@ SCENARIO("A copy of a chunk is a snapshot that later edits do not change", "[chu
 
 SCENARIO("A block knows which faces of its chunk it touches", "[chunk]") {
 	using game::planet::chunkFaceCount;
-	using game::planet::chunkFaceOffsets;
 	using game::planet::isBlockOnChunkFace;
 
 	GIVEN("the block in the corner at the origin") {

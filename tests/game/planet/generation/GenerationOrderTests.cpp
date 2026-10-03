@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <ranges>
 #include <thread>
 #include <vector>
 
@@ -31,7 +30,10 @@ namespace {
 	}
 
 	std::vector<std::size_t> ascending(const std::size_t count) {
-		return std::views::iota(std::size_t{0}, count) | std::ranges::to<std::vector>();
+		std::vector<std::size_t> order(count);
+		for (std::size_t i = 0; i < count; ++i)
+			order[i] = i;
+		return order;
 	}
 
 	std::vector<std::size_t> descending(const std::size_t count) {
