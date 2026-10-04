@@ -51,10 +51,20 @@ void ChunkStreamer::unloadRange(const glm::ivec3 start, const glm::ivec3 end) {
 	refreshStats();
 }
 
+bool ChunkStreamer::eraseLoadedChunk(const glm::ivec3 chunkPosition) {
+	const auto chunk = m_chunks.find(chunkPosition);
+	if (chunk == m_chunks.end())
+		return false;
+
+	m_chunkDataBytes -= chunk->second.dataBytes();
+	m_chunks.erase(chunk);
+	return true;
+}
+
 void ChunkStreamer::removeChunk(const glm::ivec3 chunkPosition) {
 	const bool wasWaiting  = m_waiting.erase(chunkPosition) > 0;
 	const bool wasInFlight = concurrency::cancelAndErase(m_inFlight, chunkPosition);
-	const bool wasLoaded   = m_chunks.erase(chunkPosition) > 0;
+	const bool wasLoaded   = eraseLoadedChunk(chunkPosition);
 
 	if (wasWaiting || wasInFlight || wasLoaded)
 		m_dispatcher.emit(ChunkUnloadedEvent(chunkPosition));
@@ -65,7 +75,9 @@ void ChunkStreamer::setBlock(const glm::ivec3 chunkPosition, const glm::ivec3 bl
 	DEBUG_ASSERT(chunk != m_chunks.end(), "block set in a chunk that is not loaded", chunkPosition.x, chunkPosition.y,
 				 chunkPosition.z);
 
+	m_chunkDataBytes -= chunk->second.dataBytes();
 	chunk->second.setBlock(blockPosition.x, blockPosition.y, blockPosition.z, block);
+	m_chunkDataBytes += chunk->second.dataBytes();
 	refreshStats();
 	m_dispatcher.emit(ChunkChangedEvent(chunkPosition, blockPosition, chunk->second));
 }
@@ -136,7 +148,9 @@ void ChunkStreamer::integrateGeneratedChunks() {
 			continue;
 
 		m_inFlight.erase(result.position);
-		const Chunk& stored = m_chunks.insert_or_assign(result.position, std::move(*result.chunk)).first->second;
+		eraseLoadedChunk(result.position);
+		const Chunk& stored = m_chunks.emplace(result.position, std::move(*result.chunk)).first->second;
+		m_chunkDataBytes += stored.dataBytes();
 		m_dispatcher.emit(ChunkLoadedEvent(result.position, stored));
 	}
 }
@@ -175,7 +189,5 @@ bool ChunkStreamer::isIdle() const {
 void ChunkStreamer::refreshStats() const {
 	m_stats.loadedChunks      = m_chunks.size();
 	m_stats.pendingGeneration = m_waiting.size() + m_inFlight.size();
-	m_stats.chunkDataBytes    = 0;
-	for (const Chunk& chunk: m_chunks | std::views::values)
-		m_stats.chunkDataBytes += chunk.dataBytes();
+	m_stats.chunkDataBytes    = m_chunkDataBytes;
 }

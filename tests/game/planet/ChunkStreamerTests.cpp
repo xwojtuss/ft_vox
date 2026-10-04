@@ -9,6 +9,7 @@
 #include "concurrency/IThreadPool.hpp"
 #include "game/planet/ChunkOrder.hpp"
 #include "game/planet/ChunkStreamer.hpp"
+#include "support/Blocks.hpp"
 #include "support/ChunkEventRecorder.hpp"
 #include "support/ManualThreadPool.hpp"
 #include "support/RenderArea.hpp"
@@ -521,6 +522,58 @@ SCENARIO("Changing a block announces the changed chunk as a snapshot", "[chunk-s
 			}
 			AND_THEN("the memory use is unchanged, as the chunk still holds blocks") {
 				REQUIRE(env.stats.chunkDataBytes == bytesBefore);
+			}
+		}
+	}
+}
+
+SCENARIO("The memory use of the loaded chunks follows what is loaded", "[chunk-streamer]") {
+	constexpr size_t bytesPerChunk = game::planet::chunkVolume * sizeof(game::Block);
+
+	GIVEN("a loaded chunk far above the terrain, which holds only air") {
+		constexpr glm::ivec3 airChunk(310, 12, 310);
+		StreamerEnv          env;
+		env.streamer.requestChunk(airChunk);
+		env.settle();
+		REQUIRE(env.stats.chunkDataBytes == 0);
+
+		WHEN("a block is placed in it") {
+			env.streamer.setBlock(airChunk, {1, 1, 1}, game::Block(test::dirt));
+
+			THEN("it takes the memory of one chunk") {
+				REQUIRE(env.stats.chunkDataBytes == bytesPerChunk);
+			}
+		}
+	}
+
+	GIVEN("several loaded chunks that hold blocks") {
+		StreamerEnv env;
+		env.streamer.requestRange({70, -1, 70}, {71, -1, 71});
+		env.settle();
+		REQUIRE(env.stats.chunkDataBytes == 4 * bytesPerChunk);
+
+		WHEN("one is unloaded") {
+			env.streamer.unloadChunk({70, -1, 70});
+
+			THEN("its memory is released") {
+				REQUIRE(env.stats.chunkDataBytes == 3 * bytesPerChunk);
+			}
+		}
+
+		WHEN("one is requested and generated again") {
+			env.streamer.requestChunk({70, -1, 70});
+			env.settle();
+
+			THEN("it is not counted twice") {
+				REQUIRE(env.stats.chunkDataBytes == 4 * bytesPerChunk);
+			}
+		}
+
+		WHEN("all of them are unloaded") {
+			env.streamer.unloadRange({70, -1, 70}, {71, -1, 71});
+
+			THEN("no memory is used") {
+				REQUIRE(env.stats.chunkDataBytes == 0);
 			}
 		}
 	}

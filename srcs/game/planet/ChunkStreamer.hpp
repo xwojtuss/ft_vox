@@ -2,6 +2,7 @@
 
 #include <glm/gtx/hash.hpp>
 #include <glm/vec3.hpp>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <unordered_map>
@@ -39,7 +40,8 @@ namespace game::planet {
 		std::unordered_map<glm::ivec3, Chunk>                     m_chunks;
 		std::unordered_set<glm::ivec3>                            m_waiting;
 		std::unordered_map<glm::ivec3, concurrency::CancelToken>  m_inFlight;
-		std::size_t                                               m_runningJobs = 0;
+		std::uint64_t                                             m_chunkDataBytes = 0;
+		std::size_t                                               m_runningJobs    = 0;
 		std::shared_ptr<concurrency::ResultQueue<GeneratedChunk>> m_generated =
 			std::make_shared<concurrency::ResultQueue<GeneratedChunk>>();
 		ChunkLoader               m_chunkLoader;
@@ -50,6 +52,7 @@ namespace game::planet {
 		Viewer                    m_viewer;
 		std::optional<glm::ivec3> m_viewerChunk;
 
+		bool eraseLoadedChunk(glm::ivec3 chunkPosition);
 		void removeChunk(glm::ivec3 chunkPosition);
 		void followViewer();
 		void unloadFarChunks(glm::ivec3 viewerChunk);
