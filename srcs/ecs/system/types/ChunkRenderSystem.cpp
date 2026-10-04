@@ -1,5 +1,6 @@
 #include "ecs/system/types/ChunkRenderSystem.hpp"
 #include "ecs/Registry.hpp"
+#include "ecs/ViewerLookup.hpp"
 
 using namespace ecs;
 
@@ -10,6 +11,7 @@ ChunkRenderSystem::ChunkRenderSystem(Registry& registry, render::IRenderer& rend
 }
 
 void ChunkRenderSystem::onRender([[maybe_unused]] const RenderEvent& event) {
+	m_chunkRenderer.setViewer(findViewer(*m_registry).value_or(game::planet::Viewer{}));
 	m_chunkRenderer.update();
 }
 
