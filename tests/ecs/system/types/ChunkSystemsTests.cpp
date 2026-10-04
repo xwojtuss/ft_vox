@@ -8,18 +8,16 @@
 #include "ecs/component/Components.hpp"
 #include "ecs/system/types/ChunkRenderSystem.hpp"
 #include "ecs/system/types/ChunkStreamSystem.hpp"
-#include "scene/PlanetInfo.hpp"
 #include "support/Blocks.hpp"
 #include "support/FakeRenderer.hpp"
 #include "support/ManualThreadPool.hpp"
+#include "support/RenderArea.hpp"
 #include "support/TestSeed.hpp"
 
-namespace planetinfo = scene::planetinfo;
-
 namespace {
-	constexpr glm::vec<3, unsigned short> spawnRenderDistance = {2, planetinfo::maxVerticalRenderDistance, 2};
+	constexpr glm::vec<3, unsigned short> spawnRenderDistance = {2, 4, 2};
 
-	constexpr int chunksAroundSpawn = (spawnRenderDistance.x + 1) * (spawnRenderDistance.z + 1) * spawnRenderDistance.y;
+	const size_t chunksAroundSpawn = test::renderAreaSize(spawnRenderDistance);
 
 	constexpr render::chunks::ChunkRenderSettings noUploadLimit = {.meshUploadsPerFrame = 100000};
 
@@ -31,8 +29,9 @@ namespace {
 		profiling::ClientStats  clientStats;
 
 		void addSystems(concurrency::IThreadPool& pool) {
-			registry.createSystem<ecs::ChunkStreamSystem>(registry, pool, serverStats, test::seed,
-														  game::planet::ChunkStreamSettings{spawnRenderDistance});
+			registry.createSystem<ecs::ChunkStreamSystem>(
+				registry, pool, serverStats, test::seed,
+				game::planet::ChunkStreamSettings{.renderDistance = spawnRenderDistance});
 			registry.createSystem<ecs::ChunkRenderSystem>(registry, renderer, pool, clientStats, noUploadLimit);
 		}
 
@@ -58,34 +57,74 @@ namespace {
 	};
 }
 
-SCENARIO("The streaming and rendering systems build the world around spawn together", "[ecs][chunk-systems]") {
-	GIVEN("both systems on one pool, before the registry is ready") {
+SCENARIO("The streaming and rendering systems build the world around the player together", "[ecs][chunk-systems]") {
+	GIVEN("both systems on one pool and a registry without any player") {
 		test::ManualThreadPool pool;
 		WorldEnv               env;
 		env.addSystems(pool);
 
-		THEN("nothing is requested yet") {
+		THEN("nothing is requested before the first simulation step") {
+			env.registry.getSystemManager().onRegistryReady();
 			REQUIRE(pool.pending() == 0);
 		}
 
-		WHEN("the registry becomes ready") {
-			env.registry.getSystemManager().onRegistryReady();
-
-			THEN("the area around spawn is queued") {
-				REQUIRE(pool.pending() == static_cast<size_t>(chunksAroundSpawn));
+		WHEN("frames pass until the pool has nothing left to do") {
+			constexpr int maxFrames = 100;
+			for (int frame = 0; frame < maxFrames && !env.isSettled(pool); ++frame) {
+				env.frame();
+				pool.runAll();
 			}
 
-			AND_WHEN("frames pass until the pool has nothing left to do") {
-				constexpr int maxFrames = 100;
-				for (int frame = 0; frame < maxFrames && !env.isSettled(pool); ++frame) {
-					pool.runAll();
-					env.frame();
-				}
+			THEN("every chunk around the origin is loaded and the chunks with visible blocks are drawn") {
+				REQUIRE(env.isSettled(pool));
+				REQUIRE(env.drawnChunkCount() > 0);
+				REQUIRE(env.drawnChunkCount() <= static_cast<size_t>(chunksAroundSpawn));
+			}
+		}
+	}
+}
 
-				THEN("every chunk is loaded and the chunks with visible blocks are drawn") {
-					REQUIRE(env.isSettled(pool));
-					REQUIRE(env.drawnChunkCount() > 0);
-					REQUIRE(env.drawnChunkCount() <= static_cast<size_t>(chunksAroundSpawn));
+SCENARIO("The world is built around the player and grows as they walk", "[ecs][chunk-systems]") {
+	GIVEN("both systems and a player standing in chunk (10, 0, 0)") {
+		test::ManualThreadPool pool;
+		WorldEnv               env;
+		env.addSystems(pool);
+
+		ecs::EntityHandle player = env.registry.createEntity();
+		player.add(ecs::component::Transform{.position = glm::vec3((10 * 16) + 8, 8.0f, 8.0f)});
+		player.add(ecs::component::Camera{});
+
+		const auto settle = [&] {
+			constexpr int maxFrames = 100;
+			for (int frame = 0; frame < maxFrames; ++frame) {
+				env.frame();
+				pool.runAll();
+				if (env.serverStats.pendingGeneration == 0 && env.clientStats.pendingMeshing == 0 &&
+					pool.unfinishedTaskCount() == 0)
+					return;
+			}
+		};
+
+		WHEN("the world has been built") {
+			settle();
+
+			THEN("only chunks around the player were generated") {
+				REQUIRE(env.serverStats.loadedChunks == static_cast<size_t>(chunksAroundSpawn));
+				REQUIRE(env.drawnChunkCount() > 0);
+				for (auto&& [entity, transform]: env.registry.query<const ecs::component::Transform>()) {
+					if (entity == player.id())
+						continue;
+					REQUIRE(transform.position.x >= 9 * 16);
+					REQUIRE(transform.position.x <= 11 * 16);
+				}
+			}
+
+			AND_WHEN("the player walks ten chunks further") {
+				player.get<ecs::component::Transform>().position.x += 10 * 16;
+				settle();
+
+				THEN("the chunks around the new place are generated as well, and the old ones stay") {
+					REQUIRE(env.serverStats.loadedChunks == static_cast<size_t>(2 * chunksAroundSpawn));
 				}
 			}
 		}
@@ -97,10 +136,9 @@ SCENARIO("Worker threads build the same world as running the jobs one by one", "
 		test::ManualThreadPool pool;
 		WorldEnv               reference;
 		reference.addSystems(pool);
-		reference.registry.getSystemManager().onRegistryReady();
 		for (int frame = 0; frame < 100 && !reference.isSettled(pool); ++frame) {
-			pool.runAll();
 			reference.frame();
+			pool.runAll();
 		}
 		REQUIRE(reference.isSettled(pool));
 
@@ -108,7 +146,6 @@ SCENARIO("Worker threads build the same world as running the jobs one by one", "
 			const auto pool4 = concurrency::createThreadPool(4);
 			WorldEnv   threaded;
 			threaded.addSystems(*pool4);
-			threaded.registry.getSystemManager().onRegistryReady();
 
 			const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(60);
 			while (!threaded.isSettled(*pool4) && std::chrono::steady_clock::now() < deadline) {

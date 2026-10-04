@@ -6,6 +6,7 @@
 
 #include "ecs/component/Components.hpp"
 #include "ecs/entity/EntityHandle.hpp"
+#include "game/planet/ChunkOrder.hpp"
 #include "render/chunks/ChunkRenderer.hpp"
 #include "support/Blocks.hpp"
 #include "support/FakeRenderer.hpp"
@@ -43,8 +44,11 @@ namespace {
 		profiling::ClientStats  stats;
 		ChunkRenderer           chunkRenderer;
 
-		explicit RendererEnv(const size_t uploadsPerFrame = std::numeric_limits<size_t>::max()) :
-			chunkRenderer(blockDatas, registry, renderer, pool, stats, ChunkRenderSettings{uploadsPerFrame}) {
+		explicit RendererEnv(const size_t uploadsPerFrame     = std::numeric_limits<size_t>::max(),
+							 const size_t queuedJobsPerWorker = game::planet::defaultQueuedJobsPerWorker) :
+			chunkRenderer(blockDatas, registry, renderer, pool, stats,
+						  ChunkRenderSettings{.meshUploadsPerFrame = uploadsPerFrame,
+											  .queuedJobsPerWorker = queuedJobsPerWorker}) {
 		}
 
 		void load(const glm::ivec3 position, const Chunk& chunk) {
@@ -76,6 +80,28 @@ namespace {
 
 		[[nodiscard]] size_t meshCount() const {
 			return renderer.createdMeshes.size();
+		}
+
+		void buildOneAtATime(const size_t count) {
+			for (size_t i = 0; i < count; ++i) {
+				chunkRenderer.update();
+				pool.runNext();
+			}
+			chunkRenderer.update();
+		}
+
+		[[nodiscard]] std::vector<glm::ivec3> drawOrder() {
+			std::vector<glm::ivec3> order;
+			for (const assets::MeshHandle& mesh: renderer.createdMeshes) {
+				for (auto&& [entity, drawn, transform]:
+					 registry.query<const ecs::component::Mesh, const ecs::component::Transform>()) {
+					static_cast<void>(entity);
+					if (drawn.mesh.id == mesh.id)
+						order.emplace_back(
+							glm::floor(transform.position / glm::vec3(chunkXSize, chunkYSize, chunkZSize)));
+				}
+			}
+			return order;
 		}
 	};
 }
@@ -384,6 +410,83 @@ SCENARIO("Only a limited number of meshes reach the GPU per frame", "[chunk-rend
 			THEN("all nine chunks are drawn, two per update") {
 				REQUIRE(env.meshCount() == 9);
 				REQUIRE(updates == 5);
+			}
+		}
+	}
+}
+
+namespace {
+	const game::planet::Viewer lookingNorth = {.position = {8.0f, 8.0f, 8.0f}, .forward = {0.0f, 0.0f, -1.0f}};
+	const game::planet::Viewer lookingSouth = {.position = {8.0f, 8.0f, 8.0f}, .forward = {0.0f, 0.0f, 1.0f}};
+
+	void loadFlatArea(RendererEnv& env, const int halfSize) {
+		for (int x = -halfSize; x <= halfSize; ++x)
+			for (int z = -halfSize; z <= halfSize; ++z)
+				env.load({x, 0, z}, solidChunk());
+	}
+
+	bool isOrderedBy(const std::vector<glm::ivec3>& order, const game::planet::Viewer& viewer) {
+		return std::ranges::is_sorted(
+			order, {}, [&viewer](const glm::ivec3& chunk) { return game::planet::chunkOrderCost(chunk, viewer); });
+	}
+
+	size_t indexOf(const std::vector<glm::ivec3>& order, const glm::ivec3& chunk) {
+		return static_cast<size_t>(std::ranges::find(order, chunk) - order.begin());
+	}
+}
+
+SCENARIO("A player who stands still sees the nearest chunks meshed first, and those in front before those behind",
+		 "[chunk-renderer][order]") {
+	GIVEN("a renderer that hands one job at a time to the pool and 49 solid chunks around the player") {
+		RendererEnv env(std::numeric_limits<size_t>::max(), 1);
+		env.chunkRenderer.setViewer(lookingNorth);
+		loadFlatArea(env, 3);
+
+		WHEN("the meshes are built one by one") {
+			env.buildOneAtATime(49);
+			const std::vector<glm::ivec3> order = env.drawOrder();
+
+			THEN("every chunk was meshed") {
+				REQUIRE(order.size() == 49);
+			}
+			AND_THEN("the chunk the player stands in came first") {
+				REQUIRE(order.front() == glm::ivec3(0, 0, 0));
+			}
+			AND_THEN("they came in order of how soon the player needs them") {
+				REQUIRE(isOrderedBy(order, lookingNorth));
+			}
+			AND_THEN("a chunk in front of the player came before the equally distant chunk behind") {
+				REQUIRE(indexOf(order, {0, 0, -3}) < indexOf(order, {0, 0, 3}));
+			}
+		}
+	}
+}
+
+SCENARIO("The meshing order follows a player who turns around", "[chunk-renderer][order]") {
+	GIVEN("a renderer where six meshes were built and 43 chunks are still waiting") {
+		RendererEnv env(std::numeric_limits<size_t>::max(), 1);
+		env.chunkRenderer.setViewer(lookingNorth);
+		loadFlatArea(env, 3);
+		env.buildOneAtATime(6);
+		const size_t builtBeforeTurning = env.meshCount();
+		REQUIRE(builtBeforeTurning == 6);
+		const std::vector<glm::ivec3> builtFirst = env.drawOrder();
+		REQUIRE(std::ranges::find(builtFirst, glm::ivec3(0, 0, 3)) == builtFirst.end());
+		REQUIRE(std::ranges::find(builtFirst, glm::ivec3(0, 0, -3)) == builtFirst.end());
+
+		WHEN("the player turns around and the rest is built") {
+			env.chunkRenderer.setViewer(lookingSouth);
+			env.buildOneAtATime(49);
+			const std::vector<glm::ivec3> order = env.drawOrder();
+			const std::vector<glm::ivec3> afterTurning(
+				order.begin() + static_cast<std::ptrdiff_t>(builtBeforeTurning) + 1, order.end());
+
+			THEN("the chunk that was behind the player now comes before the one in front") {
+				REQUIRE(indexOf(order, {0, 0, 3}) < indexOf(order, {0, 0, -3}));
+			}
+			AND_THEN(
+				"the meshes built after turning came in order of the new view, once the job in the pool was done") {
+				REQUIRE(isOrderedBy(afterTurning, lookingSouth));
 			}
 		}
 	}

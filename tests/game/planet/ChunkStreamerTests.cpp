@@ -7,20 +7,29 @@
 #include <vector>
 
 #include "concurrency/IThreadPool.hpp"
+#include "game/planet/ChunkOrder.hpp"
 #include "game/planet/ChunkStreamer.hpp"
-#include "scene/PlanetInfo.hpp"
 #include "support/ChunkEventRecorder.hpp"
 #include "support/ManualThreadPool.hpp"
+#include "support/RenderArea.hpp"
 #include "support/TestSeed.hpp"
 
+using game::planet::chunkOrderCost;
 using game::planet::ChunkStreamer;
 using game::planet::ChunkStreamSettings;
-namespace planetinfo = scene::planetinfo;
+using game::planet::RenderDistance;
+using game::planet::Viewer;
 
 namespace {
-	constexpr glm::vec<3, unsigned short> spawnRenderDistance = {2, planetinfo::maxVerticalRenderDistance, 2};
+	constexpr RenderDistance noStreaming         = {0, 0, 0};
+	constexpr RenderDistance spawnRenderDistance = {2, 4, 2};
+	constexpr RenderDistance wideRenderDistance  = {6, 2, 6};
 
-	constexpr int chunksAroundSpawn = (spawnRenderDistance.x + 1) * (spawnRenderDistance.z + 1) * spawnRenderDistance.y;
+	const size_t chunksAroundSpawn = test::renderAreaSize(spawnRenderDistance);
+	const size_t chunksInWideArea  = test::renderAreaSize(wideRenderDistance);
+
+	const Viewer atSpawnLookingNorth = {.position = {8.0f, 8.0f, 8.0f}, .forward = {0.0f, 0.0f, -1.0f}};
+	const Viewer atSpawnLookingSouth = {.position = {8.0f, 8.0f, 8.0f}, .forward = {0.0f, 0.0f, 1.0f}};
 
 	struct StreamerEnv {
 		ecs::Dispatcher          dispatcher;
@@ -29,46 +38,84 @@ namespace {
 		profiling::ServerStats   stats;
 		ChunkStreamer            streamer;
 
-		StreamerEnv() : streamer(dispatcher, pool, stats, test::seed, ChunkStreamSettings{spawnRenderDistance}) {
+		explicit StreamerEnv(const RenderDistance renderDistance      = noStreaming,
+							 const std::size_t    queuedJobsPerWorker = game::planet::defaultQueuedJobsPerWorker) :
+			streamer(
+				dispatcher, pool, stats, test::seed,
+				ChunkStreamSettings{.renderDistance = renderDistance, .queuedJobsPerWorker = queuedJobsPerWorker}) {
 			recorder.listenTo(dispatcher);
+			streamer.setViewer(atSpawnLookingNorth);
 		}
 
 		void settle() {
-			constexpr int maxRounds = 100;
+			constexpr int maxRounds = 200;
 			for (int round = 0; round < maxRounds; ++round) {
+				streamer.update();
 				if (streamer.isIdle() && pool.pending() == 0)
 					return;
 				pool.runAll();
-				streamer.update();
 			}
 		}
+
+		void generateOneAtATime(const size_t count) {
+			for (size_t i = 0; i < count; ++i) {
+				streamer.update();
+				pool.runNext();
+			}
+			streamer.update();
+		}
+
+		[[nodiscard]] std::vector<glm::ivec3> loadedOrder() const {
+			std::vector<glm::ivec3> order;
+			order.reserve(recorder.loaded.size());
+			for (const auto& [position, chunk]: recorder.loaded)
+				order.push_back(position);
+			return order;
+		}
 	};
+
+	size_t indexOf(const std::vector<glm::ivec3>& order, const glm::ivec3& chunk) {
+		return static_cast<size_t>(std::ranges::find(order, chunk) - order.begin());
+	}
+
+	bool isOrderedBy(const std::vector<glm::ivec3>& order, const Viewer& viewer) {
+		return std::ranges::is_sorted(order, {},
+									  [&viewer](const glm::ivec3& chunk) { return chunkOrderCost(chunk, viewer); });
+	}
 }
 
-SCENARIO("Requested chunks are announced at once and delivered later", "[chunk-streamer]") {
-	GIVEN("a streamer that was asked for the area around spawn") {
-		StreamerEnv env;
-		env.streamer.requestSpawnArea();
+SCENARIO("The chunks around the player are announced at once and delivered later", "[chunk-streamer]") {
+	constexpr size_t poolLimit = 8;
 
-		THEN("every chunk of the area was announced, and none has been delivered") {
-			REQUIRE(env.recorder.requested.size() == static_cast<size_t>(chunksAroundSpawn));
-			REQUIRE(env.recorder.loaded.empty());
-		}
-		AND_THEN("one generation job is queued per chunk, and the statistics say so") {
+	GIVEN("a streamer whose player stands in the middle of the first chunk") {
+		StreamerEnv env(spawnRenderDistance, poolLimit);
+
+		WHEN("the first update runs") {
 			env.streamer.update();
-			REQUIRE(env.pool.pending() == static_cast<size_t>(chunksAroundSpawn));
-			REQUIRE(env.stats.pendingGeneration == static_cast<size_t>(chunksAroundSpawn));
-			REQUIRE(env.stats.loadedChunks == 0);
+
+			THEN("every chunk of the area around the player is announced, and none has been delivered") {
+				REQUIRE(env.recorder.requested.size() == static_cast<size_t>(chunksAroundSpawn));
+				REQUIRE(env.recorder.loaded.empty());
+				REQUIRE(env.stats.loadedChunks == 0);
+			}
+			AND_THEN("only a limited number of generation jobs is handed to the pool, the rest waits") {
+				REQUIRE(env.pool.pending() == poolLimit);
+				REQUIRE(env.stats.pendingGeneration == static_cast<size_t>(chunksAroundSpawn));
+			}
 		}
 
-		WHEN("the pool finishes one job") {
+		WHEN("the pool finishes one job and the world is updated") {
+			env.streamer.update();
 			env.pool.runNext();
 			env.streamer.update();
 
-			THEN("exactly one chunk is delivered, the one at the centre") {
+			THEN("exactly one chunk is delivered, the one the player stands in") {
 				REQUIRE(env.recorder.loaded.size() == 1);
 				REQUIRE(env.recorder.loaded.front().first == glm::ivec3(0, 0, 0));
 				REQUIRE(env.stats.loadedChunks == 1);
+			}
+			AND_THEN("the free place in the pool is filled with the next chunk") {
+				REQUIRE(env.pool.pending() == poolLimit);
 			}
 		}
 
@@ -81,7 +128,17 @@ SCENARIO("Requested chunks are announced at once and delivered later", "[chunk-s
 				REQUIRE(env.stats.pendingGeneration == 0);
 				REQUIRE(env.streamer.isIdle());
 			}
-			AND_THEN("chunks that hold only air take no memory") {
+		}
+	}
+
+	GIVEN("a streamer whose area reaches high above the terrain") {
+		constexpr RenderDistance tall = {2, 12, 2};
+		StreamerEnv              env(tall);
+
+		WHEN("all the work is done") {
+			env.settle();
+
+			THEN("chunks that hold only air take no memory") {
 				constexpr size_t bytesPerChunk = game::planet::chunkVolume * sizeof(game::Block);
 
 				REQUIRE(env.stats.chunkDataBytes > 0);
@@ -92,21 +149,160 @@ SCENARIO("Requested chunks are announced at once and delivered later", "[chunk-s
 	}
 }
 
-SCENARIO("Chunks closer to the centre are generated first", "[chunk-streamer]") {
-	GIVEN("a streamer whose generation jobs are queued") {
-		StreamerEnv env;
-		env.streamer.requestSpawnArea();
+SCENARIO("A player who looks down or up gets the chunks in that direction first", "[chunk-streamer][order]") {
+	GIVEN("a streamer that hands one job at a time to the pool, with the player looking straight down") {
+		StreamerEnv env(wideRenderDistance, 1);
+		env.streamer.setViewer({.position = atSpawnLookingNorth.position, .forward = {0.0f, -1.0f, 0.0f}});
+		env.generateOneAtATime(chunksInWideArea);
+		const std::vector<glm::ivec3> order = env.loadedOrder();
 
-		WHEN("the pool runs the first 9 jobs") {
-			for (int i = 0; i < 9; ++i)
-				env.pool.runNext();
+		THEN("the chunk below was generated before the equally distant chunk above") {
+			REQUIRE(indexOf(order, {0, -1, 0}) < indexOf(order, {0, 1, 0}));
+		}
+	}
+
+	GIVEN("a streamer with the player looking straight up") {
+		StreamerEnv env(wideRenderDistance, 1);
+		env.streamer.setViewer({.position = atSpawnLookingNorth.position, .forward = {0.0f, 1.0f, 0.0f}});
+		env.generateOneAtATime(chunksInWideArea);
+		const std::vector<glm::ivec3> order = env.loadedOrder();
+
+		THEN("the chunk above was generated before the equally distant chunk below") {
+			REQUIRE(indexOf(order, {0, 1, 0}) < indexOf(order, {0, -1, 0}));
+		}
+	}
+}
+
+SCENARIO("A player who stands still gets the nearest chunks first, and those in front before those behind",
+		 "[chunk-streamer][order]") {
+	GIVEN("a streamer that hands one job at a time to the pool, with the player looking towards negative z") {
+		StreamerEnv env(wideRenderDistance, 1);
+
+		WHEN("all chunks around the player are generated one by one") {
+			env.generateOneAtATime(chunksInWideArea);
+			const std::vector<glm::ivec3> order = env.loadedOrder();
+
+			THEN("every chunk of the area was generated") {
+				REQUIRE(order.size() == static_cast<size_t>(chunksInWideArea));
+			}
+			AND_THEN("the chunk the player stands in came first") {
+				REQUIRE(order.front() == glm::ivec3(0, 0, 0));
+			}
+			AND_THEN("they came in order of how soon the player needs them") {
+				REQUIRE(isOrderedBy(order, atSpawnLookingNorth));
+			}
+			AND_THEN("a chunk in front of the player came before the equally distant chunk behind") {
+				REQUIRE(indexOf(order, {0, 0, -3}) < indexOf(order, {0, 0, 3}));
+				REQUIRE(indexOf(order, {-2, 0, -2}) < indexOf(order, {-2, 0, 2}));
+			}
+		}
+	}
+}
+
+SCENARIO("The order follows a player who turns around", "[chunk-streamer][order]") {
+	GIVEN("a streamer that hands one job at a time to the pool, after ten chunks were generated") {
+		StreamerEnv env(wideRenderDistance, 1);
+		env.generateOneAtATime(10);
+		const size_t generatedBeforeTurning = env.recorder.loaded.size();
+		REQUIRE(generatedBeforeTurning == 10);
+		REQUIRE_FALSE(env.streamer.isLoaded({0, 0, 3}));
+		REQUIRE_FALSE(env.streamer.isLoaded({0, 0, -3}));
+
+		WHEN("the player turns around and the rest is generated") {
+			env.streamer.setViewer(atSpawnLookingSouth);
+			env.generateOneAtATime(chunksInWideArea);
+			const std::vector<glm::ivec3> order = env.loadedOrder();
+			const std::vector<glm::ivec3> afterTurning(
+				order.begin() + static_cast<std::ptrdiff_t>(generatedBeforeTurning) + 1, order.end());
+
+			THEN("the chunk that was behind the player now comes before the one in front") {
+				REQUIRE(indexOf(order, {0, 0, 3}) < indexOf(order, {0, 0, -3}));
+			}
+			AND_THEN("the chunks generated after turning came in order of the new view, once the job already in the "
+					 "pool was done") {
+				REQUIRE(isOrderedBy(afterTurning, atSpawnLookingSouth));
+			}
+			AND_THEN("the chunks generated before turning were ordered for the old view") {
+				const std::vector<glm::ivec3> beforeTurning(
+					order.begin(), order.begin() + static_cast<std::ptrdiff_t>(generatedBeforeTurning));
+				REQUIRE(isOrderedBy(beforeTurning, atSpawnLookingNorth));
+			}
+		}
+	}
+}
+
+SCENARIO("Chunks are requested around the player's chunk as they move", "[chunk-streamer][order]") {
+	GIVEN("a streamer that has generated the chunks around the first chunk") {
+		StreamerEnv env(spawnRenderDistance);
+		env.settle();
+		REQUIRE(env.recorder.requested.size() == static_cast<size_t>(chunksAroundSpawn));
+
+		WHEN("the player walks within the same chunk") {
+			env.streamer.setViewer({.position = {12.0f, 8.0f, 3.0f}, .forward = {1.0f, 0.0f, 0.0f}});
+			env.settle();
+
+			THEN("nothing new is requested") {
+				REQUIRE(env.recorder.requested.size() == static_cast<size_t>(chunksAroundSpawn));
+			}
+		}
+
+		WHEN("the player walks into the next chunk") {
+			env.streamer.setViewer({.position = {16.0f + 8.0f, 8.0f, 8.0f}, .forward = {1.0f, 0.0f, 0.0f}});
 			env.streamer.update();
 
-			THEN("the centre chunk is among them and none of them is more than one chunk away from it") {
-				REQUIRE(env.recorder.loaded.size() == 9);
-				REQUIRE(env.streamer.isLoaded({0, 0, 0}));
-				for (const auto& [position, chunk]: env.recorder.loaded)
-					REQUIRE(std::max({std::abs(position.x), std::abs(position.y), std::abs(position.z)}) <= 1);
+			THEN("only the chunks of the new area that were not in the old one are requested") {
+				const test::ChunkSet wanted = test::unionOf(test::renderAreaAround({0, 0, 0}, spawnRenderDistance),
+															test::renderAreaAround({1, 0, 0}, spawnRenderDistance));
+				REQUIRE(env.recorder.requested.size() == wanted.size());
+				REQUIRE(test::toSet(env.recorder.requested) == wanted);
+				REQUIRE(wanted.size() > chunksAroundSpawn);
+			}
+			AND_THEN("they are generated and the old chunks are still there") {
+				env.settle();
+				REQUIRE(env.streamer.isLoaded({-1, 0, 0}));
+				REQUIRE(env.streamer.isLoaded({2, 0, 0}));
+				REQUIRE(env.stats.loadedChunks == env.recorder.requested.size());
+				REQUIRE(env.recorder.unloaded.empty());
+			}
+		}
+
+		WHEN("the player climbs one chunk") {
+			env.streamer.setViewer({.position = {8.0f, 16.0f + 8.0f, 8.0f}, .forward = {0.0f, 0.0f, -1.0f}});
+			env.streamer.update();
+
+			THEN("only the chunks of the new area that were not in the old one are requested") {
+				const test::ChunkSet wanted = test::unionOf(test::renderAreaAround({0, 0, 0}, spawnRenderDistance),
+															test::renderAreaAround({0, 1, 0}, spawnRenderDistance));
+				REQUIRE(test::toSet(env.recorder.requested) == wanted);
+				REQUIRE(env.recorder.requested.size() == wanted.size());
+			}
+			AND_THEN("the chunks above are generated and nothing is unloaded") {
+				env.settle();
+				REQUIRE(env.streamer.isLoaded({0, 3, 0}));
+				REQUIRE(env.streamer.isLoaded({0, -2, 0}));
+				REQUIRE(env.recorder.unloaded.empty());
+			}
+		}
+
+		WHEN("the player digs down below the first chunk") {
+			env.streamer.setViewer({.position = {8.0f, (-16.0f * 5) + 8.0f, 8.0f}, .forward = {0.0f, -1.0f, 0.0f}});
+			env.settle();
+
+			THEN("chunks far below are generated too, as the range applies to every axis") {
+				REQUIRE(env.streamer.isLoaded({0, -5, 0}));
+				REQUIRE(env.streamer.isLoaded({0, -7, 0}));
+				REQUIRE_FALSE(env.streamer.isLoaded({0, -8, 0}));
+			}
+		}
+
+		WHEN("the player walks far away") {
+			env.streamer.setViewer({.position = {(16.0f * 20) + 8.0f, 8.0f, 8.0f}, .forward = {0.0f, 0.0f, -1.0f}});
+			env.settle();
+
+			THEN("a whole new area is generated around them and nothing is unloaded") {
+				REQUIRE(env.stats.loadedChunks == static_cast<size_t>(2 * chunksAroundSpawn));
+				REQUIRE(env.streamer.isLoaded({20, 0, 0}));
+				REQUIRE(env.recorder.unloaded.empty());
 			}
 		}
 	}
@@ -139,11 +335,11 @@ SCENARIO("What is generated is what the terrain makes there", "[chunk-streamer]"
 SCENARIO("A chunk that is unloaded before it is generated never arrives", "[chunk-streamer]") {
 	constexpr glm::ivec3 chunk(300, -1, 300);
 
-	GIVEN("a chunk that was requested but not generated yet") {
+	GIVEN("a chunk that was requested but not handed to the pool yet") {
 		StreamerEnv env;
 		env.streamer.requestChunk(chunk);
 
-		WHEN("it is unloaded before the pool gets to it") {
+		WHEN("it is unloaded") {
 			env.streamer.unloadChunk(chunk);
 			env.settle();
 
@@ -152,6 +348,25 @@ SCENARIO("A chunk that is unloaded before it is generated never arrives", "[chun
 				REQUIRE(env.recorder.loaded.empty());
 				REQUIRE_FALSE(env.streamer.isLoaded(chunk));
 				REQUIRE(env.streamer.isIdle());
+			}
+		}
+	}
+
+	GIVEN("a chunk whose generation job is in the pool but has not run yet") {
+		StreamerEnv env;
+		env.streamer.requestChunk(chunk);
+		env.streamer.update();
+		REQUIRE(env.pool.pending() == 1);
+
+		WHEN("it is unloaded before the pool gets to it") {
+			env.streamer.unloadChunk(chunk);
+			env.settle();
+
+			THEN("the chunk never arrives and the pool is free again") {
+				REQUIRE(env.recorder.loaded.empty());
+				REQUIRE_FALSE(env.streamer.isLoaded(chunk));
+				REQUIRE(env.streamer.isIdle());
+				REQUIRE(env.pool.pending() == 0);
 			}
 		}
 	}
@@ -247,9 +462,8 @@ SCENARIO("Asking for a chunk again generates it again", "[chunk-streamer]") {
 }
 
 SCENARIO("Worker threads deliver the same chunks as running the jobs one by one", "[chunk-streamer][threads]") {
-	GIVEN("the spawn area generated with jobs run one by one") {
-		StreamerEnv reference;
-		reference.streamer.requestSpawnArea();
+	GIVEN("the area around the player generated with jobs run one by one") {
+		StreamerEnv reference(spawnRenderDistance);
 		reference.settle();
 
 		WHEN("the same area is generated by a pool of four worker threads") {
@@ -259,14 +473,15 @@ SCENARIO("Worker threads deliver the same chunks as running the jobs one by one"
 			profiling::ServerStats stats;
 			const auto             pool = concurrency::createThreadPool(4);
 			{
-				ChunkStreamer streamer(dispatcher, *pool, stats, test::seed, ChunkStreamSettings{spawnRenderDistance});
-				streamer.requestSpawnArea();
+				ChunkStreamer streamer(dispatcher, *pool, stats, test::seed,
+									   ChunkStreamSettings{.renderDistance = spawnRenderDistance});
+				streamer.setViewer(atSpawnLookingNorth);
 
 				const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(60);
-				while (!streamer.isIdle() && std::chrono::steady_clock::now() < deadline) {
+				do {
 					streamer.update();
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));
-				}
+				} while (!streamer.isIdle() && std::chrono::steady_clock::now() < deadline);
 				REQUIRE(streamer.isIdle());
 			}
 
@@ -282,6 +497,47 @@ SCENARIO("Worker threads deliver the same chunks as running the jobs one by one"
 
 				REQUIRE(summarise(recorder) == summarise(reference.recorder));
 				REQUIRE(stats.chunkDataBytes == reference.stats.chunkDataBytes);
+			}
+		}
+	}
+}
+
+SCENARIO("The chunks around the player form a sphere, not a box", "[chunk-streamer]") {
+	GIVEN("a streamer with the same render distance on every axis") {
+		constexpr RenderDistance sphere = {8, 8, 8};
+		StreamerEnv              env(sphere);
+
+		WHEN("the first update runs") {
+			env.streamer.update();
+			const test::ChunkSet requested = test::toSet(env.recorder.requested);
+
+			THEN("the chunks on the axes are requested") {
+				REQUIRE(requested.contains({4, 0, 0}));
+				REQUIRE(requested.contains({0, -4, 0}));
+			}
+			AND_THEN("the corners of the surrounding box are not") {
+				REQUIRE_FALSE(requested.contains({3, 3, 3}));
+				REQUIRE_FALSE(requested.contains({4, 4, 4}));
+			}
+			AND_THEN("fewer chunks than the box are requested") {
+				REQUIRE(requested.size() == test::renderAreaSize(sphere));
+				REQUIRE(requested.size() < 9 * 9 * 9);
+			}
+		}
+	}
+
+	GIVEN("a streamer whose render distance is shorter vertically than horizontally") {
+		constexpr RenderDistance flattened = {8, 2, 8};
+		StreamerEnv              env(flattened);
+
+		WHEN("the first update runs") {
+			env.streamer.update();
+			const test::ChunkSet requested = test::toSet(env.recorder.requested);
+
+			THEN("the area is wide and flat") {
+				REQUIRE(requested == test::renderAreaAround({0, 0, 0}, flattened));
+				REQUIRE(requested.contains({4, 0, 0}));
+				REQUIRE_FALSE(requested.contains({0, 2, 0}));
 			}
 		}
 	}

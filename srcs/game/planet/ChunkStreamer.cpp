@@ -6,7 +6,6 @@
 
 #include "error/Assert.hpp"
 #include "game/planet/ChunkEvents.hpp"
-#include "game/planet/ChunkPriority.hpp"
 
 using namespace game::planet;
 
@@ -16,33 +15,19 @@ ChunkStreamer::ChunkStreamer(ecs::Dispatcher& dispatcher, concurrency::IThreadPo
 }
 
 ChunkStreamer::~ChunkStreamer() {
-	for (const auto& token: m_pendingGeneration | std::views::values)
+	for (const auto& token: m_inFlight | std::views::values)
 		token.cancel();
 	m_pool.waitUntilIdle();
 }
 
-void ChunkStreamer::requestSpawnArea() {
-	const int halfWidth = m_settings.renderDistance.x / 2;
-	const int halfDepth = m_settings.renderDistance.z / 2;
-	const int height    = m_settings.renderDistance.y;
-
-	requestRange({-halfWidth, 0, -halfDepth}, {halfWidth, height - 1, halfDepth});
+void ChunkStreamer::setViewer(const Viewer& viewer) {
+	m_viewer = viewer;
 }
 
 void ChunkStreamer::requestChunk(const glm::ivec3 chunkPosition) {
-	concurrency::cancelAndErase(m_pendingGeneration, chunkPosition);
-
-	const concurrency::CancelToken token;
-	m_pendingGeneration[chunkPosition] = token;
+	concurrency::cancelAndErase(m_inFlight, chunkPosition);
+	m_waiting.insert(chunkPosition);
 	m_dispatcher.emit(ChunkRequestedEvent(chunkPosition));
-
-	m_pool.submit(chunkPriority(ChunkJob::Generate, chunkPosition, m_priorityCenter),
-				  [loader = &m_chunkLoader, chunkPosition, token, results = m_generated] {
-					  if (token.isCancelled())
-						  return;
-					  results->push(
-						  {.position = chunkPosition, .token = token, .chunk = loader->loadChunk(chunkPosition)});
-				  });
 }
 
 void ChunkStreamer::requestRange(const glm::ivec3 start, const glm::ivec3 end) {
@@ -53,10 +38,11 @@ void ChunkStreamer::requestRange(const glm::ivec3 start, const glm::ivec3 end) {
 }
 
 void ChunkStreamer::unloadChunk(const glm::ivec3 chunkPosition) {
-	const bool wasPending = concurrency::cancelAndErase(m_pendingGeneration, chunkPosition);
-	const bool wasLoaded  = m_chunks.erase(chunkPosition) > 0;
+	const bool wasWaiting  = m_waiting.erase(chunkPosition) > 0;
+	const bool wasInFlight = concurrency::cancelAndErase(m_inFlight, chunkPosition);
+	const bool wasLoaded   = m_chunks.erase(chunkPosition) > 0;
 
-	if (wasPending || wasLoaded) {
+	if (wasWaiting || wasInFlight || wasLoaded) {
 		refreshStats();
 		m_dispatcher.emit(ChunkUnloadedEvent(chunkPosition));
 	}
@@ -80,20 +66,67 @@ void ChunkStreamer::setBlock(const glm::ivec3 chunkPosition, const glm::ivec3 bl
 }
 
 void ChunkStreamer::update() {
-	std::vector<GeneratedChunk> generated = m_generated->drain();
+	integrateGeneratedChunks();
+	requestAroundViewer();
+	startGenerationJobs();
+	refreshStats();
+}
 
-	for (auto& [position, token, chunk]: generated) {
-		if (token.isCancelled())
+void ChunkStreamer::requestAroundViewer() {
+	const glm::ivec3 viewerChunk = chunkContaining(m_viewer.position);
+	if (m_viewerChunk == viewerChunk)
+		return;
+	m_viewerChunk = viewerChunk;
+
+	const glm::ivec3 reach = renderDistanceReach(m_settings.renderDistance);
+
+	for (int x = -reach.x; x <= reach.x; ++x) {
+		for (int y = -reach.y; y <= reach.y; ++y) {
+			for (int z = -reach.z; z <= reach.z; ++z) {
+				if (!isWithinRenderDistance({x, y, z}, m_settings.renderDistance))
+					continue;
+
+				const glm::ivec3 position = viewerChunk + glm::ivec3(x, y, z);
+				if (!m_chunks.contains(position) && !m_waiting.contains(position) && !m_inFlight.contains(position))
+					requestChunk(position);
+			}
+		}
+	}
+}
+
+void ChunkStreamer::integrateGeneratedChunks() {
+	for (GeneratedChunk& result: m_generated->drain()) {
+		--m_runningJobs;
+		if (result.token.isCancelled() || !result.chunk)
 			continue;
 
-		m_pendingGeneration.erase(position);
-		const Chunk& stored = m_chunks.insert_or_assign(position, std::move(*chunk)).first->second;
-		m_dispatcher.emit(ChunkLoadedEvent(position, stored));
+		m_inFlight.erase(result.position);
+		const Chunk& stored = m_chunks.insert_or_assign(result.position, std::move(*result.chunk)).first->second;
+		m_dispatcher.emit(ChunkLoadedEvent(result.position, stored));
 	}
+}
 
-	if (!generated.empty())
-		refreshStats();
-	m_stats.pendingGeneration = m_pendingGeneration.size();
+void ChunkStreamer::startGenerationJobs() {
+	const std::size_t queueLimit = jobQueueLimit(m_pool, m_settings.queuedJobsPerWorker);
+	if (m_waiting.empty() || m_runningJobs >= queueLimit)
+		return;
+
+	const std::vector waiting(m_waiting.begin(), m_waiting.end());
+	for (const glm::ivec3& position: mostUrgentChunks(waiting, queueLimit - m_runningJobs, m_viewer)) {
+		m_waiting.erase(position);
+
+		const concurrency::CancelToken token;
+		m_inFlight[position] = token;
+		++m_runningJobs;
+
+		m_pool.submit(generationJobPriority, [loader = &m_chunkLoader, position, token, results = m_generated] {
+			if (token.isCancelled()) {
+				results->push({.position = position, .token = token, .chunk = nullptr});
+				return;
+			}
+			results->push({.position = position, .token = token, .chunk = loader->loadChunk(position)});
+		});
+	}
 }
 
 bool ChunkStreamer::isLoaded(const glm::ivec3 chunkPosition) const {
@@ -101,12 +134,13 @@ bool ChunkStreamer::isLoaded(const glm::ivec3 chunkPosition) const {
 }
 
 bool ChunkStreamer::isIdle() const {
-	return m_pendingGeneration.empty();
+	return m_waiting.empty() && m_inFlight.empty();
 }
 
 void ChunkStreamer::refreshStats() const {
-	m_stats.loadedChunks   = m_chunks.size();
-	m_stats.chunkDataBytes = 0;
+	m_stats.loadedChunks      = m_chunks.size();
+	m_stats.pendingGeneration = m_waiting.size() + m_inFlight.size();
+	m_stats.chunkDataBytes    = 0;
 	for (const Chunk& chunk: m_chunks | std::views::values)
 		m_stats.chunkDataBytes += chunk.dataBytes();
 }
