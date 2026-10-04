@@ -299,9 +299,93 @@ SCENARIO("Chunks are requested around the player's chunk as they move", "[chunk-
 			env.streamer.setViewer({.position = {(16.0f * 20) + 8.0f, 8.0f, 8.0f}, .forward = {0.0f, 0.0f, -1.0f}});
 			env.settle();
 
-			THEN("a whole new area is generated around them and nothing is unloaded") {
-				REQUIRE(env.stats.loadedChunks == static_cast<size_t>(2 * chunksAroundSpawn));
+			THEN("a whole new area is generated around them") {
 				REQUIRE(env.streamer.isLoaded({20, 0, 0}));
+				REQUIRE(env.stats.loadedChunks == chunksAroundSpawn);
+			}
+			AND_THEN("every chunk of the old area is unloaded") {
+				REQUIRE_FALSE(env.streamer.isLoaded({0, 0, 0}));
+				REQUIRE(test::toSet(env.recorder.unloaded) == test::renderAreaAround({0, 0, 0}, spawnRenderDistance));
+			}
+		}
+	}
+}
+
+SCENARIO("Chunks the player left behind are unloaded, with some margin", "[chunk-streamer][unload]") {
+	GIVEN("a streamer that has generated the chunks around the first chunk") {
+		StreamerEnv env(spawnRenderDistance);
+		env.settle();
+
+		WHEN("the player walks one chunk away") {
+			env.streamer.setViewer({.position = {16.0f + 8.0f, 8.0f, 8.0f}, .forward = {1.0f, 0.0f, 0.0f}});
+			env.settle();
+
+			THEN("chunks just outside the render distance are kept, so walking back and forth does not reload them") {
+				REQUIRE(env.streamer.isLoaded({-1, 0, 0}));
+				REQUIRE(env.recorder.unloaded.empty());
+			}
+		}
+
+		WHEN("the player walks three chunks away") {
+			env.streamer.setViewer({.position = {(16.0f * 3) + 8.0f, 8.0f, 8.0f}, .forward = {1.0f, 0.0f, 0.0f}});
+			env.settle();
+
+			THEN("chunks beyond the margin are unloaded and announced") {
+				REQUIRE_FALSE(env.streamer.isLoaded({-1, 0, 0}));
+				REQUIRE(std::ranges::find(env.recorder.unloaded, glm::ivec3(-1, 0, 0)) != env.recorder.unloaded.end());
+			}
+			AND_THEN("the chunks around the player stay loaded") {
+				REQUIRE(env.streamer.isLoaded({3, 0, 0}));
+				REQUIRE(env.streamer.isLoaded({2, 0, 0}));
+			}
+			AND_THEN("they no longer count as loaded") {
+				REQUIRE(env.stats.loadedChunks == env.recorder.requested.size() - env.recorder.unloaded.size());
+			}
+		}
+
+		WHEN("the player walks one chunk away and back") {
+			env.streamer.setViewer({.position = {16.0f + 8.0f, 8.0f, 8.0f}, .forward = {1.0f, 0.0f, 0.0f}});
+			env.settle();
+			env.streamer.setViewer(atSpawnLookingNorth);
+			env.settle();
+
+			THEN("nothing is unloaded and the chunks of the first area are not requested again") {
+				REQUIRE(env.recorder.unloaded.empty());
+				const test::ChunkSet bothAreas = test::unionOf(test::renderAreaAround({0, 0, 0}, spawnRenderDistance),
+															   test::renderAreaAround({1, 0, 0}, spawnRenderDistance));
+				REQUIRE(env.recorder.requested.size() == bothAreas.size());
+			}
+		}
+	}
+
+	GIVEN("a streamer that still waits for most of the chunks around the player") {
+		StreamerEnv env(spawnRenderDistance, 1);
+		env.streamer.update();
+		REQUIRE(env.stats.pendingGeneration == chunksAroundSpawn);
+
+		WHEN("the player walks far away before they are generated") {
+			env.streamer.setViewer({.position = {(16.0f * 20) + 8.0f, 8.0f, 8.0f}, .forward = {0.0f, 0.0f, -1.0f}});
+			env.settle();
+
+			THEN("the chunks that were never generated are unloaded too and never arrive") {
+				REQUIRE(env.recorder.unloaded.size() == chunksAroundSpawn);
+				for (const auto& [position, chunk]: env.recorder.loaded)
+					REQUIRE(position.x >= 18);
+			}
+		}
+	}
+
+	GIVEN("a streamer that does not stream around the player") {
+		StreamerEnv env;
+		env.streamer.requestChunk({40, -1, 40});
+		env.settle();
+
+		WHEN("the player moves to another chunk") {
+			env.streamer.setViewer({.position = {16.0f * 5, 8.0f, 8.0f}, .forward = {1.0f, 0.0f, 0.0f}});
+			env.settle();
+
+			THEN("the chunk that was requested by hand stays loaded") {
+				REQUIRE(env.streamer.isLoaded({40, -1, 40}));
 				REQUIRE(env.recorder.unloaded.empty());
 			}
 		}

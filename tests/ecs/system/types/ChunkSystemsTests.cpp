@@ -123,8 +123,12 @@ SCENARIO("The world is built around the player and grows as they walk", "[ecs][c
 				player.get<ecs::component::Transform>().position.x += 10 * 16;
 				settle();
 
-				THEN("the chunks around the new place are generated as well, and the old ones stay") {
-					REQUIRE(env.serverStats.loadedChunks == static_cast<size_t>(2 * chunksAroundSpawn));
+				THEN("the chunks around the new place are generated and the old ones are gone") {
+					REQUIRE(env.serverStats.loadedChunks == static_cast<size_t>(chunksAroundSpawn));
+					for (auto&& [entity, transform]: env.registry.query<const ecs::component::Transform>()) {
+						if (entity != player.id())
+							REQUIRE(transform.position.x >= 19 * 16);
+					}
 				}
 			}
 		}

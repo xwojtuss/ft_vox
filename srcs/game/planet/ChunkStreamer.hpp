@@ -23,6 +23,8 @@ namespace game::planet {
 	struct ChunkStreamSettings {
 		RenderDistance renderDistance = scene::planetinfo::renderDistance;
 
+		unsigned short unloadMargin = defaultUnloadMargin;
+
 		std::size_t queuedJobsPerWorker = defaultQueuedJobsPerWorker;
 	};
 
@@ -48,7 +50,10 @@ namespace game::planet {
 		Viewer                    m_viewer;
 		std::optional<glm::ivec3> m_viewerChunk;
 
-		void requestAroundViewer();
+		void removeChunk(glm::ivec3 chunkPosition);
+		void followViewer();
+		void unloadFarChunks(glm::ivec3 viewerChunk);
+		void requestNearChunks(glm::ivec3 viewerChunk);
 		void integrateGeneratedChunks();
 		void startGenerationJobs();
 		void refreshStats() const;

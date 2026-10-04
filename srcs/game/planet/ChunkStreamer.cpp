@@ -1,5 +1,6 @@
 #include "game/planet/ChunkStreamer.hpp"
 
+#include <glm/vector_relational.hpp>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -38,21 +39,25 @@ void ChunkStreamer::requestRange(const glm::ivec3 start, const glm::ivec3 end) {
 }
 
 void ChunkStreamer::unloadChunk(const glm::ivec3 chunkPosition) {
-	const bool wasWaiting  = m_waiting.erase(chunkPosition) > 0;
-	const bool wasInFlight = concurrency::cancelAndErase(m_inFlight, chunkPosition);
-	const bool wasLoaded   = m_chunks.erase(chunkPosition) > 0;
-
-	if (wasWaiting || wasInFlight || wasLoaded) {
-		refreshStats();
-		m_dispatcher.emit(ChunkUnloadedEvent(chunkPosition));
-	}
+	removeChunk(chunkPosition);
+	refreshStats();
 }
 
 void ChunkStreamer::unloadRange(const glm::ivec3 start, const glm::ivec3 end) {
 	for (int x = start.x; x <= end.x; ++x)
 		for (int y = start.y; y <= end.y; ++y)
 			for (int z = start.z; z <= end.z; ++z)
-				unloadChunk({x, y, z});
+				removeChunk({x, y, z});
+	refreshStats();
+}
+
+void ChunkStreamer::removeChunk(const glm::ivec3 chunkPosition) {
+	const bool wasWaiting  = m_waiting.erase(chunkPosition) > 0;
+	const bool wasInFlight = concurrency::cancelAndErase(m_inFlight, chunkPosition);
+	const bool wasLoaded   = m_chunks.erase(chunkPosition) > 0;
+
+	if (wasWaiting || wasInFlight || wasLoaded)
+		m_dispatcher.emit(ChunkUnloadedEvent(chunkPosition));
 }
 
 void ChunkStreamer::setBlock(const glm::ivec3 chunkPosition, const glm::ivec3 blockPosition, const Block& block) {
@@ -67,17 +72,47 @@ void ChunkStreamer::setBlock(const glm::ivec3 chunkPosition, const glm::ivec3 bl
 
 void ChunkStreamer::update() {
 	integrateGeneratedChunks();
-	requestAroundViewer();
+	followViewer();
 	startGenerationJobs();
 	refreshStats();
 }
 
-void ChunkStreamer::requestAroundViewer() {
+void ChunkStreamer::followViewer() {
 	const glm::ivec3 viewerChunk = chunkContaining(m_viewer.position);
 	if (m_viewerChunk == viewerChunk)
 		return;
 	m_viewerChunk = viewerChunk;
 
+	if (glm::any(glm::equal(m_settings.renderDistance, RenderDistance(0))))
+		return;
+
+	unloadFarChunks(viewerChunk);
+	requestNearChunks(viewerChunk);
+}
+
+void ChunkStreamer::unloadFarChunks(const glm::ivec3 viewerChunk) {
+	const RenderDistance keptDistance = m_settings.renderDistance + m_settings.unloadMargin;
+	const auto           isFar        = [&](const glm::ivec3& position) {
+        return !isWithinRenderDistance(position - viewerChunk, keptDistance);
+	};
+
+	std::vector<glm::ivec3> farChunks;
+	const auto              collectFar = [&](const auto& positions) {
+        for (const glm::ivec3& position: positions) {
+            if (isFar(position))
+                farChunks.push_back(position);
+        }
+	};
+	collectFar(m_chunks | std::views::keys);
+	collectFar(m_waiting);
+	collectFar(m_inFlight | std::views::keys);
+
+	for (const glm::ivec3& position: farChunks)
+		removeChunk(position);
+	refreshStats();
+}
+
+void ChunkStreamer::requestNearChunks(const glm::ivec3 viewerChunk) {
 	const glm::ivec3 reach = renderDistanceReach(m_settings.renderDistance);
 
 	for (int x = -reach.x; x <= reach.x; ++x) {
