@@ -641,7 +641,9 @@ SCENARIO("Worker threads deliver the same chunks as running the jobs one by one"
 
 SCENARIO("The chunks around the player form a sphere, not a box", "[chunk-streamer]") {
 	GIVEN("a streamer with the same render distance on every axis") {
-		constexpr RenderDistance sphere = {8, 8, 8};
+		constexpr RenderDistance sphere      = {8, 8, 8};
+		constexpr size_t         boxSide     = 9;
+		constexpr size_t         chunksInBox = boxSide * boxSide * boxSide;
 		StreamerEnv              env(sphere);
 
 		WHEN("the first update runs") {
@@ -658,7 +660,7 @@ SCENARIO("The chunks around the player form a sphere, not a box", "[chunk-stream
 			}
 			AND_THEN("fewer chunks than the box are requested") {
 				REQUIRE(requested.size() == test::renderAreaSize(sphere));
-				REQUIRE(requested.size() < 9 * 9 * 9);
+				REQUIRE(requested.size() < chunksInBox);
 			}
 		}
 	}

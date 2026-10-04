@@ -56,8 +56,11 @@ std::vector<glm::ivec3> game::planet::mostUrgentChunks(const std::vector<glm::iv
 										 std::tie(b.cost, b.chunk.x, b.chunk.y, b.chunk.z);
 							  });
 
-	return candidates | std::views::take(kept) | std::views::transform(&Candidate::chunk) |
-		   std::ranges::to<std::vector>();
+	std::vector<glm::ivec3> result;
+	result.reserve(kept);
+	for (const Candidate& candidate: candidates | std::views::take(kept))
+		result.push_back(candidate.chunk);
+	return result;
 }
 
 std::size_t game::planet::jobQueueLimit(const concurrency::IThreadPool& pool, const std::size_t jobsPerWorker) {
