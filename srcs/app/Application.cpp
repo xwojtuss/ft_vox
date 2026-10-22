@@ -34,7 +34,7 @@ Application::Application() {
 
 	this->m_textureRepository->loadPacks(".");
 
-	auto defaultTextureData = m_textureRepository->get("base:default");
+	auto defaultTextureData         = m_textureRepository->get("base:default");
 	defaultTextureData.pixelPerfect = true;
 	game::block::BlockDatas blockDatas(m_modelLoader->toMeshData("models/cube.obj"), std::move(defaultTextureData));
 	m_registry = std::make_unique<Registry>(std::move(blockDatas));

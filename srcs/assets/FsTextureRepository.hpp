@@ -17,7 +17,7 @@ namespace assets {
 		[[nodiscard]] bool exists(std::string_view id) override;
 
 	private:
-		std::unique_ptr<ITextureLoader> texLoader_;
+		std::unique_ptr<ITextureLoader>              texLoader_;
 		std::unordered_map<std::string, TextureData> loadedTex_;
 
 		static std::string textureId(const std::filesystem::path& path);

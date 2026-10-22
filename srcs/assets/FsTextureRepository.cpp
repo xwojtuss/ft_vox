@@ -20,7 +20,7 @@ void FsTextureRepository::loadPacks(const std::filesystem::path& path) {
 		throw error::AssetError(texDir.string(), "texture directory not found");
 	}
 
-	for (const auto& entry : std::filesystem::recursive_directory_iterator(texDir)) {
+	for (const auto& entry: std::filesystem::recursive_directory_iterator(texDir)) {
 		if (!fs::is_regular_file(entry)) {
 			continue;
 		}
@@ -51,9 +51,5 @@ bool FsTextureRepository::exists(const std::string_view id) {
 }
 
 std::string FsTextureRepository::textureId(const std::filesystem::path& path) {
-	return std::format(
-		"{}:{}",
-		path.parent_path().filename().generic_string(),
-		path.stem().generic_string()
-	);
+	return std::format("{}:{}", path.parent_path().filename().generic_string(), path.stem().generic_string());
 }

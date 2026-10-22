@@ -15,17 +15,17 @@
 namespace app {
 	class Application {
 	private:
-		profiling::ClientStats						m_clientStats;
-		profiling::ServerStats						m_serverStats;
-		std::unique_ptr<concurrency::IThreadPool>	m_threadPool;
-		std::unique_ptr<platform::window::IWindow>	m_window;
-		std::unique_ptr<render::IRenderer>			m_renderer;
-		std::unique_ptr<render::gui::IGui>			m_gui;
-		std::unique_ptr<assets::IModelLoader>		m_modelLoader;
+		profiling::ClientStats                      m_clientStats;
+		profiling::ServerStats                      m_serverStats;
+		std::unique_ptr<concurrency::IThreadPool>   m_threadPool;
+		std::unique_ptr<platform::window::IWindow>  m_window;
+		std::unique_ptr<render::IRenderer>          m_renderer;
+		std::unique_ptr<render::gui::IGui>          m_gui;
+		std::unique_ptr<assets::IModelLoader>       m_modelLoader;
 		std::unique_ptr<assets::ITextureRepository> m_textureRepository;
-		std::unique_ptr<ecs::Registry>				m_registry;
-		double										m_lastSimulateTime = 0.0;
-		double										m_lastFrameTime    = 0.0;
+		std::unique_ptr<ecs::Registry>              m_registry;
+		double                                      m_lastSimulateTime = 0.0;
+		double                                      m_lastFrameTime    = 0.0;
 
 		void init();
 
