@@ -2,7 +2,7 @@
 #include "ecs/component/Components.hpp"
 #include "ecs/system/types/RenderSystem.hpp"
 #include "app/ApplicationInfo.hpp"
-#include "assets/StbTextureLoader.hpp"
+#include "assets/FsTextureRepository.hpp"
 #include "assets/TinyObjLoader.hpp"
 #include "game/block/BlockData.hpp"
 #include "log/Log.hpp"
@@ -30,9 +30,11 @@ Application::Application() {
 																		  vulkanRenderer->getSwapchain(), *m_window);
 	m_renderer          = std::move(vulkanRenderer);
 	m_modelLoader       = std::make_unique<assets::TinyObjLoader>();
-	m_textureLoader     = std::make_unique<assets::StbTextureLoader>();
+	m_textureRepository = std::make_unique<assets::FsTextureRepository>();
 
-	auto defaultTextureData         = m_textureLoader->toTextureData("textures/default.png");
+	this->m_textureRepository->loadPacks(".");
+
+	auto defaultTextureData = m_textureRepository->get("base:default");
 	defaultTextureData.pixelPerfect = true;
 	game::block::BlockDatas blockDatas(m_modelLoader->toMeshData("models/cube.obj"), std::move(defaultTextureData));
 	m_registry = std::make_unique<Registry>(std::move(blockDatas));
