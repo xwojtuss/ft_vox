@@ -3,15 +3,14 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-
 namespace {
-	constexpr const char* TEST_VALID_TEXTURE_PATH = "tests/fixtures/textures_valid";
+	constexpr const char* TEST_VALID_TEXTURE_PATH        = "tests/fixtures/textures_valid";
 	constexpr const char* TEST_NON_EXISTENT_TEXTURE_PATH = "foo/bar";
 }
 
 SCENARIO("repo can load all textures from a specified directory on the filesystem recursively", "[assets][textures]") {
 	GIVEN("an instance of FsTextureRepository and a texture location") {
-		auto subject = assets::FsTextureRepository{};
+		auto        subject         = assets::FsTextureRepository{};
 		const auto* textureLocation = TEST_VALID_TEXTURE_PATH;
 
 		WHEN("the packs are loaded") {

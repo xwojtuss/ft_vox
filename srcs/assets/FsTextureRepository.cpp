@@ -51,10 +51,10 @@ bool FsTextureRepository::exists(const std::string_view id) {
 std::string FsTextureRepository::textureId(const std::filesystem::path& texDir, const std::filesystem::path& file) {
 	namespace fs = std::filesystem;
 
-	const fs::path rel = file.lexically_relative(texDir);
+	const fs::path rel    = file.lexically_relative(texDir);
 	const fs::path parent = rel.parent_path();
-	std::string dir = parent.generic_string();
-	std::string name = rel.stem().string();
+	std::string    dir    = parent.generic_string();
+	std::string    name   = rel.stem().string();
 
 	if (dir.empty() || dir == ".")
 		return name;
