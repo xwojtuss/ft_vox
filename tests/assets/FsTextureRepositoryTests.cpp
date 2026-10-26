@@ -4,7 +4,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 namespace {
-	constexpr const char* TEST_VALID_TEXTURE_PATH        = "tests/fixtures/textures_valid";
+	constexpr const char* TEST_VALID_TEXTURE_PATH        = ".";
 	constexpr const char* TEST_NON_EXISTENT_TEXTURE_PATH = "foo/bar";
 }
 

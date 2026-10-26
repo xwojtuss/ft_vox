@@ -8,6 +8,7 @@
 #include "ITextureRepository.hpp"
 #include "StbTextureLoader.hpp"
 #include "error/Exception.hpp"
+#include "platform/filesystem/resolvePath.hpp"
 
 using namespace assets;
 
@@ -17,7 +18,7 @@ FsTextureRepository::FsTextureRepository() : texLoader_(std::make_unique<StbText
 void FsTextureRepository::loadPacks(const std::filesystem::path& path) {
 	namespace fs = std::filesystem;
 
-	const fs::path texDir = path / TEXTURES_DIR_NAME;
+	const fs::path texDir = fs::path(resolvePath(path)) / TEXTURES_DIR_NAME;
 	if (!fs::is_directory(texDir)) {
 		throw error::AssetError(texDir.string(), "texture directory not found");
 	}
