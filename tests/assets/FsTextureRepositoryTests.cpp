@@ -6,6 +6,7 @@
 namespace {
 	constexpr const char* TEST_VALID_TEXTURE_PATH        = TEST_FIXTURES_DIR "/textures_valid";
 	constexpr const char* TEST_NON_EXISTENT_TEXTURE_PATH = "foo/bar";
+	constexpr const char* TEST_INVALID_TEXTURE_PATH      = TEST_FIXTURES_DIR "/textures_invalid";
 }
 
 SCENARIO("repo can load all textures from a specified directory on the filesystem recursively", "[assets][textures]") {
@@ -43,6 +44,21 @@ SCENARIO("fetching a non-existent texture results in a throw", "[assets][texture
 			REQUIRE_NOTHROW(subject.loadPacks(TEST_VALID_TEXTURE_PATH));
 			AND_THEN("exception is thrown") {
 				REQUIRE_THROWS_AS(subject.get("non-existent:default"), error::AssetError);
+			}
+		}
+	}
+}
+
+SCENARIO("loading skips non-allowed extensions", "[assets][textures]") {
+	GIVEN("an instance of FsTextureRepository and a texture with an invalid extension") {
+		auto subject = assets::FsTextureRepository{};
+
+		WHEN("the packs are loaded") {
+			REQUIRE_NOTHROW(subject.loadPacks(TEST_INVALID_TEXTURE_PATH));
+
+			THEN("the texture is not available") {
+				REQUIRE_THROWS_AS(subject.get("should_be_skipped:certainly_not_a_texture_file"), error::AssetError);
+				REQUIRE_NOTHROW(subject.get("should_not_be_skipped:valid_alongside_invalid"));
 			}
 		}
 	}

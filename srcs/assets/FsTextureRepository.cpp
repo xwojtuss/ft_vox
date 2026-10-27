@@ -5,14 +5,14 @@
 #include <format>
 #include <ranges>
 
-#include "ITextureRepository.hpp"
 #include "StbTextureLoader.hpp"
 #include "error/Exception.hpp"
+#include "platform/filesystem/filesystemUtils.hpp"
 #include "platform/filesystem/resolvePath.hpp"
 
 using namespace assets;
 
-FsTextureRepository::FsTextureRepository() : texLoader_(std::make_unique<StbTextureLoader>()) {
+FsTextureRepository::FsTextureRepository() : m_textureLoader(std::make_unique<StbTextureLoader>()) {
 }
 
 void FsTextureRepository::loadPacks(const std::filesystem::path& path) {
@@ -23,30 +23,27 @@ void FsTextureRepository::loadPacks(const std::filesystem::path& path) {
 		throw error::AssetError(texDir.string(), "texture directory not found");
 	}
 
-	for (const auto& entry: std::filesystem::recursive_directory_iterator(texDir)) {
-		if (!fs::is_regular_file(entry)) {
+	for (const auto& entry: fs::recursive_directory_iterator(texDir, fs::directory_options::skip_permission_denied)) {
+		if (!fs::is_regular_file(entry) || !hasAllowedExtension(entry.path().filename(), {".png", ".jpg", ".jpeg"})) {
 			continue;
 		}
 
-		TextureData tex = this->texLoader_->toTextureData(entry.path().string());
+		TextureData tex = this->m_textureLoader->toTextureData(entry.path().string());
 
 		const std::string texId = textureId(texDir, entry.path());
 
-		if (auto [it, inserted] = this->loadedTex_.emplace(texId, std::move(tex)); !inserted) {
+		if (auto [it, inserted] = this->m_loadedTextures.emplace(texId, std::move(tex)); !inserted) {
 			throw error::AssetError(texId, "duplicate texture loading attempt");
 		}
 	}
 }
 
-const TextureData& FsTextureRepository::get(const std::string_view id) {
-	if (!exists(id)) {
+const TextureData& FsTextureRepository::get(const std::string_view id) const {
+	const auto it = this->m_loadedTextures.find(std::string(id));
+	if (it == this->m_loadedTextures.end()) {
 		throw error::AssetError(static_cast<std::string>(id), "texture id does not exist");
 	}
-	return this->loadedTex_.at(std::string(id));
-}
-
-bool FsTextureRepository::exists(const std::string_view id) {
-	return this->loadedTex_.contains(std::string(id));
+	return it->second;
 }
 
 std::string FsTextureRepository::textureId(const std::filesystem::path& texDir, const std::filesystem::path& file) {

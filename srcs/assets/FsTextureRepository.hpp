@@ -11,16 +11,13 @@ namespace assets {
 
 		void loadPacks(const std::filesystem::path& path) override;
 
-		[[nodiscard]] const TextureData& get(std::string_view id) override;
-
-	protected:
-		[[nodiscard]] bool exists(std::string_view id) override;
+		[[nodiscard]] const TextureData& get(std::string_view id) const override;
 
 	private:
 		static constexpr auto TEXTURES_DIR_NAME = "textures";
 
-		std::unique_ptr<ITextureLoader>              texLoader_;
-		std::unordered_map<std::string, TextureData> loadedTex_;
+		std::unique_ptr<ITextureLoader>              m_textureLoader;
+		std::unordered_map<std::string, TextureData> m_loadedTextures;
 
 		static std::string textureId(const std::filesystem::path& texDir, const std::filesystem::path& file);
 	};
