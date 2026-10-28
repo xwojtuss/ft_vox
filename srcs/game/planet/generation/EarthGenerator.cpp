@@ -21,8 +21,7 @@ float EarthGenerator::normalizedHeightAt(const int planetX, const int planetZ) c
 // TODO: refactor to split this mess
 void EarthGenerator::generateChunk(Chunk* chunk, const glm::ivec3 chunkPosition) const {
 	const int     planetChunkBaseY = static_cast<int>(chunkPosition.y) * chunkYSize;
-	constexpr int maxTerrainHeight = std::min<int>(scene::planetinfo::terrainMaxHeightBlocks,
-												   chunkYSize * scene::planetinfo::maxVerticalRenderDistance);
+	constexpr int maxTerrainHeight = scene::planetinfo::terrainMaxHeightBlocks;
 	if (planetChunkBaseY >= maxTerrainHeight)
 		return;
 

@@ -15,7 +15,6 @@ namespace ecs {
 		ChunkStreamSystem(Registry& registry, concurrency::IThreadPool& pool, profiling::ServerStats& stats,
 						  game::Seed seed, game::planet::ChunkStreamSettings settings = {});
 
-		void onRegistryReady(const RegistryReadyEvent& event);
 		void onSimulate(const SimulateEvent& event);
 		void bindEvents(Dispatcher& dispatcher) override;
 	};

@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "ecs/component/Components.hpp"
-#include "game/planet/ChunkPriority.hpp"
+#include "game/planet/ChunkOrder.hpp"
 #include "profiling/Profiler.hpp"
 #include "render/IRenderer.hpp"
 
@@ -71,8 +71,8 @@ void ChunkRenderer::onChunkChanged(const ChunkChangedEvent& event) {
 
 void ChunkRenderer::update() {
 	FT_PROFILE_FUNCTION();
-	startReadyMeshJobs();
 	integrateMeshes();
+	startReadyMeshJobs();
 
 	m_stats.pendingMeshing = m_dirty.size() + m_meshJobs.size();
 }
@@ -101,15 +101,23 @@ bool ChunkRenderer::isReadyToMesh(const glm::ivec3 chunkPosition) const {
 	});
 }
 
-void ChunkRenderer::startReadyMeshJobs() {
-	for (auto dirty = m_dirty.begin(); dirty != m_dirty.end();) {
-		if (!isReadyToMesh(*dirty)) {
-			++dirty;
-			continue;
-		}
+void ChunkRenderer::setViewer(const Viewer& viewer) {
+	m_viewer = viewer;
+}
 
-		const glm::ivec3 position = *dirty;
-		dirty                     = m_dirty.erase(dirty);
+void ChunkRenderer::startReadyMeshJobs() {
+	const std::size_t queueLimit = jobQueueLimit(m_pool, m_settings.queuedJobsPerWorker);
+	if (m_dirty.empty() || m_runningMeshJobs >= queueLimit)
+		return;
+
+	std::vector<glm::ivec3> ready;
+	for (const glm::ivec3& position: m_dirty) {
+		if (isReadyToMesh(position))
+			ready.push_back(position);
+	}
+
+	for (const glm::ivec3& position: mostUrgentChunks(ready, queueLimit - m_runningMeshJobs, m_viewer)) {
+		m_dirty.erase(position);
 		startMeshing(position);
 	}
 }
@@ -128,7 +136,8 @@ void ChunkRenderer::submitMeshJob(const glm::ivec3 chunkPosition) {
 	const concurrency::CancelToken token;
 	m_meshJobs[chunkPosition] = token;
 
-	m_pool.submit(chunkPriority(ChunkJob::Mesh, chunkPosition, m_priorityCenter), makeMeshJob(chunkPosition, token));
+	++m_runningMeshJobs;
+	m_pool.submit(meshJobPriority, makeMeshJob(chunkPosition, token));
 }
 
 ChunkRenderer::NeighbourSnapshots ChunkRenderer::snapshotNeighbours(const glm::ivec3 chunkPosition) const {
@@ -145,8 +154,10 @@ concurrency::Task ChunkRenderer::makeMeshJob(const glm::ivec3                chu
 											 const concurrency::CancelToken& token) const {
 	return [mesher = &m_chunkMesher, chunkPosition, token, chunk = m_chunks.at(chunkPosition),
 			neighbours = snapshotNeighbours(chunkPosition), results = m_meshed] {
-		if (token.isCancelled())
+		if (token.isCancelled()) {
+			results->push({.position = chunkPosition, .token = token, .mesh = {}});
 			return;
+		}
 
 		results->push(
 			{.position = chunkPosition, .token = token, .mesh = mesher->toMeshData(chunk, viewsOf(neighbours))});
@@ -154,8 +165,10 @@ concurrency::Task ChunkRenderer::makeMeshJob(const glm::ivec3                chu
 }
 
 void ChunkRenderer::integrateMeshes() {
-	for (MeshedChunk& meshed: m_meshed->drain())
+	for (MeshedChunk& meshed: m_meshed->drain()) {
+		--m_runningMeshJobs;
 		m_readyMeshes.push_back(std::move(meshed));
+	}
 
 	std::size_t uploads = 0;
 	while (!m_readyMeshes.empty() && uploads < m_settings.meshUploadsPerFrame) {

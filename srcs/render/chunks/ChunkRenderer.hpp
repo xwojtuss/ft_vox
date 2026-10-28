@@ -17,6 +17,7 @@
 #include "game/planet/Chunk.hpp"
 #include "game/planet/ChunkEvents.hpp"
 #include "game/planet/ChunkMesher.hpp"
+#include "game/planet/ChunkOrder.hpp"
 #include "profiling/ClientStats.hpp"
 
 namespace render::chunks {
@@ -24,6 +25,8 @@ namespace render::chunks {
 
 	struct ChunkRenderSettings {
 		std::size_t meshUploadsPerFrame = defaultMeshUploadsPerFrame;
+
+		std::size_t queuedJobsPerWorker = game::planet::defaultQueuedJobsPerWorker;
 	};
 
 	class ChunkRenderer {
@@ -49,7 +52,8 @@ namespace render::chunks {
 		profiling::ClientStats&   m_stats;
 		assets::TextureHandle     m_chunkTexture;
 		ChunkRenderSettings       m_settings;
-		glm::ivec3                m_priorityCenter{0};
+		std::size_t               m_runningMeshJobs = 0;
+		game::planet::Viewer      m_viewer;
 
 		using NeighbourSnapshots = std::array<std::optional<game::planet::Chunk>, game::planet::chunkFaceCount>;
 
@@ -81,6 +85,8 @@ namespace render::chunks {
 		void onChunkLoaded(const game::planet::ChunkLoadedEvent& event);
 		void onChunkUnloaded(const game::planet::ChunkUnloadedEvent& event);
 		void onChunkChanged(const game::planet::ChunkChangedEvent& event);
+
+		void setViewer(const game::planet::Viewer& viewer);
 
 		/** Starts meshing what is ready and puts finished meshes into the world. Call once per frame. */
 		void update();
