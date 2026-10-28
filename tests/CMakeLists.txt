@@ -15,6 +15,8 @@ file(GLOB_RECURSE FT_VOX_TEST_SOURCES CONFIGURE_DEPENDS
 
 add_executable(ft_vox_tests ${FT_VOX_TEST_SOURCES})
 
+target_compile_definitions(ft_vox_tests PRIVATE TEST_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+
 target_include_directories(ft_vox_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 find_package(Threads REQUIRED)
