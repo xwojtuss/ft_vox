@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "assets/ITextureRepository.hpp"
 #include "concurrency/CancelToken.hpp"
 #include "concurrency/IThreadPool.hpp"
 #include "concurrency/ResultQueue.hpp"
@@ -42,14 +43,15 @@ namespace render::chunks {
 		std::deque<MeshedChunk>                                  m_readyMeshes;
 		std::shared_ptr<concurrency::ResultQueue<MeshedChunk>>   m_meshed =
 			std::make_shared<concurrency::ResultQueue<MeshedChunk>>();
-		game::planet::ChunkMesher m_chunkMesher;
-		ecs::Registry&            m_registry;
-		IRenderer&                m_renderer;
-		concurrency::IThreadPool& m_pool;
-		profiling::ClientStats&   m_stats;
-		assets::TextureHandle     m_chunkTexture;
-		ChunkRenderSettings       m_settings;
-		glm::ivec3                m_priorityCenter{0};
+		game::planet::ChunkMesher   m_chunkMesher;
+		ecs::Registry&              m_registry;
+		IRenderer&                  m_renderer;
+		assets::ITextureRepository& m_textureRepository;
+		concurrency::IThreadPool&   m_pool;
+		profiling::ClientStats&     m_stats;
+		assets::TextureHandle       m_chunkTexture;
+		ChunkRenderSettings         m_settings;
+		glm::ivec3                  m_priorityCenter{0};
 
 		using NeighbourSnapshots = std::array<std::optional<game::planet::Chunk>, game::planet::chunkFaceCount>;
 
@@ -69,8 +71,9 @@ namespace render::chunks {
 		void applyMesh(const MeshedChunk& meshed);
 
 	public:
-		ChunkRenderer(game::block::BlockDatas& blockDatas, ecs::Registry& registry, IRenderer& renderer,
-					  concurrency::IThreadPool& pool, profiling::ClientStats& stats, ChunkRenderSettings settings = {});
+		ChunkRenderer(game::block::BlockDatas& blockDatas, assets::ITextureRepository& textureRepository,
+					  ecs::Registry& registry, IRenderer& renderer, concurrency::IThreadPool& pool,
+					  profiling::ClientStats& stats, ChunkRenderSettings settings = {});
 		ChunkRenderer(const ChunkRenderer&)            = delete;
 		ChunkRenderer& operator=(const ChunkRenderer&) = delete;
 		ChunkRenderer(ChunkRenderer&&)                 = delete;

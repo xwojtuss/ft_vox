@@ -9,6 +9,7 @@
 #include "render/chunks/ChunkRenderer.hpp"
 #include "support/Blocks.hpp"
 #include "support/FakeRenderer.hpp"
+#include "support/FakeTextureRepository.hpp"
 #include "support/ManualThreadPool.hpp"
 
 using game::Block;
@@ -36,15 +37,16 @@ namespace {
 	}
 
 	struct RendererEnv {
-		game::block::BlockDatas blockDatas = test::makeBlockDatas();
-		ecs::Registry           registry{blockDatas};
-		test::FakeRenderer      renderer;
-		test::ManualThreadPool  pool;
-		profiling::ClientStats  stats;
-		ChunkRenderer           chunkRenderer;
+		game::block::BlockDatas     blockDatas = test::makeBlockDatas();
+		ecs::Registry               registry{blockDatas};
+		test::FakeTextureRepository textures;
+		test::FakeRenderer          renderer;
+		test::ManualThreadPool      pool;
+		profiling::ClientStats      stats;
+		ChunkRenderer               chunkRenderer;
 
 		explicit RendererEnv(const size_t uploadsPerFrame = std::numeric_limits<size_t>::max()) :
-			chunkRenderer(blockDatas, registry, renderer, pool, stats, ChunkRenderSettings{uploadsPerFrame}) {
+			chunkRenderer(blockDatas, textures, registry, renderer, pool, stats, ChunkRenderSettings{uploadsPerFrame}) {
 		}
 
 		void load(const glm::ivec3 position, const Chunk& chunk) {

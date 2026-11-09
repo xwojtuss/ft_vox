@@ -214,8 +214,10 @@ SCENARIO("The game's block model fills exactly its own cell", "[mesher][assets]"
 	GIVEN("the cube model the game loads for its blocks") {
 		assets::TinyObjLoader   loader;
 		const assets::MeshData  cube = loader.toMeshData("models/cube.obj");
-		game::block::BlockDatas blockDatas(cube, assets::TextureData{});
-		const ChunkMesher       mesher(blockDatas);
+		game::block::BlockDatas blockDatas;
+		blockDatas.add(
+			{.prettyName = "Dirt", .meshData = cube, .textureId = "base:dirt", .isUnique = false, .packName = "base"});
+		const ChunkMesher mesher(blockDatas);
 
 		THEN("every corner lies between 0 and 1 on every axis") {
 			for (const render::Vertex& vertex: cube.vertices) {

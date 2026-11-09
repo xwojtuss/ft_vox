@@ -25,12 +25,17 @@ namespace {
 	}
 }
 
-ChunkRenderer::ChunkRenderer(game::block::BlockDatas& blockDatas, ecs::Registry& registry, IRenderer& renderer,
-							 concurrency::IThreadPool& pool, profiling::ClientStats& stats,
-							 const ChunkRenderSettings settings) :
-	m_chunkMesher(blockDatas), m_registry(registry), m_renderer(renderer), m_pool(pool), m_stats(stats),
-	m_settings(settings) {
-	m_chunkTexture = renderer.createTexture(blockDatas.getBlockData(1).textureData);
+ChunkRenderer::ChunkRenderer(game::block::BlockDatas& blockDatas, assets::ITextureRepository& textureRepository,
+							 ecs::Registry& registry, IRenderer& renderer, concurrency::IThreadPool& pool,
+							 profiling::ClientStats& stats, const ChunkRenderSettings settings) :
+	m_chunkMesher(blockDatas), m_registry(registry), m_renderer(renderer), m_textureRepository(textureRepository),
+	m_pool(pool), m_stats(stats), m_settings(settings) {
+	if (blockDatas.size() > 1) {
+		assets::TextureData textureData = m_textureRepository.get(blockDatas.getBlockData(1).textureId);
+		textureData.pixelPerfect        = true;
+
+		m_chunkTexture = renderer.createTexture(textureData);
+	}
 }
 
 ChunkRenderer::~ChunkRenderer() {

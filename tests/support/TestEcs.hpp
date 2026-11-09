@@ -62,7 +62,7 @@ namespace test {
 	};
 
 	struct TestRegistry {
-		game::block::BlockDatas blockDatas{assets::MeshData{}, assets::TextureData{}};
+		game::block::BlockDatas blockDatas{};
 		ecs::Registry           registry{blockDatas};
 
 		TestRegistry() {

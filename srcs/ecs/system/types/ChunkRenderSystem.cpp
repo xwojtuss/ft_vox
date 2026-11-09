@@ -3,10 +3,11 @@
 
 using namespace ecs;
 
-ChunkRenderSystem::ChunkRenderSystem(Registry& registry, render::IRenderer& renderer, concurrency::IThreadPool& pool,
+ChunkRenderSystem::ChunkRenderSystem(Registry& registry, render::IRenderer& renderer,
+									 assets::ITextureRepository& textureRepository, concurrency::IThreadPool& pool,
 									 profiling::ClientStats&                   stats,
 									 const render::chunks::ChunkRenderSettings settings) :
-	m_chunkRenderer(registry.getBlockDatas(), registry, renderer, pool, stats, settings) {
+	m_chunkRenderer(registry.getBlockDatas(), textureRepository, registry, renderer, pool, stats, settings) {
 }
 
 void ChunkRenderSystem::onRender([[maybe_unused]] const RenderEvent& event) {

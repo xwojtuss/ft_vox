@@ -35,12 +35,14 @@ namespace test {
 		return mesh;
 	}
 
-	inline game::block::BlockDatas makeBlockDatas(std::vector<unsigned char> dirtTexturePixels = {0, 0, 0, 255}) {
-		assets::TextureData texture{};
-		texture.width     = 1;
-		texture.height    = 1;
-		texture.mipLevels = 1;
-		texture.pixels    = std::move(dirtTexturePixels);
-		return {makeCubeMesh(), texture};
+	inline game::block::BlockDatas makeBlockDatas() {
+		game::block::BlockDatas blockDatas;
+		blockDatas.add({.prettyName = "Dirt",
+						.meshData   = makeCubeMesh(),
+						.textureId  = "base:dirt",
+						.isUnique   = false,
+						.packName   = "base"});
+		blockDatas.add({.prettyName = "", .meshData = {}, .textureId = "", .isUnique = false, .packName = "test"});
+		return blockDatas;
 	}
 }
