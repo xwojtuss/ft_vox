@@ -18,9 +18,9 @@ namespace {
 
 SCENARIO("Every JSON file in a pack's blocks folder becomes a block", "[block][repository]") {
 	GIVEN("a temporary pack with two blocks") {
-		test::TemporaryDirectory    pack("blocks");
-		test::FakeTextureRepository textures;
-		FsBlockRepository           repository(textures);
+		const test::TemporaryDirectory pack("blocks");
+		test::FakeTextureRepository    textures;
+		FsBlockRepository              repository(textures);
 
 		pack.write("blocks/base/dirt.json", blockJson("Dirt"));
 		pack.write("blocks/custom/stone.json", blockJson("Stone"));
@@ -83,9 +83,9 @@ SCENARIO("Two blocks cannot share a pretty name", "[block][repository]") {
 
 SCENARIO("The block repository has no fixed number of blocks", "[block][repository]") {
 	GIVEN("a temporary pack with more than 256 block files") {
-		test::TemporaryDirectory    pack("many-blocks");
-		test::FakeTextureRepository textures;
-		FsBlockRepository           repository(textures);
+		const test::TemporaryDirectory pack("many-blocks");
+		test::FakeTextureRepository    textures;
+		FsBlockRepository              repository(textures);
 
 		for (unsigned int id = 0; id < 300; ++id)
 			pack.write(std::format("blocks/base/block{}.json", id), blockJson(std::format("Block{}", id)));
