@@ -1,6 +1,9 @@
 #pragma once
 
+#include <array>
+#include <istream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -13,11 +16,13 @@ private:
 	std::vector<std::string>                                m_names;
 	assets::MeshData                                        m_defaultMeshData;
 
-	static game::block::BlockData jsonToBlock(const nlohmann::json& json);
+	static game::block::BlockData jsonToBlock(std::istream& stream, const std::string& path);
+	static void                   assertLegalBlockName(std::string_view name);
+
+	static constexpr auto       BLOCK_DIR_NAME = "blocks";
+	static constexpr std::array EXCLUDED_BLOCK_NAMES{std::string_view{"air"}};
 
 public:
-	static constexpr auto BLOCK_DIR_NAME = "blocks";
-
 	explicit FsBlockRepository(assets::ITextureRepository& textureRepository, assets::MeshData defaultMeshData = {});
 
 	void loadBlocks(const std::filesystem::path& path) override;

@@ -22,25 +22,25 @@ SCENARIO("Every JSON file in a pack's blocks folder becomes a block", "[block][r
 		test::FakeTextureRepository    textures;
 		FsBlockRepository              repository(textures);
 
-		pack.write("blocks/base/dirt.json", blockJson("Dirt"));
-		pack.write("blocks/custom/stone.json", blockJson("Stone"));
+		pack.write("blocks/base/dirt.json", blockJson("dirt"));
+		pack.write("blocks/custom/stone.json", blockJson("stone"));
 
 		WHEN("the blocks are loaded") {
 			REQUIRE_NOTHROW(repository.loadBlocks(pack.path()));
 
-			THEN("both files are registered under their pretty name") {
-				REQUIRE(repository.names() == std::vector<std::string>{"Dirt", "Stone"});
+			THEN("both files are registered under their pack-qualified name") {
+				REQUIRE(repository.names() == std::vector<std::string>{"base:dirt", "custom:stone"});
 			}
 			AND_THEN("the block data comes from the file") {
-				const game::block::BlockData& dirt = repository.get("Dirt");
+				const game::block::BlockData& dirt = repository.get("base:dirt");
 
-				REQUIRE(dirt.prettyName == "Dirt");
+				REQUIRE(dirt.prettyName == "dirt");
 				REQUIRE(dirt.textureId == "base:dirt");
 				REQUIRE(dirt.packName == "base");
 				REQUIRE_FALSE(dirt.isUnique);
 			}
 			AND_THEN("the block repository asks the texture repository for its texture") {
-				REQUIRE_NOTHROW(repository.getBlockTexture("Dirt"));
+				REQUIRE_NOTHROW(repository.getBlockTexture("base:dirt"));
 			}
 		}
 	}
@@ -52,29 +52,115 @@ SCENARIO("A block's texture is its pack and lowercased pretty name", "[block][re
 		test::FakeTextureRepository    textures;
 		FsBlockRepository              repository(textures);
 
-		pack.write("blocks/base/anything.json", blockJson("Gravel"));
+		pack.write("blocks/base/anything.json", blockJson("gravel"));
 
 		WHEN("the block is loaded") {
 			repository.loadBlocks(pack.path());
 
 			THEN("the texture id comes from the pack and the block's name") {
-				REQUIRE(repository.get("Gravel").textureId == "base:gravel");
+				REQUIRE(repository.get("base:gravel").textureId == "base:gravel");
 			}
 		}
 	}
 }
 
-SCENARIO("Two blocks cannot share a pretty name", "[block][repository]") {
+SCENARIO("Two blocks in the same pack cannot share a name", "[block][repository]") {
 	GIVEN("two files that define the same block") {
 		const test::TemporaryDirectory pack("duplicate-block");
 		test::FakeTextureRepository    textures;
 		FsBlockRepository              repository(textures);
 
-		pack.write("blocks/base/first.json", blockJson("Gravel"));
-		pack.write("blocks/base/second.json", blockJson("Gravel"));
+		pack.write("blocks/base/first.json", blockJson("gravel"));
+		pack.write("blocks/base/second.json", blockJson("gravel"));
 
 		WHEN("the blocks are loaded") {
 			THEN("the duplicate name is reported") {
+				REQUIRE_THROWS_AS(repository.loadBlocks(pack.path()), error::AssetError);
+			}
+		}
+	}
+}
+
+SCENARIO("Two packs can define a block with the same pretty name", "[block][repository]") {
+	GIVEN("two packs that define a block with the same name") {
+		const test::TemporaryDirectory pack("shared-name");
+		test::FakeTextureRepository    textures;
+		FsBlockRepository              repository(textures);
+
+		pack.write("blocks/base/gravel.json", blockJson("gravel"));
+		pack.write("blocks/custom/gravel.json", blockJson("gravel"));
+
+		WHEN("the blocks are loaded") {
+			repository.loadBlocks(pack.path());
+
+			THEN("both blocks are registered separately") {
+				REQUIRE(repository.names() == std::vector<std::string>{"base:gravel", "custom:gravel"});
+				REQUIRE(repository.get("base:gravel").textureId == "base:gravel");
+				REQUIRE(repository.get("custom:gravel").textureId == "custom:gravel");
+			}
+		}
+	}
+}
+
+SCENARIO("A block outside a pack folder is registered under its bare name", "[block][repository]") {
+	GIVEN("a block file directly in the blocks folder") {
+		const test::TemporaryDirectory pack("no-pack");
+		test::FakeTextureRepository    textures;
+		FsBlockRepository              repository(textures);
+
+		pack.write("blocks/stone.json", blockJson("stone"));
+
+		WHEN("the block is loaded") {
+			repository.loadBlocks(pack.path());
+
+			THEN("the name and the texture id have no pack prefix") {
+				REQUIRE(repository.names() == std::vector<std::string>{"stone"});
+				REQUIRE(repository.get("stone").textureId == "stone");
+			}
+		}
+	}
+}
+
+SCENARIO("Block names must be legal identifiers", "[block][repository]") {
+	GIVEN("a temporary pack") {
+		const test::TemporaryDirectory pack("illegal-name");
+		test::FakeTextureRepository    textures;
+		FsBlockRepository              repository(textures);
+
+		WHEN("a block name contains an unsupported character") {
+			pack.write("blocks/base/upper.json", blockJson("Stone"));
+
+			THEN("the illegal name is reported") {
+				REQUIRE_THROWS_AS(repository.loadBlocks(pack.path()), error::AssetError);
+			}
+		}
+		WHEN("a block name is empty") {
+			pack.write("blocks/base/empty.json", blockJson(""));
+
+			THEN("the illegal name is reported") {
+				REQUIRE_THROWS_AS(repository.loadBlocks(pack.path()), error::AssetError);
+			}
+		}
+		WHEN("a block name is reserved") {
+			pack.write("blocks/base/air.json", blockJson("air"));
+
+			THEN("the illegal name is reported") {
+				REQUIRE_THROWS_AS(repository.loadBlocks(pack.path()), error::AssetError);
+			}
+		}
+	}
+}
+
+SCENARIO("A malformed block file is reported as an asset error", "[block][repository]") {
+	GIVEN("a block file that is not valid JSON") {
+		const test::TemporaryDirectory pack("malformed-block");
+		test::FakeTextureRepository    textures;
+		FsBlockRepository              repository(textures);
+
+		pack.write("blocks/base/broken.json", "{ this is not json");
+
+		WHEN("the blocks are loaded") {
+			THEN("the parse error is wrapped in an asset error") {
 				REQUIRE_THROWS_AS(repository.loadBlocks(pack.path()), error::AssetError);
 			}
 		}
@@ -88,7 +174,7 @@ SCENARIO("The block repository has no fixed number of blocks", "[block][reposito
 		FsBlockRepository              repository(textures);
 
 		for (unsigned int id = 0; id < 300; ++id)
-			pack.write(std::format("blocks/base/block{}.json", id), blockJson(std::format("Block{}", id)));
+			pack.write(std::format("blocks/base/block{}.json", id), blockJson(std::format("block{}", id)));
 
 		WHEN("the blocks are loaded") {
 			repository.loadBlocks(pack.path());

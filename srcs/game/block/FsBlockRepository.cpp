@@ -62,20 +62,24 @@ void FsBlockRepository::loadBlocks(const std::filesystem::path& path) {
 		if (!stream.is_open())
 			throw error::AssetError(file.string(), "could not be opened");
 
-		const nlohmann::json   parsed    = nlohmann::json::parse(stream);
-		game::block::BlockData blockData = jsonToBlock(parsed);
+		game::block::BlockData blockData = jsonToBlock(stream, file.string());
+		const std::string      packName  = packNameFromPath(blockDir, file);
+
+		assertLegalBlockName(blockData.prettyName);
 
 		blockData.meshData  = m_defaultMeshData;
-		blockData.packName  = packNameFromPath(blockDir, file);
-		blockData.textureId = textureIdFor(blockData.packName, blockData.prettyName);
+		blockData.packName  = packName;
+		blockData.textureId = textureIdFor(packName, blockData.prettyName);
 
 		static_cast<void>(m_textureRepository.get(blockData.textureId));
 
-		std::string name = blockData.prettyName;
-		if (auto [it, inserted] = m_blocks.emplace(name, std::move(blockData)); !inserted)
+		const std::string blockInPack =
+			packName.empty() ? blockData.prettyName : std::format("{}:{}", packName, blockData.prettyName);
+
+		if (auto [it, inserted] = m_blocks.emplace(blockInPack, std::move(blockData)); !inserted)
 			throw error::AssetError(it->first, "duplicate block name loading attempt");
 
-		m_names.push_back(std::move(name));
+		m_names.push_back(blockInPack);
 	}
 }
 
@@ -95,9 +99,24 @@ const std::vector<std::string>& FsBlockRepository::names() const {
 	return m_names;
 }
 
-game::block::BlockData FsBlockRepository::jsonToBlock(const nlohmann::json& json) {
-	game::block::BlockData block;
-	block.prettyName = json.at("prettyName").get<std::string>();
-	block.isUnique   = json.value("isUnique", false);
-	return block;
+game::block::BlockData FsBlockRepository::jsonToBlock(std::istream& stream, const std::string& path) {
+	try {
+		const nlohmann::json parsed = nlohmann::json::parse(stream);
+
+		game::block::BlockData block;
+		block.prettyName = parsed.at("prettyName").get<std::string>();
+		block.isUnique   = parsed.value("isUnique", false);
+		return block;
+	} catch (const nlohmann::json::exception& e) {
+		throw error::AssetError(path, std::format("invalid block definition: {}", e.what()));
+	}
+}
+
+/* valid chars: a-z, 0-9, _ */
+void FsBlockRepository::assertLegalBlockName(std::string_view name) {
+	if (name.empty() || std::ranges::find(EXCLUDED_BLOCK_NAMES, name) != EXCLUDED_BLOCK_NAMES.end() ||
+		!std::ranges::all_of(name,
+							 [](const unsigned char c) { return std::islower(c) || std::isdigit(c) || c == '_'; })) {
+		throw error::AssetError(std::string{name}, "illegal block name. block names support {a-z, 0-9, _}");
+	}
 }
