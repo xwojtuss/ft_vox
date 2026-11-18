@@ -17,6 +17,7 @@ private:
 	assets::MeshData                                        m_defaultMeshData;
 
 	static game::block::BlockData jsonToBlock(std::istream& stream, const std::string& path);
+	static std::string            normalizePrettyName(std::string_view name);
 	static void                   assertLegalBlockName(std::string_view name);
 
 	static constexpr auto       BLOCK_DIR_NAME = "blocks";

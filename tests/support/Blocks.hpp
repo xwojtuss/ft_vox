@@ -37,12 +37,18 @@ namespace test {
 
 	inline game::block::BlockDatas makeBlockDatas() {
 		game::block::BlockDatas blockDatas;
-		blockDatas.add({.prettyName = "Dirt",
+		blockDatas.add({.blockName  = "dirt",
+						.prettyName = "Dirt",
 						.meshData   = makeCubeMesh(),
 						.textureId  = "base:dirt",
 						.isUnique   = false,
 						.packName   = "base"});
-		blockDatas.add({.prettyName = "", .meshData = {}, .textureId = "", .isUnique = false, .packName = "test"});
+		blockDatas.add({.blockName  = "",
+						.prettyName = "",
+						.meshData   = {},
+						.textureId  = "",
+						.isUnique   = false,
+						.packName   = "test"});
 		return blockDatas;
 	}
 }

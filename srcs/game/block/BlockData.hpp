@@ -9,6 +9,7 @@
 
 namespace game::block {
 	struct BlockData {
+		std::string      blockName;
 		std::string      prettyName;
 		assets::MeshData meshData;
 		std::string      textureId;

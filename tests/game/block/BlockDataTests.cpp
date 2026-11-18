@@ -11,6 +11,7 @@ SCENARIO("The block registry knows air and dirt", "[block][registry]") {
 		THEN("block 0 is air and has nothing to draw") {
 			const game::block::BlockData& air = blockDatas.getBlockData(test::air);
 
+			REQUIRE(air.blockName == "air");
 			REQUIRE(air.prettyName == "Air");
 			REQUIRE(air.meshData.vertices.empty());
 			REQUIRE(air.meshData.indices.empty());
@@ -18,6 +19,7 @@ SCENARIO("The block registry knows air and dirt", "[block][registry]") {
 		AND_THEN("block 1 is dirt and uses the default model and texture") {
 			const game::block::BlockData& dirt = blockDatas.getBlockData(test::dirt);
 
+			REQUIRE(dirt.blockName == "dirt");
 			REQUIRE(dirt.prettyName == "Dirt");
 			REQUIRE(dirt.meshData.vertices == test::makeCubeMesh().vertices);
 			REQUIRE(dirt.meshData.indices == test::makeCubeMesh().indices);
@@ -27,7 +29,7 @@ SCENARIO("The block registry knows air and dirt", "[block][registry]") {
 		AND_THEN("a block type without a model is registered but has no geometry") {
 			const game::block::BlockData& unknown = blockDatas.getBlockData(test::blockWithoutModel);
 
-			REQUIRE(unknown.prettyName.empty());
+			REQUIRE(unknown.blockName.empty());
 			REQUIRE(unknown.meshData.vertices.empty());
 		}
 	}
@@ -38,10 +40,10 @@ SCENARIO("Block definitions can be changed through the registry", "[block][regis
 		game::block::BlockDatas blockDatas = test::makeBlockDatas();
 
 		WHEN("a new block type is defined") {
-			blockDatas.getBlockData(test::blockWithoutModel).prettyName = "Stone";
+			blockDatas.getBlockData(test::blockWithoutModel).blockName = "stone";
 
 			THEN("later lookups see the new definition") {
-				REQUIRE(blockDatas.getBlockData(test::blockWithoutModel).prettyName == "Stone");
+				REQUIRE(blockDatas.getBlockData(test::blockWithoutModel).blockName == "stone");
 			}
 		}
 	}
@@ -54,7 +56,7 @@ SCENARIO("The block registry grows without a fixed limit", "[block][registry]") 
 		WHEN("more block types are added") {
 			for (unsigned int id = 0; id < 300; ++id) {
 				game::block::BlockData stone;
-				stone.prettyName = "Stone";
+				stone.blockName = "stone";
 				blockDatas.add(stone);
 			}
 
@@ -74,12 +76,12 @@ SCENARIO("New blocks get the next numeric id", "[block][registry]") {
 		}
 		WHEN("a block is added") {
 			game::block::BlockData stone;
-			stone.prettyName          = "Stone";
+			stone.blockName           = "stone";
 			const game::BlockId newId = blockDatas.add(stone);
 
 			THEN("it gets the next id and can be looked up by it") {
 				REQUIRE(newId == static_cast<game::BlockId>(blockDatas.size() - 1));
-				REQUIRE(blockDatas.getBlockData(newId).prettyName == "Stone");
+				REQUIRE(blockDatas.getBlockData(newId).blockName == "stone");
 			}
 		}
 		AND_THEN("an unknown numeric id is reported") {

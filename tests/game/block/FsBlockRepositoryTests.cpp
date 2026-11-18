@@ -34,6 +34,7 @@ SCENARIO("Every JSON file in a pack's blocks folder becomes a block", "[block][r
 			AND_THEN("the block data comes from the file") {
 				const game::block::BlockData& dirt = repository.get("base:dirt");
 
+				REQUIRE(dirt.blockName == "dirt");
 				REQUIRE(dirt.prettyName == "dirt");
 				REQUIRE(dirt.textureId == "base:dirt");
 				REQUIRE(dirt.packName == "base");
@@ -41,6 +42,30 @@ SCENARIO("Every JSON file in a pack's blocks folder becomes a block", "[block][r
 			}
 			AND_THEN("the block repository asks the texture repository for its texture") {
 				REQUIRE_NOTHROW(repository.getBlockTexture("base:dirt"));
+			}
+		}
+	}
+}
+
+SCENARIO("A block's pretty name is normalized into the name used by the program", "[block][repository]") {
+	GIVEN("a block whose pretty name contains uppercase letters and spaces") {
+		const test::TemporaryDirectory pack("pretty-name");
+		test::FakeTextureRepository    textures;
+		FsBlockRepository              repository(textures);
+
+		pack.write("blocks/base/super-dirt.json", blockJson("Super Dirt"));
+
+		WHEN("the block is loaded") {
+			repository.loadBlocks(pack.path());
+
+			THEN("the pretty name is kept and the internal name is normalized") {
+				REQUIRE(repository.names() == std::vector<std::string>{"base:super_dirt"});
+
+				const game::block::BlockData& block = repository.get("base:super_dirt");
+
+				REQUIRE(block.blockName == "super_dirt");
+				REQUIRE(block.prettyName == "Super Dirt");
+				REQUIRE(block.textureId == "base:super_dirt");
 			}
 		}
 	}
@@ -128,7 +153,7 @@ SCENARIO("Block names must be legal identifiers", "[block][repository]") {
 		FsBlockRepository              repository(textures);
 
 		WHEN("a block name contains an unsupported character") {
-			pack.write("blocks/base/upper.json", blockJson("Stone"));
+			pack.write("blocks/base/punctuation.json", blockJson("stone!"));
 
 			THEN("the illegal name is reported") {
 				REQUIRE_THROWS_AS(repository.loadBlocks(pack.path()), error::AssetError);
@@ -143,6 +168,13 @@ SCENARIO("Block names must be legal identifiers", "[block][repository]") {
 		}
 		WHEN("a block name is reserved") {
 			pack.write("blocks/base/air.json", blockJson("air"));
+
+			THEN("the illegal name is reported") {
+				REQUIRE_THROWS_AS(repository.loadBlocks(pack.path()), error::AssetError);
+			}
+		}
+		WHEN("a block name becomes reserved after normalization") {
+			pack.write("blocks/base/upper-air.json", blockJson("Air"));
 
 			THEN("the illegal name is reported") {
 				REQUIRE_THROWS_AS(repository.loadBlocks(pack.path()), error::AssetError);

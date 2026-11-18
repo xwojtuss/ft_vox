@@ -10,6 +10,7 @@ using game::BlockId;
 
 BlockDatas::BlockDatas() {
 	BlockData air;
+	air.blockName  = "air";
 	air.prettyName = "Air";
 
 	m_blockDatas.push_back(std::move(air));

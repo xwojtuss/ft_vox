@@ -65,16 +65,14 @@ void FsBlockRepository::loadBlocks(const std::filesystem::path& path) {
 		game::block::BlockData blockData = jsonToBlock(stream, file.string());
 		const std::string      packName  = packNameFromPath(blockDir, file);
 
-		assertLegalBlockName(blockData.prettyName);
-
 		blockData.meshData  = m_defaultMeshData;
 		blockData.packName  = packName;
-		blockData.textureId = textureIdFor(packName, blockData.prettyName);
+		blockData.textureId = textureIdFor(packName, blockData.blockName);
 
 		static_cast<void>(m_textureRepository.get(blockData.textureId));
 
 		const std::string blockInPack =
-			packName.empty() ? blockData.prettyName : std::format("{}:{}", packName, blockData.prettyName);
+			packName.empty() ? blockData.blockName : std::format("{}:{}", packName, blockData.blockName);
 
 		if (auto [it, inserted] = m_blocks.emplace(blockInPack, std::move(blockData)); !inserted)
 			throw error::AssetError(it->first, "duplicate block name loading attempt");
@@ -104,19 +102,44 @@ game::block::BlockData FsBlockRepository::jsonToBlock(std::istream& stream, cons
 		const nlohmann::json parsed = nlohmann::json::parse(stream);
 
 		game::block::BlockData block;
-		block.prettyName = parsed.at("prettyName").get<std::string>();
-		block.isUnique   = parsed.value("isUnique", false);
+		block.isUnique = parsed.value("isUnique", false);
+
+		const std::string nameCandidate = parsed.at("prettyName").get<std::string>();
+		block.blockName                 = normalizePrettyName(nameCandidate);
+		block.prettyName                = nameCandidate;
+
 		return block;
 	} catch (const nlohmann::json::exception& e) {
 		throw error::AssetError(path, std::format("invalid block definition: {}", e.what()));
 	}
 }
 
-/* valid chars: a-z, 0-9, _ */
+std::string FsBlockRepository::normalizePrettyName(const std::string_view name) {
+	assertLegalBlockName(name);
+
+	std::string normalized;
+	normalized.reserve(name.size());
+
+	for (const unsigned char c: name) {
+		if (std::isspace(c) != 0) {
+			normalized += '_';
+		} else {
+			normalized += static_cast<char>(std::tolower(c));
+		}
+	}
+
+	if (std::ranges::find(EXCLUDED_BLOCK_NAMES, normalized) != EXCLUDED_BLOCK_NAMES.end()) {
+		throw error::AssetError(normalized, "illegal block name. block name is reserved");
+	}
+
+	return normalized;
+}
+
+/* valid chars: a-z/A-Z, 0-9, _, space */
 void FsBlockRepository::assertLegalBlockName(std::string_view name) {
-	if (name.empty() || std::ranges::find(EXCLUDED_BLOCK_NAMES, name) != EXCLUDED_BLOCK_NAMES.end() ||
-		!std::ranges::all_of(name,
-							 [](const unsigned char c) { return std::islower(c) || std::isdigit(c) || c == '_'; })) {
-		throw error::AssetError(std::string{name}, "illegal block name. block names support {a-z, 0-9, _}");
+	if (name.empty() || !std::ranges::all_of(name, [](const unsigned char c) {
+			return std::isalpha(c) || std::isspace(c) || std::isdigit(c) || c == '_';
+		})) {
+		throw error::AssetError(std::string{name}, "illegal block name. block names support {a-z, A-Z, 0-9, _, space}");
 	}
 }
