@@ -5,6 +5,7 @@
 #include "assets/FsTextureRepository.hpp"
 #include "assets/TinyObjLoader.hpp"
 #include "game/block/BlockData.hpp"
+#include "game/block/FsBlockRepository.hpp"
 #include "log/Log.hpp"
 #include "ecs/entity/EntityHandle.hpp"
 #include "ecs/system/types/CameraSystem.hpp"
@@ -34,9 +35,13 @@ Application::Application() {
 
 	this->m_textureRepository->loadPacks(".");
 
-	auto defaultTextureData         = m_textureRepository->get("base:default");
-	defaultTextureData.pixelPerfect = true;
-	game::block::BlockDatas blockDatas(m_modelLoader->toMeshData("models/cube.obj"), std::move(defaultTextureData));
+	FsBlockRepository blockRepository(*m_textureRepository, m_modelLoader->toMeshData("models/cube.obj"));
+	blockRepository.loadBlocks(".");
+
+	game::block::BlockDatas blockDatas;
+	for (const std::string& name: blockRepository.names())
+		blockDatas.add(blockRepository.get(name));
+
 	m_registry = std::make_unique<Registry>(std::move(blockDatas));
 
 	m_window->getInputManager().getKeyInputProcessor().resetBindings();
@@ -55,7 +60,8 @@ void Application::init() {
 	m_registry->createSystem<PlayerInputSystem>(m_window->getInputManager());
 	m_registry->createSystem<GuiSystem>(*m_gui, m_clientStats, m_serverStats);
 	m_registry->createSystem<ChunkStreamSystem>(*m_registry, *m_threadPool, m_serverStats, seed);
-	m_registry->createSystem<ChunkRenderSystem>(*m_registry, *m_renderer, *m_threadPool, m_clientStats);
+	m_registry->createSystem<ChunkRenderSystem>(*m_registry, *m_renderer, *m_textureRepository, *m_threadPool,
+												m_clientStats);
 	m_registry->getSystemManager().onRegistryReady();
 
 	EntityHandle player = m_registry->createEntity();

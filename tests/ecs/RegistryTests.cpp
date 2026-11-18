@@ -192,6 +192,7 @@ SCENARIO("The registry keeps the block definitions it was created with", "[ecs][
 		ecs::Registry           registry(blockDatas);
 
 		THEN("it knows the same blocks") {
+			REQUIRE(registry.getBlockDatas().getBlockData(test::dirt).blockName == "dirt");
 			REQUIRE(registry.getBlockDatas().getBlockData(test::dirt).prettyName == "Dirt");
 			REQUIRE(registry.getBlockDatas().getBlockData(test::dirt).meshData.indices ==
 					blockDatas.getBlockData(test::dirt).meshData.indices);

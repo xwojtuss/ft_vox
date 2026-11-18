@@ -11,6 +11,7 @@
 #include "scene/PlanetInfo.hpp"
 #include "support/Blocks.hpp"
 #include "support/FakeRenderer.hpp"
+#include "support/FakeTextureRepository.hpp"
 #include "support/ManualThreadPool.hpp"
 #include "support/TestSeed.hpp"
 
@@ -24,16 +25,18 @@ namespace {
 	constexpr render::chunks::ChunkRenderSettings noUploadLimit = {.meshUploadsPerFrame = 100000};
 
 	struct WorldEnv {
-		game::block::BlockDatas blockDatas = test::makeBlockDatas();
-		ecs::Registry           registry{blockDatas};
-		test::FakeRenderer      renderer;
-		profiling::ServerStats  serverStats;
-		profiling::ClientStats  clientStats;
+		game::block::BlockDatas     blockDatas = test::makeBlockDatas();
+		ecs::Registry               registry{blockDatas};
+		test::FakeTextureRepository textures;
+		test::FakeRenderer          renderer;
+		profiling::ServerStats      serverStats;
+		profiling::ClientStats      clientStats;
 
 		void addSystems(concurrency::IThreadPool& pool) {
 			registry.createSystem<ecs::ChunkStreamSystem>(registry, pool, serverStats, test::seed,
 														  game::planet::ChunkStreamSettings{spawnRenderDistance});
-			registry.createSystem<ecs::ChunkRenderSystem>(registry, renderer, pool, clientStats, noUploadLimit);
+			registry.createSystem<ecs::ChunkRenderSystem>(registry, renderer, textures, pool, clientStats,
+														  noUploadLimit);
 		}
 
 		void frame() {
